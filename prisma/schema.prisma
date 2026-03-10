@@ -1,0 +1,1160 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                            String                         @id @default(cuid())
+  walletAddress                 String?                        @unique
+  email                         String?                        @unique
+  displayName                   String?
+  avatarUrl                     String?
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  passwordHash                  String
+  username                      String                         @unique
+  encryptionSalt                String?
+  addressLabels                 AddressLabel[]
+  externalApiKeys               ExternalApiKey[]
+  financeCredentials            FinanceCredential[]
+  financeInstitutions           FinanceInstitution[]
+  manualBalances                ManualBalance[]
+  portfolioRefreshJobs          PortfolioRefreshJob[]
+  portfolioSetting              PortfolioSetting?
+  providerCallGates             ProviderCallGate[]
+  sessions                      Session[]
+  trackedWallets                TrackedWallet[]
+  portfolioSnapshots            PortfolioSnapshot[]
+  chartCaches                   ChartCache[]
+  transactionCaches             TransactionCache[]
+  transactionSyncStates         TransactionSyncState[]
+  historySyncJobs               HistorySyncJob[]
+  exchangeTransactionCaches     ExchangeTransactionCache[]
+  exchangeSyncStates            ExchangeSyncState[]
+  manualPrices                  ManualPrice[]
+  costBasisLots                 CostBasisLot[]
+  realizedGains                 RealizedGain[]
+  capitalFlows                  CapitalFlow[]
+  stakingSnapshots              StakingSnapshot[]
+  stakingPositions              StakingPosition[]
+  stakingSyncState              StakingSyncState?
+  financeBudgets                FinanceBudget[]
+  financeSubscriptions          FinanceSubscription[]
+  financeCategoryRules          FinanceCategoryRule[]
+  financeCustomCategories       FinanceCustomCategory[]
+  creditCardProfiles            CreditCardProfile[]
+  financeSnapshots              FinanceSnapshot[]
+  plaidDataSnapshots            PlaidDataSnapshot[]
+  financeAccountIdentities      FinanceAccountIdentity[]
+  financeLiabilityCreditCards   FinanceLiabilityCreditCard[]
+  financeLiabilityMortgages     FinanceLiabilityMortgage[]
+  financeLiabilityStudentLoans  FinanceLiabilityStudentLoan[]
+  financeInvestmentHoldings          FinanceInvestmentHolding[]
+  financeInvestmentHoldingSnapshots  FinanceInvestmentHoldingSnapshot[]
+  financeInvestmentSecurities        FinanceInvestmentSecurity[]
+  financeInvestmentTransactions      FinanceInvestmentTransaction[]
+  financeRecurringStreams       FinanceRecurringStream[]
+  exchangeBalanceSnapshots      ExchangeBalanceSnapshot[]
+  projectedChartCaches          ProjectedChartCache[]
+  monthlyIncomeOverride         Float?
+
+  @@index([walletAddress])
+  @@index([username])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  nonce        String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  encryptedDek String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ExternalApiKey {
+  id             String    @id @default(cuid())
+  userId         String
+  serviceName    String
+  apiKeyEnc      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  verified       Boolean   @default(false)
+  verifyError    String?
+  consecutive429 Int       @default(0)
+  label          String?
+  lastErrorAt    DateTime?
+  lastUsedAt     DateTime?
+  priority       Int       @default(0)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, serviceName])
+  @@index([userId])
+}
+
+model ManualBalance {
+  id        String   @id @default(cuid())
+  userId    String
+  asset     String
+  label     String
+  amount    String
+  location  String?
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AddressLabel {
+  id         String   @id @default(cuid())
+  userId     String
+  address    String
+  name       String
+  blockchain String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+  @@index([userId])
+}
+
+model PortfolioSetting {
+  id       String @id @default(cuid())
+  userId   String @unique
+  currency String @default("USD")
+  settings Json?
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrackedWallet {
+  id             String            @id @default(cuid())
+  userId         String
+  address        String
+  label          String?
+  emoji          String?
+  chains         String[]          @default(["ethereum"])
+  primaryChain   String            @default("ETHEREUM")
+  isActive       Boolean           @default(true)
+  lastScannedAt  DateTime?
+  lastScanBlock  String?
+  lastScanSig    String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  snapshots      BalanceSnapshot[]
+  transactions   TrackerTx[]
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+  @@index([userId])
+  @@index([address])
+}
+
+model TrackerTx {
+  id               String   @id @default(cuid())
+  walletId         String
+  txHash           String
+  chain            String
+  type             String   @default("UNKNOWN")
+  blockTimestamp    DateTime
+  blockNumber      String?
+  tokenAddress     String?
+  tokenSymbol      String?
+  tokenName        String?
+  amountFormatted  Float?
+  valueUsd         Float?
+  priceUsd         Float?
+  marketCap        Float?
+  tokenInAddress   String?
+  tokenInSymbol    String?
+  tokenInAmount    Float?
+  tokenOutAddress  String?
+  tokenOutSymbol   String?
+  tokenOutAmount   Float?
+  fromAddress      String?
+  toAddress        String?
+  dexName          String?
+  wallet           TrackedWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, txHash])
+  @@index([walletId, blockTimestamp(sort: Desc)])
+  @@index([chain])
+}
+
+model BalanceSnapshot {
+  id         String        @id @default(cuid())
+  walletId   String
+  totalValue Float
+  positions  String
+  fetchedAt  DateTime      @default(now())
+  wallet     TrackedWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([fetchedAt])
+}
+
+model PortfolioSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  totalValue  Float
+  walletCount Int      @default(0)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  source      String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([userId, source, createdAt])
+}
+
+model ExchangeBalanceSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  totalValue Float
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ChartCache {
+  id        String @id @default(cuid())
+  userId    String
+  timestamp Int
+  value     Float
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, timestamp])
+  @@index([userId, timestamp])
+}
+
+model TransactionCache {
+  id               String    @id @default(cuid())
+  userId           String
+  walletAddress    String
+  chain            String
+  txHash           String
+  blockNumber      Int
+  blockTimestamp   Int
+  category         String
+  from             String
+  // NOTE: `to` is nullable. In the @@unique constraint below, PostgreSQL treats
+  // each NULL as distinct, so contract-creation transactions (where to=NULL) can
+  // produce duplicate rows for the same (userId, chain, txHash, category, from).
+  // This is a known PostgreSQL characteristic with limited impact (rare edge case).
+  to               String?
+  asset            String?
+  symbol           String?
+  decimals         Int?
+  rawValue         String?
+  value            Float?
+  usdValue         Float?
+  direction        String
+  isFlagged        Boolean   @default(false)
+  flaggedAt        DateTime?
+  isWhitelisted    Boolean   @default(false)
+  whitelistedAt    DateTime?
+  txClassification     String?
+  classifiedAt         DateTime?
+  manualClassification String?
+  manualClassifiedAt   DateTime?
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chain, txHash, category, from, to])
+  @@index([userId, walletAddress, chain, blockTimestamp])
+  @@index([userId, walletAddress])
+  @@index([userId, blockTimestamp])
+  @@index([userId, txHash])
+  @@index([userId, txClassification])
+}
+
+model TransactionSyncState {
+  id                String    @id @default(cuid())
+  userId            String
+  walletAddress     String
+  chain             String
+  lastBlockFetched  Int       @default(0)
+  isComplete        Boolean   @default(false)
+  updatedAt         DateTime  @updatedAt
+  cursorFromBlock   Int?
+  cursorToBlock     Int?
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  pageKey           String?
+  phase             String    @default("bootstrap")
+  recordsInserted   Int       @default(0)
+  requestsProcessed Int       @default(0)
+  retryAfter        DateTime?
+  highWaterMark     Int?
+  syncMode          String    @default("historical")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletAddress, chain])
+  @@index([userId, isComplete])
+  @@index([userId, retryAfter])
+  @@index([userId, syncMode])
+  @@index([userId, chain])
+}
+
+model HistorySyncJob {
+  id              String    @id @default(cuid())
+  userId          String
+  status          String    @default("queued")
+  strategy        String    @default("latest_first")
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  lastRunAt       DateTime?
+  insertedTxCount Int       @default(0)
+  processedSyncs  Int       @default(0)
+  failedSyncs     Int       @default(0)
+  cursorSnapshot  Json?
+  error           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, updatedAt])
+}
+
+model ProviderCallGate {
+  id             String    @id @default(cuid())
+  userId         String
+  provider       String
+  operationKey   String
+  leaseOwner     String?
+  leaseUntil     DateTime?
+  nextAllowedAt  DateTime?
+  consecutive429 Int       @default(0)
+  lastStatusCode Int?
+  lastErrorCode  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  serviceKeyId   String    @default("shared")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, operationKey, serviceKeyId])
+  @@index([provider, nextAllowedAt])
+  @@index([userId, provider])
+}
+
+model ProviderUsageMinute {
+  id               String   @id @default(cuid())
+  provider         String
+  minuteBucket     DateTime
+  callCount        Int      @default(0)
+  successCount     Int      @default(0)
+  rateLimitedCount Int      @default(0)
+  errorCount       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([provider, minuteBucket])
+  @@index([provider, minuteBucket])
+}
+
+model PortfolioRefreshJob {
+  id          String    @id @default(cuid())
+  userId      String
+  status      String    @default("queued")
+  reason      String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  staleBefore DateTime?
+  asOfAfter   DateTime?
+  details     Json?
+  error       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, updatedAt])
+}
+
+model ExchangeTransactionCache {
+  id            String   @id @default(cuid())
+  userId        String
+  exchangeId    String
+  exchangeLabel String
+  txid          String?
+  externalId    String?
+  timestamp     Int
+  type          String
+  amount        Float
+  currency      String
+  status        String
+  address       String?
+  fee           Float    @default(0)
+  network       String?
+  source        String   @default("exchange")
+  usdValue      Float?
+  raw           Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exchangeId, type, timestamp, currency, amount, txid, address])
+  @@index([userId, timestamp])
+  @@index([userId, exchangeId, timestamp])
+  @@index([userId, source, exchangeId])
+  @@index([userId, currency, timestamp])
+}
+
+model ExchangeSyncState {
+  id                  String    @id @default(cuid())
+  userId              String
+  exchangeId          String
+  status              String    @default("idle")
+  supportsDeposits    Boolean   @default(false)
+  supportsWithdrawals Boolean   @default(false)
+  lastSyncedAt        DateTime?
+  error               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exchangeId])
+  @@index([userId, status])
+  @@index([userId, lastSyncedAt])
+}
+
+model ManualPrice {
+  id        String   @id @default(cuid())
+  userId    String
+  chain     String
+  asset     String
+  symbol    String
+  priceUsd  Float
+  source    String   @default("manual")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chain, asset])
+  @@index([userId])
+}
+
+model CostBasisLot {
+  id            String   @id @default(cuid())
+  userId        String
+  walletAddress String
+  asset         String
+  symbol        String
+  acquiredAt    DateTime
+  quantity      Float
+  remainingQty  Float
+  costBasisUsd  Float
+  txHash        String
+  source        String
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, walletAddress, txHash, asset])
+  @@index([userId, asset])
+  @@index([userId, walletAddress])
+}
+
+model RealizedGain {
+  id                String    @id @default(cuid())
+  userId            String
+  walletAddress     String
+  asset             String
+  symbol            String
+  disposedAt        DateTime
+  quantity          Float
+  proceedsUsd       Float
+  costBasisUsd      Float
+  gainUsd           Float
+  txHash            String
+  holdingPeriod     Int
+  acquiredAt        DateTime?
+  acquiredAtVarious Boolean   @default(false)
+  costBasisMethod   String    @default("FIFO")
+  form8949Box       String    @default("I")
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, txHash, symbol])
+  @@index([userId, asset])
+  @@index([userId, disposedAt])
+}
+
+model CapitalFlow {
+  id            String   @id @default(cuid())
+  userId        String
+  walletAddress String
+  flowType      String
+  asset         String
+  symbol        String
+  amount        Float
+  usdValue      Float
+  fromAddress   String
+  toAddress     String
+  txHash        String
+  timestamp     DateTime
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, txHash, flowType])
+  @@index([userId, flowType])
+  @@index([userId, timestamp])
+}
+
+/// Global application settings (not user-scoped). Do not use for per-user config.
+model Settings {
+  id    String @id @default("default")
+  key   String @unique
+  value Json
+
+  @@index([key])
+}
+
+model StakingSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  snapshotDate     DateTime @db.Date
+  totalStaked      Float
+  totalDailyYield  Float
+  totalAnnualYield Float
+  avgApy           Float
+  totalRewards     Float
+  positions        Json
+  rewards          Json
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snapshotDate])
+  @@index([userId, snapshotDate])
+}
+
+model StakingPosition {
+  id                String                    @id @default(cuid())
+  userId            String
+  positionKey       String
+  wallet            String
+  chain             String
+  protocol          String?
+  providerSlug      String?
+  symbol            String
+  name              String
+  contractAddress   String?
+  underlying        String?
+  maturityDate      DateTime?
+  openedAt          DateTime                  @default(now())
+  closedAt          DateTime?
+  status            String                    @default("active")
+  quantity          Float                     @default(0)
+  priceUsd          Float                     @default(0)
+  valueUsd          Float                     @default(0)
+  apy               Float?
+  apyBase           Float?
+  apyReward         Float?
+  dailyYield        Float?
+  annualYield       Float?
+  depositedUsd      Float                     @default(0)
+  withdrawnUsd      Float                     @default(0)
+  claimedUsd        Float                     @default(0)
+  principalUsd      Float                     @default(0)
+  yieldEarnedUsd    Float                     @default(0)
+  yieldEarnedPct    Float?
+  dataConfidence    String                    @default("estimated")
+  confidenceReason  String?
+  cacheState        String                    @default("live")
+  isFrozen          Boolean                   @default(false)
+  frozenAt          DateTime?
+  freezeConfidence  String?
+  dustStreak        Int                       @default(0)
+  closeCandidateAt  DateTime?
+  reopenCheckCursor Int?
+  lastValidatedAt   DateTime?
+  metadata          Json?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  depositedNative   Float?
+  withdrawnNative   Float?
+  nativeSymbol      String?
+  excludeFromYield  Boolean                   @default(false)
+  snapshots         StakingPositionSnapshot[]
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, positionKey])
+  @@index([userId, status])
+  @@index([userId, isFrozen])
+  @@index([userId, cacheState])
+}
+
+model StakingPositionSnapshot {
+  id                        String          @id @default(cuid())
+  userId                    String
+  positionKey               String
+  snapshotAt                DateTime
+  quantity                  Float
+  priceUsd                  Float
+  valueUsd                  Float
+  apyTotal                  Float?
+  apyBase                   Float?
+  apyReward                 Float?
+  depositedUsdCumulative    Float           @default(0)
+  withdrawnUsdCumulative    Float           @default(0)
+  claimedUsdCumulative      Float           @default(0)
+  principalUsd              Float           @default(0)
+  yieldEarnedUsd            Float           @default(0)
+  dailyYieldUsd             Float           @default(0)
+  dataConfidence            String          @default("estimated")
+  confidenceReason          String?
+  sourceMeta                Json?
+  createdAt                 DateTime        @default(now())
+  depositedNativeCumulative Float?
+  withdrawnNativeCumulative Float?
+  position                  StakingPosition @relation(fields: [userId, positionKey], references: [userId, positionKey], onDelete: Cascade)
+
+  @@unique([userId, positionKey, snapshotAt])
+  @@index([userId, snapshotAt])
+  @@index([userId, positionKey, snapshotAt])
+}
+
+model StakingSyncState {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  backfillStartedAt    DateTime?
+  backfillCompletedAt  DateTime?
+  lastHourlySnapshotAt DateTime?
+  lastWeeklyAuditAt    DateTime?
+  hourlyCursor         String?
+  weeklyCursor         String?
+  status               String    @default("idle")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model FinanceCredential {
+  id              String   @id @default(cuid())
+  userId          String
+  service         String
+  encryptedKey    String
+  encryptedSecret String
+  environment     String   @default("sandbox")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, service])
+  @@index([userId])
+}
+
+model FinanceInstitution {
+  id                 String           @id @default(cuid())
+  userId             String
+  provider           String
+  institutionName    String
+  institutionLogo    String?
+  plaidItemId        String?          @unique
+  plaidAccessToken   String?
+  simplefinAccessUrl String?
+  syncCursor         String?
+  status             String           @default("active")
+  errorCode          String?
+  errorMessage       String?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  accounts           FinanceAccount[]
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([plaidItemId])
+}
+
+model FinanceAccount {
+  id                    String                        @id @default(cuid())
+  userId                String
+  institutionId         String
+  externalId            String
+  linkedExternalId      String?
+  name                  String
+  officialName          String?
+  type                  String
+  subtype               String?
+  mask                  String?
+  currentBalance        Float?
+  availableBalance      Float?
+  creditLimit           Float?
+  currency              String                        @default("USD")
+  isHidden              Boolean                       @default(false)
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  institution           FinanceInstitution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  transactions          FinanceTransaction[]
+  identities            FinanceAccountIdentity[]
+  liabilityCreditCards  FinanceLiabilityCreditCard[]
+  liabilityMortgages    FinanceLiabilityMortgage[]
+  liabilityStudentLoans FinanceLiabilityStudentLoan[]
+  investmentHoldings    FinanceInvestmentHolding[]
+
+  @@unique([userId, externalId])
+  @@index([userId])
+  @@index([institutionId])
+}
+
+model FinanceTransaction {
+  id               String         @id @default(cuid())
+  userId           String
+  accountId        String
+  externalId       String
+  provider         String
+  date             DateTime       @db.Date
+  name             String
+  merchantName     String?
+  amount           Float
+  currency         String         @default("USD")
+  category         String?
+  subcategory      String?
+  plaidCategory        String?
+  plaidCategoryPrimary String?
+  isRecurring          Boolean        @default(false)
+  isPending        Boolean        @default(false)
+  isExcluded       Boolean        @default(false)
+  isDuplicate      Boolean        @default(false)
+  nickname         String?
+  notes            String?
+  tags             String[]       @default([])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  authorizedDate   DateTime?      @db.Date
+  checkNumber      String?
+  counterparties   Json?
+  location         Json?
+  logoUrl          String?
+  merchantEntityId String?
+  paymentChannel   String?
+  paymentMeta      Json?
+  transactionCode  String?
+  website          String?
+  account          FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, externalId])
+  @@index([userId, date])
+  @@index([userId, category])
+  @@index([accountId, date])
+  @@index([userId, isRecurring])
+  @@index([userId, merchantName])
+  @@index([userId, isDuplicate, date])
+  @@index([userId, isDuplicate, isExcluded, date])
+  @@index([userId, name])
+}
+
+model FinanceBudget {
+  id           String   @id @default(cuid())
+  userId       String
+  category     String
+  monthlyLimit Float
+  rollover     Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([userId])
+}
+
+model FinanceSubscription {
+  id             String    @id @default(cuid())
+  userId         String
+  merchantName   String
+  nickname       String?
+  amount         Float
+  frequency      String
+  category       String?
+  accountId      String?
+  lastChargeDate DateTime?
+  nextChargeDate DateTime?
+  status         String    @default("active")
+  isWanted       Boolean   @default(true)
+  notes          String?
+  billType       String?   // "subscription" | "cc_annual_fee" | "insurance" | "membership" | "bill"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model FinanceCategoryRule {
+  id          String   @id @default(cuid())
+  userId      String
+  matchType   String
+  matchValue  String
+  category    String
+  subcategory String?
+  nickname    String?
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model FinanceCustomCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  icon      String   @default("label")
+  hex       String   @default("#78716c")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, label])
+  @@index([userId])
+}
+
+model CreditCardProfile {
+  id               String                 @id @default(cuid())
+  userId           String
+  accountId        String
+  cardNetwork      String
+  cardName         String
+  annualFee        Float                  @default(0)
+  rewardType       String
+  rewardProgram    String?
+  pointsBalance    Float?
+  pointValue       Float?
+  cashbackBalance  Float?
+  totalEarned      Float                  @default(0)
+  totalRedeemed    Float                  @default(0)
+  baseRewardRate   Float                  @default(1)
+  bonusCategories  Json
+  statementCredits Json?
+  annualFeeDate    DateTime?
+  transferPartners Json?
+  cardImageUrl     String?
+  aiEnrichedData   Json?
+  aiEnrichedAt     DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  perks            CreditCardPerk[]
+  rewardRates      CreditCardRewardRate[]
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+}
+
+model CreditCardPerk {
+  id            String            @id @default(cuid())
+  cardProfileId String
+  name          String
+  value         Float             @default(0)
+  isUsed        Boolean           @default(false)
+  usedDate      DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  cardProfile   CreditCardProfile @relation(fields: [cardProfileId], references: [id], onDelete: Cascade)
+
+  @@index([cardProfileId])
+}
+
+model CreditCardRewardRate {
+  id               String            @id @default(cuid())
+  cardProfileId    String
+  spendingCategory String
+  rewardRate       Float
+  rewardType       String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  cardProfile      CreditCardProfile @relation(fields: [cardProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([cardProfileId, spendingCategory])
+  @@index([cardProfileId])
+}
+
+model FinanceSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @db.Date
+  totalAssets Float
+  totalDebt   Float
+  netWorth    Float
+  breakdown   String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model PlaidDataSnapshot {
+  id            String   @id @default(cuid())
+  userId        String
+  institutionId String
+  dataType      String
+  encryptedData String
+  fetchedAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, institutionId, dataType])
+  @@index([userId, institutionId])
+}
+
+model FinanceAccountIdentity {
+  id           String         @id @default(cuid())
+  userId       String
+  accountId    String
+  ownerNames   String
+  emails       String?
+  phoneNumbers String?
+  addresses    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account      FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model FinanceLiabilityCreditCard {
+  id                   String         @id @default(cuid())
+  userId               String
+  accountId            String
+  isOverdue            Boolean        @default(false)
+  lastPaymentAmount    Float?
+  lastPaymentDate      DateTime?
+  lastStatementBalance Float?
+  lastStatementDate    DateTime?
+  minimumPaymentAmount Float?
+  nextPaymentDueDate   DateTime?
+  aprs                 Json
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account              FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model FinanceLiabilityMortgage {
+  id                   String         @id @default(cuid())
+  userId               String
+  accountId            String
+  interestRateType     String?
+  interestRatePercent  Float?
+  currentLateFee       Float?
+  escrowBalance        Float?
+  hasPmi               Boolean        @default(false)
+  hasPrepaymentPenalty Boolean        @default(false)
+  lastPaymentAmount    Float?
+  lastPaymentDate      DateTime?
+  loanTerm             String?
+  loanTypeDescription  String?
+  maturityDate         DateTime?
+  nextMonthlyPayment   Float?
+  nextPaymentDueDate   DateTime?
+  originationDate      DateTime?
+  originationPrincipal Float?
+  pastDueAmount        Float?
+  propertyAddress      String?
+  ytdInterestPaid      Float?
+  ytdPrincipalPaid     Float?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account              FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model FinanceLiabilityStudentLoan {
+  id                       String         @id @default(cuid())
+  userId                   String
+  accountId                String
+  expectedPayoffDate       DateTime?
+  guarantor                String?
+  interestRatePercent      Float?
+  isOverdue                Boolean        @default(false)
+  lastPaymentAmount        Float?
+  lastPaymentDate          DateTime?
+  lastStatementBalance     Float?
+  lastStatementDate        DateTime?
+  loanName                 String?
+  loanStatusType           String?
+  loanStatusEndDate        DateTime?
+  minimumPaymentAmount     Float?
+  nextPaymentDueDate       DateTime?
+  originationDate          DateTime?
+  originationPrincipal     Float?
+  outstandingInterest      Float?
+  paymentReferenceNumber   String?
+  repaymentPlanType        String?
+  repaymentPlanDescription String?
+  servicerAddress          String?
+  ytdInterestPaid          Float?
+  ytdPrincipalPaid         Float?
+  disbursementDates        String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+  user                     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account                  FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model FinanceInvestmentHolding {
+  id                     String         @id @default(cuid())
+  userId                 String
+  accountId              String
+  securityId             String?
+  costBasis              Float?
+  institutionPrice       Float?
+  institutionPriceAsOf   DateTime?
+  institutionValue       Float?
+  isoCurrencyCode        String?
+  quantity               Float?
+  unofficialCurrencyCode String?
+  vestedQuantity         Float?
+  vestedValue            Float?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  user                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account                FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId, securityId])
+  @@index([userId])
+  @@index([userId, accountId])
+}
+
+model FinanceInvestmentHoldingSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  accountId        String
+  securityId       String?
+  date             DateTime @db.Date
+  quantity         Float?
+  institutionPrice Float?
+  institutionValue Float?
+  costBasis        Float?
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId, securityId, date])
+  @@index([userId, date])
+  @@index([userId, accountId, date])
+}
+
+model FinanceInvestmentSecurity {
+  id                     String    @id @default(cuid())
+  userId                 String
+  securityId             String
+  isin                   String?
+  cusip                  String?
+  sedol                  String?
+  institutionSecurityId  String?
+  institutionId          String?
+  proxySecurityId        String?
+  name                   String?
+  tickerSymbol           String?
+  isCashEquivalent       Boolean   @default(false)
+  type                   String?
+  closePrice             Float?
+  closePriceAsOf         DateTime?
+  isoCurrencyCode        String?
+  unofficialCurrencyCode String?
+  marketIdentifierCode   String?
+  sector                 String?
+  industry               String?
+  optionContract         Json?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, securityId])
+  @@index([userId])
+}
+
+model FinanceInvestmentTransaction {
+  id                      String   @id @default(cuid())
+  userId                  String
+  accountId               String
+  securityId              String?
+  investmentTransactionId String
+  date                    DateTime @db.Date
+  name                    String
+  quantity                Float?
+  amount                  Float
+  price                   Float?
+  fees                    Float?
+  type                    String
+  subtype                 String?
+  isoCurrencyCode         String?
+  unofficialCurrencyCode  String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, investmentTransactionId])
+  @@index([userId, date])
+  @@index([userId, accountId])
+}
+
+model FinanceRecurringStream {
+  id                      String    @id @default(cuid())
+  userId                  String
+  streamId                String
+  accountId               String
+  category                String?
+  description             String
+  merchantName            String?
+  firstDate               DateTime?
+  lastDate                DateTime?
+  frequency               String
+  averageAmount           Float?
+  lastAmount              Float?
+  isActive                Boolean   @default(true)
+  status                  String
+  personalFinanceCategory Json?
+  streamType              String
+  transactionIds          String[]  @default([])
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, streamId])
+  @@index([userId])
+  @@index([userId, streamType])
+}
+
+model ProjectedChartCache {
+  id                String   @id @default(cuid())
+  userId            String
+  timestamp         Int
+  value             Float
+  walletFingerprint String
+  computedAt        DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, timestamp, walletFingerprint])
+  @@index([userId, walletFingerprint])
+}

@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "test",
+    "contracts",
+    "**/*-example.ts",
+    "**/*-example.tsx",
+    "prisma.config.ts",
+    "src/lib/alpha/**",
+    "src/lib/discord-forum.ts",
+    "src/lib/google-drive.ts",
+    "src/lib/google-sheets.ts",
+    "src/lib/nft-tiers.ts",
+    "src/lib/discord.ts",
+    "src/lib/push-preferences.ts",
+    "src/lib/push-server.ts",
+    "src/lib/push-delivery.ts",
+    "src/lib/telegram/**",
+    "src/lib/tracker/confluence.ts",
+    "src/lib/tracker/enricher.ts",
+    "src/lib/vesting-campaign-access.ts",
+    "src/lib/codex.ts"
+  ]
+}
