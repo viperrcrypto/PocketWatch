@@ -92,31 +92,8 @@ export function LandingPage() {
       <div className="flex flex-col items-center gap-8 max-w-sm w-full">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="pw-landing" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#6366f1"/>
-                <stop offset="100%" stopColor="#22d3ee"/>
-              </linearGradient>
-            </defs>
-            {/* Chain/ring */}
-            <path d="M12 1.5v2" stroke="url(#pw-landing)" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="12" cy="1.8" r="1" fill="none" stroke="url(#pw-landing)" strokeWidth="0.8"/>
-            {/* Watch body */}
-            <circle cx="12" cy="13" r="9.5" fill="url(#pw-landing)"/>
-            {/* Inner face */}
-            <circle cx="12" cy="13" r="7.5" fill="none" stroke="white" strokeWidth="0.8" opacity="0.3"/>
-            {/* Hour hand */}
-            <line x1="12" y1="13" x2="12" y2="8.5" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
-            {/* Minute hand */}
-            <line x1="12" y1="13" x2="16" y2="13" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
-            {/* Center dot */}
-            <circle cx="12" cy="13" r="1" fill="white"/>
-            {/* Hour markers */}
-            <circle cx="12" cy="6.5" r="0.6" fill="white" opacity="0.5"/>
-            <circle cx="18.5" cy="13" r="0.6" fill="white" opacity="0.5"/>
-            <circle cx="12" cy="19.5" r="0.6" fill="white" opacity="0.5"/>
-            <circle cx="5.5" cy="13" r="0.6" fill="white" opacity="0.5"/>
+          <svg width="36" height="36" viewBox="0 0 16 16" fill="currentColor" className="text-foreground" aria-hidden="true">
+            <path d="M3 2.5A1.5 1.5 0 0 1 4.5 1h1A1.5 1.5 0 0 1 7 2.5V5h2V2.5A1.5 1.5 0 0 1 10.5 1h1A1.5 1.5 0 0 1 13 2.5v2.382a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V14.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 14.5v-3a.5.5 0 0 1 .146-.354l.854-.853V9.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v.793l.854.853A.5.5 0 0 1 7 11.5v3A1.5 1.5 0 0 1 5.5 16h-3A1.5 1.5 0 0 1 1 14.5V7.118a1.5 1.5 0 0 1 .83-1.342l.894-.447A.5.5 0 0 0 3 4.882zM4.5 2a.5.5 0 0 0-.5.5V3h2v-.5a.5.5 0 0 0-.5-.5zM6 4H4v.882a1.5 1.5 0 0 1-.83 1.342l-.894.447A.5.5 0 0 0 2 7.118V13h4v-1.293l-.854-.853A.5.5 0 0 1 5 10.5v-1A1.5 1.5 0 0 1 6.5 8h3A1.5 1.5 0 0 1 11 9.5v1a.5.5 0 0 1-.146.354l-.854.853V13h4V7.118a.5.5 0 0 0-.276-.447l-.895-.447A1.5 1.5 0 0 1 12 4.882V4h-2v1.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5zm4-1h2v-.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5zm4 11h-4v.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5zm-8 0H2v.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5z"/>
           </svg>
           <span className="text-2xl font-semibold tracking-wide text-foreground">
             Pocket<span className="font-normal">Watch</span>
