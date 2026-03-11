@@ -145,7 +145,20 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
         )}
 
         {/* Bottom section */}
-        <div className="px-3 py-3 border-t border-card-border flex-shrink-0">
+        <div className="px-3 py-3 border-t border-card-border flex-shrink-0 space-y-1">
+          {/* Credits */}
+          <div className="flex items-center gap-2 px-3 py-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-foreground-muted flex-shrink-0" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            <span className="text-[11px] text-foreground-muted">
+              Built by{" "}
+              <a href="https://x.com/viperr" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@viperr</a>
+              {" & "}
+              <a href="https://x.com/0xXinu" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@0xXinu</a>
+            </span>
+          </div>
+
           <button
             onClick={handleLock}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-foreground-muted hover:text-foreground hover:bg-background-secondary"
