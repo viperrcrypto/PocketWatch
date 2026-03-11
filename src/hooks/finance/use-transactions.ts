@@ -162,11 +162,54 @@ export function useBulkCategorize() {
 export function useAutoCategorize() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () =>
-      financeFetch<{ categorized: number; remaining: number }>(
+    mutationFn: async (): Promise<{ categorized: number; remaining: number; aiCategorized: number }> => {
+      // Step 1: Rule-based categorization
+      const ruleResult = await financeFetch<{ categorized: number; remaining: number }>(
         "/transactions/categorize",
         { method: "POST" }
-      ),
+      )
+
+      if (ruleResult.remaining === 0) {
+        return { ...ruleResult, aiCategorized: 0 }
+      }
+
+      // Step 2: AI categorization for remaining
+      let aiCategorized = 0
+      try {
+        const aiResult = await financeFetch<AICategorizeResponse>(
+          "/transactions/ai-categorize",
+          { method: "POST" }
+        )
+
+        if (aiResult.suggestions.length > 0) {
+          // Step 3: Auto-apply all AI suggestions with rule creation
+          const applyResult = await financeFetch<ApplyAIResult>(
+            "/transactions/ai-categorize/apply",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                accepted: aiResult.suggestions.map((s) => ({
+                  transactionIds: s.transactionIds,
+                  category: s.suggestedCategory,
+                  subcategory: s.suggestedSubcategory ?? undefined,
+                  createRule: true,
+                  merchantName: s.merchantName,
+                })),
+              }),
+            }
+          )
+          aiCategorized = applyResult.applied
+        }
+      } catch {
+        // AI failed — still return rule-based results
+      }
+
+      return {
+        categorized: ruleResult.categorized + aiCategorized,
+        remaining: ruleResult.remaining - aiCategorized,
+        aiCategorized,
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.all }),
   })
 }

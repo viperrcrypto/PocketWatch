@@ -303,7 +303,16 @@ export default function FinanceDashboardPage() {
               onClick={() => autoCategorize.mutate(undefined, {
                 onSuccess: (result) => {
                   if (result.categorized > 0) {
-                    toast.success(`Categorized ${result.categorized} transaction${result.categorized > 1 ? "s" : ""}${result.remaining > 0 ? ` (${result.remaining} remaining)` : ""}`)
+                    const parts = []
+                    if (result.aiCategorized > 0) {
+                      parts.push(`${result.aiCategorized} by AI`)
+                    }
+                    const ruleCount = result.categorized - (result.aiCategorized ?? 0)
+                    if (ruleCount > 0) {
+                      parts.push(`${ruleCount} by rules`)
+                    }
+                    const detail = parts.length > 0 ? ` (${parts.join(", ")})` : ""
+                    toast.success(`Categorized ${result.categorized} transaction${result.categorized > 1 ? "s" : ""}${detail}${result.remaining > 0 ? ` — ${result.remaining} remaining` : ""}`)
                   } else {
                     toast.info("No transactions could be auto-categorized. Review them manually.")
                   }
@@ -313,7 +322,7 @@ export default function FinanceDashboardPage() {
               disabled={autoCategorize.isPending}
               className="w-full px-3 py-1.5 text-xs font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors disabled:opacity-50"
             >
-              {autoCategorize.isPending ? "Working..." : "Auto-categorize"}
+              {autoCategorize.isPending ? "Categorizing with AI..." : "Auto-categorize"}
             </button>
           </div>
         ) : (

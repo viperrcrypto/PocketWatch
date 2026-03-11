@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
+import { invalidateCache } from "@/lib/cache"
 import { db } from "@/lib/db"
 import { categorizeTransaction, cleanMerchantName, uncategorizedWhere } from "@/lib/finance/categorize"
 import { NextResponse } from "next/server"
@@ -53,6 +54,13 @@ export async function POST() {
     }
 
     await db.$transaction(updates)
+
+    // Invalidate cached insights/suggestions since categories changed
+    if (updates.length > 0) {
+      invalidateCache(`deep-insights:${user.id}`)
+      invalidateCache(`budget-suggest:${user.id}`)
+      invalidateCache(`budget-ai:${user.id}`)
+    }
 
     // Count remaining uncategorized
     const remaining = await db.financeTransaction.count({ where })

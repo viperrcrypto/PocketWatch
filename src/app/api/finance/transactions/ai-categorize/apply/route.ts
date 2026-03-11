@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
+import { invalidateCache } from "@/lib/cache"
 import { db } from "@/lib/db"
 import { CATEGORIES, cleanMerchantName, uncategorizedWhere } from "@/lib/finance/categorize"
 import { financeRateLimiters, getClientId } from "@/lib/rate-limit"
@@ -93,6 +94,11 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Invalidate cached insights/suggestions since categories changed
+    invalidateCache(`deep-insights:${user.id}`)
+    invalidateCache(`budget-suggest:${user.id}`)
+    invalidateCache(`budget-ai:${user.id}`)
 
     // Count remaining uncategorized
     const remaining = await db.financeTransaction.count({

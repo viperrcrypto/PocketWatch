@@ -15,6 +15,7 @@ export interface SimpleFINTransaction {
   description: string
   payee?: string
   memo?: string
+  pending?: boolean
 }
 
 export interface SimpleFINAccount {
@@ -112,10 +113,16 @@ export async function getAccountsAndTransactions(
   const { baseUrl, authHeader } = parseAccessUrl(accessUrl)
   const url = new URL(`${baseUrl}/accounts`)
 
-  if (since) {
-    // SimpleFIN uses Unix timestamp for start-date
-    url.searchParams.set("start-date", Math.floor(since.getTime() / 1000).toString())
-  }
+  // Always request 90-day window (SimpleFIN max) regardless of lastSyncedAt.
+  // Using lastSyncedAt as start-date caused 0 transactions when first sync
+  // returned none — lastSyncedAt was set anyway, and all future syncs
+  // only looked forward from that empty point.
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  const startDate = since && since < ninetyDaysAgo ? ninetyDaysAgo : (since ?? ninetyDaysAgo)
+  url.searchParams.set("start-date", Math.floor(startDate.getTime() / 1000).toString())
+
+  // Include pending transactions (excluded by default)
+  url.searchParams.set("pending", "1")
 
   const response = await fetch(url.toString(), {
     method: "GET",
@@ -134,31 +141,66 @@ export async function getAccountsAndTransactions(
 }
 
 /**
- * Map SimpleFIN account type from name heuristics.
+ * Known credit-card-only issuers.
+ * If institution matches, accounts default to "credit" unless name
+ * contains a non-card keyword (savings, checking, deposit, bank, 360).
+ */
+const CREDIT_CARD_ISSUERS = [
+  "american express", "amex", "discover", "discover financial", "capital one",
+] as const
+
+const NON_CARD_KEYWORDS = ["saving", "checking", "deposit", "bank", "360"] as const
+
+const CARD_KEYWORDS = [
+  "card", "platinum", "gold", "signature", "rewards", "cashback", "cash back",
+  "visa", "mastercard", "sapphire", "freedom", "venture", "quicksilver",
+  "everyday", "preferred", "reserve", "ink", "world elite",
+] as const
+
+/**
+ * Map SimpleFIN account type using three-layer inference:
+ *   1. Institution name (known CC issuers)
+ *   2. Account name keywords (2+ card keywords → credit)
+ *   3. Balance sign tiebreaker (1 keyword + negative balance → credit)
  */
 function inferAccountType(
   name: string,
+  institutionName: string,
   balance: number,
-  orgName: string
 ): "checking" | "savings" | "credit" | "investment" | "loan" {
   const lower = name.toLowerCase()
-  const orgLower = orgName.toLowerCase()
+  const instLower = institutionName.toLowerCase()
 
-  // Explicit type keywords
-  if (lower.includes("credit")) return "credit"
+  // Priority checks — these keywords are unambiguous
   if (lower.includes("saving")) return "savings"
   if (lower.includes("invest") || lower.includes("brokerage")) return "investment"
   if (lower.includes("loan") || lower.includes("mortgage")) return "loan"
+  if (lower.includes("credit")) return "credit"
 
-  // Credit card heuristics: card-related keywords
-  const cardPatterns = ["card", "visa", "mastercard", "amex", "platinum", "gold", "rewards", "cash back", "cashback", "blue cash", "everyday"]
-  if (cardPatterns.some((p) => lower.includes(p))) return "credit"
+  // Layer 1: Known credit-card issuers
+  const isCardIssuer = CREDIT_CARD_ISSUERS.some((issuer) => instLower.includes(issuer))
+  const hasNonCardKeyword = NON_CARD_KEYWORDS.some((kw) => lower.includes(kw))
+  if (isCardIssuer && !hasNonCardKeyword) return "credit"
 
-  // Known credit card issuers as org
-  const cardIssuers = ["american express", "amex", "chase", "citi", "capital one", "discover", "barclays", "synchrony"]
-  if (cardIssuers.some((p) => orgLower.includes(p)) && balance <= 0) return "credit"
+  // Layer 2: Count card-product keywords in account name
+  const matchCount = CARD_KEYWORDS.reduce(
+    (count, kw) => count + (lower.includes(kw) ? 1 : 0),
+    0,
+  )
+  if (matchCount >= 2) return "credit"
+
+  // Layer 3: Single keyword + negative balance → likely credit card
+  if (matchCount === 1 && balance < 0) return "credit"
 
   return "checking"
+}
+
+/**
+ * Extract last-4 mask from account names like "Blue Cash Everyday® (2006)".
+ */
+function extractMask(name: string): string | null {
+  const match = name.match(/\((\d{4})\)\s*$/)
+  return match ? match[1] : null
 }
 
 /**
@@ -185,7 +227,7 @@ export interface NormalizedSimpleFINTransaction {
   merchantName: string
   rawName: string
   amount: number // positive = outflow, negative = inflow
-  isPending: false
+  isPending: boolean
   category: null
   plaidCategory: null
 }
@@ -206,8 +248,13 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
       provider: "simplefin",
       institutionName: acct.org.name,
       accountName: acct.name,
+<<<<<<< Updated upstream
       type: inferAccountType(acct.name, balance, acct.org.name),
       mask: null, // SimpleFIN doesn't provide last 4 digits
+=======
+      type: inferAccountType(acct.name, acct.org.name, balance),
+      mask: extractMask(acct.name),
+>>>>>>> Stashed changes
       currentBalance: balance,
       availableBalance: available,
       creditLimit: null,
@@ -229,7 +276,7 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
         // SimpleFIN: negative = outflow, positive = inflow
         // Our convention: positive = outflow, negative = inflow
         amount: -amount,
-        isPending: false,
+        isPending: tx.pending === true,
         category: null,
         plaidCategory: null,
       })

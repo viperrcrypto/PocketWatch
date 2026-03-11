@@ -140,7 +140,11 @@ export async function backfillHistoricalSnapshots(userId: string): Promise<numbe
     select: { accountId: true, date: true, amount: true },
   })
 
-  if (transactions.length === 0) return 0
+  if (transactions.length === 0) {
+    // No transactions — seed baseline snapshots from current balances
+    // so the chart shows at least a flat line over the last 30 days
+    return seedBaselineSnapshots(userId, canonical)
+  }
 
   // Group transactions by account -> date -> sum of amounts
   const txByAccountDate = new Map<string, Map<string, number>>()
@@ -235,27 +239,106 @@ export async function backfillHistoricalSnapshots(userId: string): Promise<numbe
 
   if (snapshots.length === 0) return 0
 
+  // Upsert all snapshots — existing ones may have stale data from when
+  // account types were incorrect (e.g. credit cards typed as "checking")
+  let upserted = 0
+  for (const s of snapshots) {
+    await db.financeSnapshot.upsert({
+      where: { userId_date: { userId, date: s.date } },
+      create: {
+        userId,
+        date: s.date,
+        totalAssets: s.totalAssets,
+        totalDebt: s.totalDebt,
+        netWorth: s.netWorth,
+        breakdown: JSON.stringify(s.breakdown),
+      },
+      update: {
+        totalAssets: s.totalAssets,
+        totalDebt: s.totalDebt,
+        netWorth: s.netWorth,
+        breakdown: JSON.stringify(s.breakdown),
+      },
+    })
+    upserted++
+  }
+
+  return upserted
+}
+
+/**
+ * Seed baseline snapshots when no transaction history exists.
+ * Creates flat historical snapshots from current balances going back 30 days
+ * so the chart shows a meaningful line instead of a single point.
+ */
+async function seedBaselineSnapshots(
+  userId: string,
+  accounts: Array<{ id: string; type: string; currentBalance: number | null }>
+): Promise<number> {
+  const breakdown: Record<string, number> = {
+    checking: 0, savings: 0, credit: 0, loan: 0, investment: 0, mortgage: 0,
+  }
+  let totalAssets = 0
+  let totalDebt = 0
+
+  for (const acct of accounts) {
+    const balance = acct.currentBalance ?? 0
+    const breakdownKey = acct.type === "business_credit" ? "credit"
+      : acct.type === "brokerage" ? "investment"
+      : acct.type
+
+    if (breakdown[breakdownKey] !== undefined) {
+      breakdown[breakdownKey] += DEBT_TYPES.has(acct.type) ? Math.abs(balance) : balance
+    }
+
+    if (DEPOSIT_TYPES.has(acct.type)) {
+      totalAssets += balance
+    } else if (DEBT_TYPES.has(acct.type)) {
+      totalDebt += Math.abs(balance)
+    }
+  }
+
+  const netWorth = totalAssets - totalDebt
+  const today = todayUtc()
+  const startDate = addDaysUtc(today, -30)
+
   const existingSnapshots = await db.financeSnapshot.findMany({
     where: { userId, date: { gte: startDate, lte: today } },
     select: { date: true },
   })
   const existingDates = new Set(existingSnapshots.map((s) => toUtcDateKey(s.date)))
 
-  const newSnapshots = snapshots.filter((s) => !existingDates.has(toUtcDateKey(s.date)))
+  const newSnapshots: Array<{
+    userId: string
+    date: Date
+    totalAssets: number
+    totalDebt: number
+    netWorth: number
+    breakdown: string
+  }> = []
+
+  let cursor = new Date(startDate)
+  while (cursor <= today) {
+    const key = toUtcDateKey(cursor)
+    if (!existingDates.has(key)) {
+      newSnapshots.push({
+        userId,
+        date: new Date(cursor),
+        totalAssets,
+        totalDebt,
+        netWorth,
+        breakdown: JSON.stringify(breakdown),
+      })
+    }
+    cursor = addDaysUtc(cursor, 1)
+  }
 
   if (newSnapshots.length === 0) return 0
 
   await db.financeSnapshot.createMany({
-    data: newSnapshots.map((s) => ({
-      userId,
-      date: s.date,
-      totalAssets: s.totalAssets,
-      totalDebt: s.totalDebt,
-      netWorth: s.netWorth,
-      breakdown: JSON.stringify(s.breakdown),
-    })),
+    data: newSnapshots,
     skipDuplicates: true,
   })
 
-  return snapshots.length
+  return newSnapshots.length
 }

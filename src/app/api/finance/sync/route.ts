@@ -2,7 +2,9 @@ import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { mapFinanceError } from "@/lib/finance/error-map"
-import { syncAllInstitutions, syncInstitution, saveFinanceSnapshot } from "@/lib/finance/sync"
+import { invalidateCache } from "@/lib/cache"
+import { syncAllInstitutions, syncInstitution, saveFinanceSnapshot, backfillHistoricalSnapshots } from "@/lib/finance/sync"
+import { detectAndSaveSubscriptions } from "@/lib/finance/sync/detect-subscriptions"
 import { financeRateLimiters, getClientId, rateLimitHeaders } from "@/lib/rate-limit"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod/v4"
@@ -39,11 +41,25 @@ export async function POST(req: NextRequest) {
 
       const result = await syncInstitution(institutionId)
       await saveFinanceSnapshot(user.id)
+      await backfillHistoricalSnapshots(user.id)
+      invalidateCache(`deep-insights:${user.id}`)
+      invalidateCache(`budget-suggest:${user.id}`)
+      invalidateCache(`budget-ai:${user.id}`)
+      detectAndSaveSubscriptions(user.id).catch((e: unknown) =>
+        console.warn("[sync] Subscription detection failed:", e)
+      )
       return NextResponse.json(result)
     }
 
     const results = await syncAllInstitutions(user.id)
     await saveFinanceSnapshot(user.id)
+    await backfillHistoricalSnapshots(user.id)
+    invalidateCache(`deep-insights:${user.id}`)
+    invalidateCache(`budget-suggest:${user.id}`)
+    invalidateCache(`budget-ai:${user.id}`)
+    detectAndSaveSubscriptions(user.id).catch((e: unknown) =>
+      console.warn("[sync] Subscription detection failed:", e)
+    )
     return NextResponse.json({ results })
   } catch (err) {
     const mapped = mapFinanceError(err, "Sync failed")

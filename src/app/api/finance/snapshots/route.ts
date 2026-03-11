@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
-import { saveFinanceSnapshot, backfillHistoricalSnapshots, fetchFullPlaidHistory } from "@/lib/finance/sync"
+import { saveFinanceSnapshot, backfillHistoricalSnapshots } from "@/lib/finance/sync"
 import { NextResponse, type NextRequest } from "next/server"
 
 type RangeKey = "1w" | "1m" | "3m" | "6m" | "1y" | "all"
@@ -129,32 +129,20 @@ export async function GET(req: NextRequest) {
   const includeInvestments = searchParams.get("includeInvestments") !== "false"
 
   try {
-    // Rebuild all snapshots from transaction history (includes today)
-    await backfillHistoricalSnapshots(user.id)
-    // Ensure today's snapshot exists even if there are no transactions yet
-    await saveFinanceSnapshot(user.id)
-
-    // One-time: fetch full Plaid history if we have Plaid institutions but no old transactions
-    const plaidInstitutionCount = await db.financeInstitution.count({
-      where: { userId: user.id, provider: "plaid", status: "active" },
+    // Only rebuild snapshots if today's snapshot is missing (stale data).
+    // Full backfill + snapshot save happens in the sync route (POST /api/finance/sync).
+    // This avoids expensive recomputation on every chart load.
+    const n = new Date()
+    const todayUtc = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()))
+    const todaySnapshot = await db.financeSnapshot.findUnique({
+      where: { userId_date: { userId: user.id, date: todayUtc } },
+      select: { id: true },
     })
 
-    if (plaidInstitutionCount > 0) {
-      const sixtyDaysAgo = new Date()
-      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
-
-      const oldTransactionCount = await db.financeTransaction.count({
-        where: { userId: user.id, provider: "plaid", date: { lt: sixtyDaysAgo } },
-      })
-
-      if (oldTransactionCount === 0) {
-        try {
-          await fetchFullPlaidHistory(user.id)
-        } catch {
-          // If deep fetch fails, still backfill from whatever transactions exist
-          await backfillHistoricalSnapshots(user.id)
-        }
-      }
+    if (!todaySnapshot) {
+      // First load of the day or first-time user — bootstrap snapshots
+      await saveFinanceSnapshot(user.id)
+      await backfillHistoricalSnapshots(user.id)
     }
 
     const startDate = startOfUtcDay(rangeToDate(range))
