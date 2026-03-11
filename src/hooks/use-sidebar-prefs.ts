@@ -41,19 +41,38 @@ export const FINANCE_NAV_ITEMS: NavItem[] = [
   { id: "fin-settings",      label: "Settings",       href: "/finance/settings",       icon: "settings" },
 ]
 
+export const NET_WORTH_NAV_ITEMS: NavItem[] = [
+  { id: "net-worth", label: "Net Worth", href: "/net-worth", icon: "equalizer" },
+]
+
 export const NAV_CATEGORIES: Record<string, { label: string; items: NavItem[] }> = {
-  finance:   { label: "Finance",   items: FINANCE_NAV_ITEMS },
+  netWorth:  { label: "",              items: NET_WORTH_NAV_ITEMS },
+  finance:   { label: "Finance",       items: FINANCE_NAV_ITEMS },
   portfolio: { label: "Digital Assets", items: PORTFOLIO_NAV_ITEMS },
 }
 
 function buildDefaultPrefs(): SidebarPrefs {
   return {
-    categoryOrder: ["finance", "portfolio"],
+    categoryOrder: ["netWorth", "finance", "portfolio"],
     categories: {
+      netWorth:  { order: NET_WORTH_NAV_ITEMS.map((i) => i.id), hidden: [] },
       finance:   { order: FINANCE_NAV_ITEMS.map((i) => i.id),   hidden: [] },
       portfolio: { order: PORTFOLIO_NAV_ITEMS.map((i) => i.id), hidden: [] },
     },
   }
+}
+
+function migratePrefs(prefs: SidebarPrefs): SidebarPrefs {
+  // Inject netWorth category if missing (added after initial release)
+  if (!prefs.categoryOrder.includes("netWorth")) {
+    prefs.categoryOrder.unshift("netWorth")
+    prefs.categories.netWorth = {
+      order: NET_WORTH_NAV_ITEMS.map((i) => i.id),
+      hidden: [],
+    }
+    savePrefs(prefs)
+  }
+  return prefs
 }
 
 function loadPrefs(): SidebarPrefs {
@@ -63,7 +82,7 @@ function loadPrefs(): SidebarPrefs {
     if (!raw) return buildDefaultPrefs()
     const parsed = JSON.parse(raw) as SidebarPrefs
     if (!parsed.categoryOrder || !parsed.categories) return buildDefaultPrefs()
-    return parsed
+    return migratePrefs(parsed)
   } catch {
     return buildDefaultPrefs()
   }

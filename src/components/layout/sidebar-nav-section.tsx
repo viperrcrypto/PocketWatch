@@ -15,11 +15,13 @@ interface SidebarNavSectionProps {
 export function SidebarNavSection({ label, items, pathname, baseHref, onClose }: SidebarNavSectionProps) {
   return (
     <>
-      <div className="px-3 mb-3">
-        <p className="text-[10px] font-semibold tracking-widest text-foreground-muted uppercase">
-          {label}
-        </p>
-      </div>
+      {label && (
+        <div className="px-3 mb-3">
+          <p className="text-[10px] font-semibold tracking-widest text-foreground-muted uppercase">
+            {label}
+          </p>
+        </div>
+      )}
 
       {items.map((item) => {
         const isActive =

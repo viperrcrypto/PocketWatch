@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
+  { href: "/net-worth",           icon: "equalizer",              label: "Net Worth" },
   { href: "/portfolio",           icon: "pie_chart",              label: "Overview" },
   { href: "/portfolio/balances",  icon: "account_balance_wallet", label: "Balances" },
-  { href: "/portfolio/history",   icon: "history",                label: "History" },
   { href: "/portfolio/accounts",  icon: "wallet",                 label: "Wallets" },
 ]
 
