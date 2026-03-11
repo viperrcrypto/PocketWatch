@@ -26,8 +26,9 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "WealthTracker - Portfolio Tracker",
-  description: "Track your crypto and stock portfolio in one place.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  title: "PocketWatch - Finance & Digital Assets",
+  description: "Your personal finance and digital asset tracker.",
   manifest: "/manifest.json",
   icons: {
     icon: "/img/logo-circle.png",
@@ -36,25 +37,25 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "WealthTracker",
+    title: "PocketWatch",
   },
   openGraph: {
-    title: "WealthTracker - Portfolio Tracker",
-    description: "Track your crypto and stock portfolio in one place.",
+    title: "PocketWatch - Finance & Digital Assets",
+    description: "Your personal finance and digital asset tracker.",
     type: "website",
     images: [
       {
         url: "/img/og-banner.jpg",
         width: 1200,
         height: 630,
-        alt: "WealthTracker - Portfolio Tracker",
+        alt: "PocketWatch - Finance & Digital Assets",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WealthTracker - Portfolio Tracker",
-    description: "Track your crypto and stock portfolio in one place.",
+    title: "PocketWatch - Finance & Digital Assets",
+    description: "Your personal finance and digital asset tracker.",
     images: ["/img/og-banner.jpg"],
   },
 }

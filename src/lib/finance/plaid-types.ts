@@ -167,7 +167,7 @@ export async function createLinkToken(userId: string): Promise<string> {
   const client = await getPlaidClient(userId)
   const response = await client.linkTokenCreate({
     user: { client_user_id: userId },
-    client_name: "WealthTracker",
+    client_name: "PocketWatch",
     products: [Products.Transactions],
     optional_products: [
       Products.Liabilities,

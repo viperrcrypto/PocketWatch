@@ -196,7 +196,7 @@ export async function validatePlaidCredentials(params: {
   try {
     await client.linkTokenCreate({
       user: { client_user_id: params.probeUserId ?? `verify_${Date.now()}` },
-      client_name: "WealthTracker Verification",
+      client_name: "PocketWatch Verification",
       products: [Products.Transactions],
       country_codes: [CountryCode.Us],
       language: "en",

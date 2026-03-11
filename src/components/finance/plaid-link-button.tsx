@@ -62,39 +62,23 @@ export function PlaidLinkButton({
   const disabled = isLoadingToken || !!tokenError || !ready
 
   return (
-    <div className="flex flex-col items-start gap-1.5">
+    <div className="inline-flex flex-col items-start gap-1">
       <button
         onClick={() => {
-          if (!ready || tokenError) return
+          if (tokenError) {
+            fetchLinkToken()
+            return
+          }
+          if (!ready) return
           open()
         }}
-        disabled={disabled}
+        disabled={isLoadingToken}
         className={className ?? "btn-primary flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"}
+        title={tokenError ? `${tokenError} — Click to retry` : undefined}
       >
-        <span className="material-symbols-rounded text-lg">account_balance</span>
-        {buttonLabel}
+        <span className="material-symbols-rounded" style={{ fontSize: className ? 14 : 18 }}>account_balance</span>
+        {isLoadingToken ? "..." : tokenError ? `${buttonLabel} ↻` : buttonLabel}
       </button>
-
-      {isLoadingToken && (
-        <p className="text-xs text-foreground-muted">Preparing Plaid connection...</p>
-      )}
-
-      {!isLoadingToken && !tokenError && !ready && linkToken && (
-        <p className="text-xs text-foreground-muted">Loading Plaid secure widget...</p>
-      )}
-
-      {tokenError && (
-        <div className="flex items-center gap-2">
-          <p className="text-xs text-error">{tokenError}</p>
-          <button
-            type="button"
-            onClick={fetchLinkToken}
-            className="text-xs text-primary hover:underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
     </div>
   )
 }

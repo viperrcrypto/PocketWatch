@@ -4,6 +4,7 @@
 
 import { Codex } from "@codex-data/sdk"
 import { db } from "./db"
+import { decrypt } from "./crypto"
 
 // Singleton Codex client (server-side env var key — used for DAO-wide features)
 let codexInstance: Codex | null = null
@@ -37,7 +38,14 @@ export async function getCodexForUser(userId: string): Promise<Codex | null> {
     select: { apiKeyEnc: true },
   })
   if (stored?.apiKeyEnc) {
-    const instance = new Codex(stored.apiKeyEnc)
+    let key: string
+    try {
+      key = await decrypt(stored.apiKeyEnc)
+    } catch {
+      // Fallback for unencrypted legacy keys
+      key = stored.apiKeyEnc
+    }
+    const instance = new Codex(key)
     userCodexCache.set(userId, { instance, expiry: Date.now() + 5 * 60_000 })
     return instance
   }

@@ -44,6 +44,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
       })}
       <button
         onClick={onMoreClick}
+        aria-label="More navigation options"
         className="flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors text-foreground-muted hover:text-foreground min-w-[56px]"
       >
         <span className="material-symbols-rounded text-xl" aria-hidden="true">menu</span>

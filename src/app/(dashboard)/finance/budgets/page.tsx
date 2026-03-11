@@ -19,9 +19,12 @@ import { BudgetSuggestionsCard } from "@/components/finance/budgets/budget-sugge
 import { BudgetUserCard } from "@/components/finance/budgets/budget-user-card"
 import { BudgetUntrackedSection } from "@/components/finance/budgets/budget-untracked-section"
 import { ConfirmDialog } from "@/components/finance/confirm-dialog"
+import { BudgetSubscriptionsSection } from "@/components/finance/budgets/budget-subscriptions-section"
 import { getBudgetableCategories } from "@/lib/finance/categories"
 import { usePanelState } from "@/hooks/use-panel-state"
 import { cn } from "@/lib/utils"
+
+type BudgetView = "budgets" | "subscriptions"
 
 export default function FinanceBudgetsPage() {
   const router = useRouter()
@@ -40,6 +43,7 @@ export default function FinanceBudgetsPage() {
   const autoCategorize = useAutoCategorize()
   const updateCategory = useUpdateTransactionCategory()
 
+  const [activeView, setActiveView] = useState<BudgetView>("budgets")
   const { isOpen: isDualView, toggle: toggleDualView } = usePanelState("budgetDualView", true)
 
   const [showModal, setShowModal] = useState(false)
@@ -146,7 +150,9 @@ export default function FinanceBudgetsPage() {
       {/* Header */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Budgets</h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">
+            {activeView === "budgets" ? "Budgets" : "Subscriptions & Bills"}
+          </h1>
           <p className="text-foreground-muted text-sm mt-0.5">{currentMonth}</p>
         </div>
         <span className="text-[11px] font-bold text-foreground-muted tabular-nums">
@@ -154,6 +160,38 @@ export default function FinanceBudgetsPage() {
         </span>
       </div>
 
+      {/* View Toggle: Budgets vs Subscriptions */}
+      <div className="flex items-center gap-0.5 bg-foreground/[0.04] rounded-lg p-0.5 w-fit">
+        <button
+          onClick={() => setActiveView("budgets")}
+          className={cn(
+            "text-[11px] font-bold px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+            activeView === "budgets"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-foreground-muted hover:text-foreground",
+          )}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 14 }}>savings</span>
+          Budgets
+        </button>
+        <button
+          onClick={() => setActiveView("subscriptions")}
+          className={cn(
+            "text-[11px] font-bold px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5",
+            activeView === "subscriptions"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-foreground-muted hover:text-foreground",
+          )}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 14 }}>autorenew</span>
+          Subscriptions
+        </button>
+      </div>
+
+      {activeView === "subscriptions" ? (
+        <BudgetSubscriptionsSection />
+      ) : (
+      <>
       {/* Stat Cards */}
       <BudgetStatCards
         hasBudgets={hasBudgets}
@@ -286,6 +324,8 @@ export default function FinanceBudgetsPage() {
             />
           )}
         </>
+      )}
+      </>
       )}
 
       {/* Modals */}

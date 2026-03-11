@@ -50,17 +50,7 @@ export async function POST(_request: NextRequest) {
     const evmAddresses = new Set<string>()
     const solanaAddresses = new Set<string>()
 
-    // Add the user's own wallet (WalletConnect auth)
-    if (user.walletAddress) {
-      const addr = user.walletAddress.toLowerCase()
-      if (addr.startsWith("0x")) {
-        evmAddresses.add(addr)
-      } else if (addr.length >= 32) {
-        solanaAddresses.add(user.walletAddress)
-      }
-    }
-
-    // Also scan the user's tracked wallets
+    // Scan the user's tracked wallets
     const trackedWallets = await db.trackedWallet.findMany({
       where: { userId: user.id },
       select: { address: true },

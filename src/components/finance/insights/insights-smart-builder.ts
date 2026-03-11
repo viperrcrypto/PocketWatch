@@ -94,7 +94,7 @@ export function buildSmartInsights({
       title: `${subscriptionSummary.unwantedCount} unwanted subscription${subscriptionSummary.unwantedCount > 1 ? "s" : ""}`,
       description: `Cancel them to save ${formatCurrency(subscriptionSummary.potentialSavings)}/month.`,
       variant: "warning",
-      actionLink: { label: "Review subscriptions", href: "/finance/subscriptions" },
+      actionLink: { label: "Review subscriptions", href: "/finance/budgets" },
     })
   }
 

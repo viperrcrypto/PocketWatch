@@ -142,7 +142,7 @@ export function PWAInstallPrompt() {
           />
           <div>
             <div className="text-sm font-semibold text-foreground">
-              Install WealthTracker
+              Install PocketWatch
             </div>
             <div className="text-[11px] text-foreground-muted">
               Quick access from your home screen

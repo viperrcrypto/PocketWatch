@@ -1,7 +1,7 @@
 {
-  "name": "WealthTracker",
-  "short_name": "WealthTracker",
-  "description": "Track your crypto and stock portfolio in one place.",
+  "name": "PocketWatch",
+  "short_name": "PocketWatch",
+  "description": "Your personal finance and digital asset tracker.",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#FFFFFF",

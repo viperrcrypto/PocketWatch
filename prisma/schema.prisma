@@ -9,15 +9,10 @@ datasource db {
 
 model User {
   id                            String                         @id @default(cuid())
-  walletAddress                 String?                        @unique
-  email                         String?                        @unique
-  displayName                   String?
-  avatarUrl                     String?
   createdAt                     DateTime                       @default(now())
   updatedAt                     DateTime                       @updatedAt
   passwordHash                  String
-  username                      String                         @unique
-  encryptionSalt                String?
+  encryptionSalt                String
   addressLabels                 AddressLabel[]
   externalApiKeys               ExternalApiKey[]
   financeCredentials            FinanceCredential[]
@@ -62,8 +57,6 @@ model User {
   projectedChartCaches          ProjectedChartCache[]
   monthlyIncomeOverride         Float?
 
-  @@index([walletAddress])
-  @@index([username])
 }
 
 model Session {

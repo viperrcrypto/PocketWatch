@@ -65,10 +65,7 @@ export default function FinanceLayout({ children }: { children: ReactNode }) {
   return (
     <div className="space-y-0 fade-in">
       <FinancePrefetch />
-      <FinanceNav />
-      <div className="pt-6">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }

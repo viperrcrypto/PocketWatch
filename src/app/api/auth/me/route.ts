@@ -5,7 +5,6 @@ import { rateLimit, getClientId, rateLimitHeaders } from "@/lib/rate-limit"
 
 export async function GET(request: NextRequest) {
   try {
-    // Rate limiting
     const clientId = getClientId(request)
     const rateLimitResult = rateLimit(`auth:me:${clientId}`, { limit: 60, windowSeconds: 60 })
     if (!rateLimitResult.success) {
@@ -21,11 +20,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user: {
         id: user.id,
-        username: user.username,
-        walletAddress: user.walletAddress,
-        displayName: user.displayName,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       },
     })

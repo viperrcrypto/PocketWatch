@@ -17,15 +17,32 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+/**
+ * Check if a vault owner (single user) exists.
+ */
+export async function isVaultInitialized(): Promise<boolean> {
+  const count = await db.user.count()
+  return count > 0
+}
+
+/**
+ * Get the single vault owner user.
+ */
+export async function getVaultOwner() {
+  return db.user.findFirst()
+}
+
 export async function createSession(userId: string, dekHex?: string) {
   const nonce = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
-  // Wrap the per-user DEK with the server master key for safe storage
   let encryptedDek: string | null = null
   if (dekHex && isEncryptionConfigured()) {
     encryptedDek = await wrapDek(dekHex)
   }
+
+  // Delete any existing sessions (single user, single session)
+  await db.session.deleteMany({ where: { userId } })
 
   const session = await db.session.create({
     data: {
@@ -40,7 +57,7 @@ export async function createSession(userId: string, dekHex?: string) {
   cookieStore.set(SESSION_COOKIE, session.id, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     expires: expiresAt,
     path: "/",
   })
@@ -115,7 +132,6 @@ export async function requireAuth(): Promise<
 
 /**
  * Derive a per-user encryption key from password and user's salt.
- * Used during login and registration.
  */
 export async function deriveUserDek(
   password: string,
@@ -126,8 +142,7 @@ export async function deriveUserDek(
 }
 
 /**
- * Provision encryption salt for a user (called on registration).
- * Returns the salt hex string.
+ * Provision encryption salt for a user.
  */
 export function provisionEncryptionSalt(): string {
   return generateSalt()
@@ -135,7 +150,6 @@ export function provisionEncryptionSalt(): string {
 
 /**
  * Run a handler with the per-user encryption key from the current session.
- * Falls back to global key if no per-user key is stored.
  */
 export async function withUserEncryption<T>(fn: () => T | Promise<T>): Promise<T> {
   const session = await getSession()
@@ -146,20 +160,12 @@ export async function withUserEncryption<T>(fn: () => T | Promise<T>): Promise<T
     const dekHex = await unwrapDek(session.encryptedDek)
     return withEncryptionKey(dekHex, fn)
   } catch {
-    // If unwrap fails (key rotation, corruption), fall back to global key
     return withEncryptionKey(null, fn)
   }
 }
 
 /**
  * Wrap a route handler with authentication + per-user encryption context.
- * Replaces the pattern: `const user = await getCurrentUser(); if (!user) return 401`
- *
- * Usage:
- *   export const GET = withAuthEncryption(async (user) => {
- *     // user is guaranteed non-null, per-user encryption key is threaded
- *     return NextResponse.json({ ... })
- *   })
  */
 export function withAuthEncryption(
   handler: (user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, request: Request) => Promise<Response>,
@@ -176,19 +182,11 @@ export function withAuthEncryption(
 }
 
 /**
- * Require an authenticated admin user. Returns the user or 401/403 response.
- * Admin user IDs are configured via the ADMIN_USER_IDS environment variable (comma-separated).
+ * Wipe all data and reset the vault. Deletes everything.
  */
-export async function requireAdmin(): Promise<
-  | { user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>; response: null }
-  | { user: null; response: Response }
-> {
-  const auth = await requireAuth()
-  if (auth.response) return auth
-  const adminIds = new Set((process.env.ADMIN_USER_IDS ?? "").split(",").filter(Boolean))
-  if (!adminIds.has(auth.user.id)) {
-    const { NextResponse } = await import("next/server")
-    return { user: null, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) }
-  }
-  return { user: auth.user, response: null }
+export async function resetVault() {
+  // Delete all sessions first
+  await db.session.deleteMany()
+  // Delete all users (cascade deletes everything)
+  await db.user.deleteMany()
 }

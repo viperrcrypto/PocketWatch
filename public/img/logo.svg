@@ -1,16 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none">
   <defs>
-    <linearGradient id="wt-grad" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+    <linearGradient id="pw-logo" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#6366f1"/>
       <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
   </defs>
-  <!-- Shield/rounded square background -->
-  <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#wt-grad)"/>
-  <!-- Stylized W shape made of growth lines -->
-  <polyline points="4.5,16 8,9 12,14 16,7 19.5,4" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Arrow tip on the growth line -->
-  <polyline points="16.5,4 19.5,4 19.5,7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Bottom baseline -->
-  <line x1="4.5" y1="19.5" x2="19.5" y2="19.5" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+  <!-- Chain/ring at top -->
+  <path d="M12 1.5v2" stroke="url(#pw-logo)" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="12" cy="1.8" r="1" fill="none" stroke="url(#pw-logo)" stroke-width="0.8"/>
+  <!-- Watch body -->
+  <circle cx="12" cy="13" r="9.5" fill="url(#pw-logo)"/>
+  <!-- Inner face ring -->
+  <circle cx="12" cy="13" r="7.5" fill="none" stroke="white" stroke-width="0.8" opacity="0.3"/>
+  <!-- Hour hand (12 o'clock) -->
+  <line x1="12" y1="13" x2="12" y2="8.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Minute hand (3 o'clock) -->
+  <line x1="12" y1="13" x2="16" y2="13" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="12" cy="13" r="1" fill="white"/>
+  <!-- Hour markers -->
+  <circle cx="12" cy="6.5" r="0.6" fill="white" opacity="0.5"/>
+  <circle cx="18.5" cy="13" r="0.6" fill="white" opacity="0.5"/>
+  <circle cx="12" cy="19.5" r="0.6" fill="white" opacity="0.5"/>
+  <circle cx="5.5" cy="13" r="0.6" fill="white" opacity="0.5"/>
 </svg>

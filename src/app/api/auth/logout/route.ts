@@ -1,12 +1,7 @@
-import { NextResponse } from "next/server"
-import { apiError } from "@/lib/api-error"
-import { deleteSession } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function POST() {
-  try {
-    await deleteSession()
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    return apiError("E1080", "Logout failed", 500, error)
-  }
+// Redirects to the new lock endpoint for backwards compatibility
+export async function POST(request: NextRequest) {
+  const url = new URL("/api/auth/lock", request.url)
+  return NextResponse.rewrite(url)
 }

@@ -28,13 +28,15 @@ export function SimpleFINConnect({ onConnect, isLoading, className, buttonLabel 
     }
   }
 
+  const isCompact = !!className
+
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className={className ?? "btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"}
       >
-        <span className="material-symbols-rounded text-lg">link</span>
+        <span className="material-symbols-rounded" style={{ fontSize: isCompact ? 14 : 18 }}>link</span>
         {buttonLabel}
       </button>
 

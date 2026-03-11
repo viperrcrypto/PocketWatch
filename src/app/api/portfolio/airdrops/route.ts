@@ -87,7 +87,7 @@ export async function POST() {
 
     const trackedAddresses = trackedWallets.map((w) => w.address)
     const { evmAddresses, solanaAddresses } = collectAddresses(
-      user.walletAddress,
+      null,
       trackedAddresses,
     )
 

@@ -10,13 +10,13 @@ interface FinancePageHeaderProps {
 
 export function FinancePageHeader({ title, subtitle, actions }: FinancePageHeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1 font-data text-sm text-foreground-muted tracking-wide">
+          <p className="mt-0.5 font-data text-xs text-foreground-muted tracking-wide">
             {subtitle}
           </p>
         )}

@@ -6,7 +6,6 @@ export const PORTFOLIO_NAV_TABS = [
   { label: "Wallets", href: "/portfolio/accounts", icon: "wallet" },
   { label: "Balances", href: "/portfolio/balances", icon: "account_balance" },
   { label: "Activity", href: "/portfolio/history", icon: "history" },
-  { label: "Airdrops & Staking", href: "/portfolio/airdrops", icon: "redeem" },
   { label: "NFTs", href: "/portfolio/nfts", icon: "collections" },
   { label: "Settings", href: "/portfolio/settings", icon: "tune" },
 ]
@@ -25,7 +24,6 @@ export const HISTORY_SUB_TABS = [
 
 export const ACCOUNT_SUB_TABS = [
   { label: "Wallets", href: "/portfolio/accounts" },
-  { label: "Address Book", href: "/portfolio/accounts/labels" },
 ]
 
 // ============================================
@@ -37,9 +35,7 @@ export const FINANCE_NAV_TABS = [
   { label: "Accounts",      href: "/finance/accounts",      icon: "account_balance" },
   { label: "Transactions",  href: "/finance/transactions",  icon: "receipt_long" },
   { label: "Budgets",       href: "/finance/budgets",       icon: "savings" },
-  { label: "Subscriptions", href: "/finance/subscriptions", icon: "autorenew" },
   { label: "Credit Cards",  href: "/finance/cards",         icon: "credit_card" },
   { label: "Investments",   href: "/finance/investments",   icon: "show_chart" },
-  { label: "Net Worth",     href: "/finance/net-worth",     icon: "trending_up" },
-  { label: "Insights",      href: "/finance/insights",      icon: "analytics" },
+  { label: "Settings",      href: "/finance/settings",      icon: "settings" },
 ]

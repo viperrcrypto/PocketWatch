@@ -8,7 +8,6 @@ import {
   useUpdateAccount, useUpdateTransactionCategory, useLiabilities,
 } from "@/hooks/use-finance"
 import { formatCurrency, cn } from "@/lib/utils"
-import { FinancePageHeader } from "@/components/finance/finance-page-header"
 import { FinanceStatCard } from "@/components/finance/stat-card"
 import { FinanceEmpty } from "@/components/finance/finance-empty"
 import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
@@ -98,28 +97,37 @@ export default function FinanceAccountsPage() {
     setExpandedInst((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
 
-  const actions = (
-    <div className="flex gap-2">
+  const handlePlaidSuccess = (publicToken: string, metadata: { institution: { institution_id: string; name: string } }) => {
+    toast.info("Connecting and syncing account...")
+    exchangeToken.mutate(
+      { publicToken, institutionId: metadata.institution.institution_id },
+      {
+        onSuccess: (result) => toast.success(`Connected ${result.institutionName} — ${result.accountCount} account${result.accountCount !== 1 ? "s" : ""} synced`),
+        onError: (err) => toast.error(err.message),
+      },
+    )
+  }
+
+  const handleSimpleFINConnect = async (token: string) => {
+    toast.info("Connecting and syncing account...")
+    const result = await connectSF.mutateAsync(token)
+    toast.success(`Connected ${result.institutionName}`)
+  }
+
+  const pageHeader = (
+    <div className="flex items-center gap-3">
+      <h1 className="text-xl font-bold tracking-tight text-foreground">Accounts</h1>
       <PlaidLinkButton
-        onSuccess={(publicToken, metadata) => {
-          toast.info("Connecting and syncing account...")
-          exchangeToken.mutate(
-            { publicToken, institutionId: metadata.institution.institution_id },
-            {
-              onSuccess: (result) => toast.success(`Connected ${result.institutionName} — ${result.accountCount} account${result.accountCount !== 1 ? "s" : ""} synced`),
-              onError: (err) => toast.error(err.message),
-            },
-          )
-        }}
+        onSuccess={handlePlaidSuccess}
         onError={(message) => toast.error(message)}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
+        buttonLabel="Plaid"
       />
       <SimpleFINConnect
-        onConnect={async (token) => {
-          toast.info("Connecting and syncing account...")
-          const result = await connectSF.mutateAsync(token)
-          toast.success(`Connected ${result.institutionName}`)
-        }}
+        onConnect={handleSimpleFINConnect}
         isLoading={connectSF.isPending}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors"
+        buttonLabel="SimpleFIN"
       />
     </div>
   )
@@ -127,7 +135,7 @@ export default function FinanceAccountsPage() {
   if (!isLoading && !institutions?.length) {
     return (
       <div className="space-y-6">
-        <FinancePageHeader title="Bank Accounts" actions={actions} />
+        {pageHeader}
         <FinanceEmpty
           icon="account_balance" title="No accounts connected"
           description="Connect your bank to start tracking finances."
@@ -144,7 +152,7 @@ export default function FinanceAccountsPage() {
 
   return (
     <div className="space-y-6">
-      <FinancePageHeader title="Bank Accounts" actions={actions} />
+      {pageHeader}
 
       {isConnecting && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-3 animate-pulse">

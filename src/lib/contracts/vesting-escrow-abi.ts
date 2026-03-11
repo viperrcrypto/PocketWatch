@@ -1,6 +1,6 @@
 /**
  * VestingEscrow Contract ABI
- * Generated for WealthTracker platform
+ * Generated for PocketWatch platform
  */
 
 export const VESTING_ESCROW_ABI = [

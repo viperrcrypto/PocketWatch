@@ -37,7 +37,7 @@ export function BudgetSubscriptionsPreview({
           </p>
         </div>
         <Link
-          href="/finance/subscriptions"
+          href="/finance/budgets"
           className="text-primary text-xs font-semibold hover:underline"
         >
           View All
@@ -85,7 +85,7 @@ export function BudgetSubscriptionsPreview({
       {totalSubscriptions > subscriptions.length && (
         <div className="px-5 py-3 border-t border-card-border/50">
           <Link
-            href="/finance/subscriptions"
+            href="/finance/budgets"
             className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
           >
             View all {totalSubscriptions} subscriptions

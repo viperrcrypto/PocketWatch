@@ -114,10 +114,7 @@ export default function PortfolioLayout({ children }: { children: ReactNode }) {
   return (
     <div className="space-y-0 fade-in">
       <PortfolioPrefetch />
-      <PortfolioNav badges={badges} />
-      <div className="pt-6">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }

@@ -82,7 +82,7 @@ export function MonthlySubscriptionsCard({ subscriptions, isHidden }: MonthlySub
       </div>
       {monthlySubs.length > 5 && (
         <div className="px-5 py-3 border-t border-card-border/30">
-          <Link href="/finance/subscriptions" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+          <Link href="/finance/budgets" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
             View all {monthlySubs.length} subscriptions
           </Link>
         </div>

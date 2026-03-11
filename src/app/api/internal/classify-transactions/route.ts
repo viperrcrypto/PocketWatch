@@ -43,12 +43,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    let users: Array<{ id: string; username: string }>
+    let users: Array<{ id: string }>
 
     if (targetUserId) {
       const user = await db.user.findUnique({
         where: { id: targetUserId },
-        select: { id: true, username: true },
+        select: { id: true },
       })
       users = user ? [user] : []
     } else {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       })
       users = await db.user.findMany({
         where: { id: { in: userIds.map((u) => u.userId) } },
-        select: { id: true, username: true },
+        select: { id: true },
       })
     }
 

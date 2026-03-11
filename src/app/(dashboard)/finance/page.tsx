@@ -9,13 +9,13 @@ import {
   useFetchFullHistory,
 } from "@/hooks/use-finance"
 import { formatCurrency, cn } from "@/lib/utils"
+import { useFinanceTrends, useRecurringStreams, useInvestmentHoldings } from "@/hooks/use-finance"
 import { FinancePageHeader } from "@/components/finance/finance-page-header"
 import { usePrivacyMode } from "@/hooks/use-privacy-mode"
 import { PrivacyToggle } from "@/components/portfolio/privacy-toggle"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
 import { FinanceHeroCard } from "@/components/finance/finance-hero-card"
 import { FinanceStatCard } from "@/components/finance/stat-card"
-import { FinanceChartWrapper } from "@/components/finance/finance-chart-wrapper"
 import { FinanceEmpty } from "@/components/finance/finance-empty"
 import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
 import { NetWorthChart } from "@/components/finance/net-worth-chart"
@@ -23,6 +23,7 @@ import { SpendingMonthCard } from "@/components/finance/spending-month-card"
 import { MerchantIcon } from "@/components/finance/merchant-icon"
 import { MonthlySubscriptionsCard } from "@/components/finance/dashboard/monthly-subscriptions-card"
 import { MonthlyBillsCard } from "@/components/finance/dashboard/monthly-bills-card"
+import { InsightsSection } from "@/components/finance/dashboard/insights-section"
 
 const NW_RANGES = ["1W", "1M", "3M", "6M", "1Y", "ALL"] as const
 const RANGE_MAP: Record<string, "1w" | "1m" | "3m" | "6m" | "1y" | "all"> = {
@@ -40,6 +41,10 @@ export default function FinanceDashboardPage() {
   const { data: subs } = useFinanceSubscriptions()
   const autoCategorize = useAutoCategorize()
   const fetchHistory = useFetchFullHistory()
+  const { data: trends } = useFinanceTrends(6)
+  const { data: recurringData } = useRecurringStreams()
+  const { data: holdingsData } = useInvestmentHoldings()
+  const [showInsights, setShowInsights] = useState(false)
 
   // Account aggregation
   const allAccounts = accounts?.flatMap((inst) =>
@@ -334,6 +339,27 @@ export default function FinanceDashboardPage() {
         <MonthlySubscriptionsCard subscriptions={activeSubs} isHidden={isHidden} />
         <SpendingMonthCard />
       </div>
+
+      {/* Insights Section */}
+      {hasData && (
+        <div className="mt-10">
+          <button
+            onClick={() => setShowInsights(!showInsights)}
+            className="flex items-center gap-2 mb-4 group"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-muted">
+              Insights & Analytics
+            </p>
+            <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground transition-colors" style={{ fontSize: 16 }}>
+              {showInsights ? "expand_less" : "expand_more"}
+            </span>
+          </button>
+
+          {showInsights && deep && (
+            <InsightsSection deep={deep} trends={trends} recurringData={recurringData} holdingsData={holdingsData} />
+          )}
+        </div>
+      )}
     </div>
   )
 }
