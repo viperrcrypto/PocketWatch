@@ -18,6 +18,7 @@ import { WalletCard } from "@/components/portfolio/accounts/wallet-card"
 import { ExchangeCard } from "@/components/portfolio/accounts/exchange-card"
 import { AccountsEmptyState } from "@/components/portfolio/accounts/accounts-empty-state"
 import { AccountsLoadingSkeleton } from "@/components/portfolio/accounts/accounts-loading-skeleton"
+import { SetupRequiredState } from "@/components/portfolio/setup-required-state"
 
 export default function AccountsPage() {
   const { data: accounts, isLoading, isError } = useTrackedAccounts()
@@ -312,12 +313,7 @@ export default function AccountsPage() {
 
       {/* Error State */}
       {isError && (
-        <div className="bg-card border border-card-border p-6 rounded-xl">
-          <div className="flex items-center gap-3 text-error">
-            <span className="material-symbols-rounded">error</span>
-            <span className="text-sm">Failed to load tracked accounts. Please try again.</span>
-          </div>
-        </div>
+        <SetupRequiredState service="zerion" feature="tracked wallets and accounts" />
       )}
 
       {/* Content */}

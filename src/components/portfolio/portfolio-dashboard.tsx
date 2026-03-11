@@ -201,10 +201,12 @@ export function PortfolioDashboard() {
       <ApiKeysBanner />
 
       {hasError && !isLoading && (
-        <div className="bg-card border border-error/25 px-5 py-3 flex items-center gap-3 rounded-xl">
-          <span className="material-symbols-rounded text-error text-lg">error</span>
-          <p className="text-sm text-error">Some data failed to load. Showing cached data where available.</p>
-          <button onClick={() => window.location.reload()} className="ml-auto text-foreground-muted hover:text-foreground transition-colors text-xs tracking-wide">Retry</button>
+        <div className="bg-card border border-warning/25 px-5 py-3 flex items-center gap-3 rounded-xl" style={{ borderLeft: "2px solid var(--warning)" }}>
+          <span className="material-symbols-rounded text-warning text-lg">key</span>
+          <p className="text-sm text-foreground-muted">
+            Add your <strong className="text-foreground">Zerion API key</strong> in Settings to load wallet balances, portfolio history, and staking data.
+          </p>
+          <a href="/portfolio/settings" className="ml-auto flex-shrink-0 btn-primary text-xs" style={{ height: 32, padding: "0 14px" }}>Add API Key</a>
         </div>
       )}
 

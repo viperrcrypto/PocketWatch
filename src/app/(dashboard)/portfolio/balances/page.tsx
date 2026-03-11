@@ -12,6 +12,7 @@ import { BalanceSummaryBar } from "@/components/portfolio/balances/balance-summa
 import { BalanceTableSkeleton } from "@/components/portfolio/balances/balance-table-skeleton"
 import { BalanceTable } from "@/components/portfolio/balances/balance-table"
 import type { BalanceRow, AssetGroup } from "@/components/portfolio/balances/balances-types"
+import { SetupRequiredState } from "@/components/portfolio/setup-required-state"
 
 export default function BlockchainBalancesPage() {
   const { data, isLoading, isError } = useBlockchainBalances()
@@ -198,11 +199,8 @@ export default function BlockchainBalancesPage() {
       <PortfolioPageHeader title="Balances" subtitle="View your token holdings across all wallets and chains" />
 
       {isError && (
-        <div className="bg-card border border-card-border p-6 mb-6 rounded-xl">
-          <div className="flex items-center gap-3 text-error">
-            <span className="material-symbols-rounded">error</span>
-            <span className="text-sm">Failed to load blockchain balances. Please try again.</span>
-          </div>
+        <div className="mb-6">
+          <SetupRequiredState service="zerion" feature="blockchain balances" />
         </div>
       )}
 

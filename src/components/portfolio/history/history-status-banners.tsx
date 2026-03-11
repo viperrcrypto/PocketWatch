@@ -85,6 +85,21 @@ export function SoftErrorBanner({
 // ─── Hard Error Banner ───
 
 export function HardErrorBanner({ error }: { error: Error }) {
+  const msg = error?.message?.toLowerCase() ?? ""
+  const isAuthError = msg.includes("authentication") || msg.includes("unauthorized") || msg.includes("401")
+
+  if (isAuthError) {
+    return (
+      <div className="bg-card border border-warning/25 px-4 py-3 mb-4 flex items-center gap-3 rounded-xl" style={{ borderLeft: "2px solid var(--warning)" }}>
+        <span className="material-symbols-rounded text-warning text-lg">key</span>
+        <p className="text-sm text-foreground-muted">
+          Add your <strong className="text-foreground">Zerion API key</strong> in{" "}
+          <a href="/portfolio/settings" className="text-primary hover:underline">Settings</a> to view transaction history.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-card border border-error/30 px-4 py-3 mb-4 flex items-center gap-3 rounded-xl">
       <span className="material-symbols-rounded text-error text-lg">error</span>
