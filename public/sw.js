@@ -10,7 +10,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// ─── Activate: clean old caches (including old alfadao caches) ───
+// ─── Activate: clean old caches ───
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches

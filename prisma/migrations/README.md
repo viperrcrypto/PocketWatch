@@ -1,6 +1,6 @@
 # Database Migrations
 
-This directory contains Prisma migrations for the AlfaDAO database.
+This directory contains Prisma migrations for the PocketWatch database.
 
 ## Migrations
 
