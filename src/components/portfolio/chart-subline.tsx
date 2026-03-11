@@ -48,7 +48,7 @@ export function ChartSubline({
           periodChange && (
             <BlurredValue isHidden={isHidden}>
               <div className={`flex items-center gap-1.5 ${periodChange.positive ? "text-success" : "text-error"}`}>
-                <span className="text-sm">{periodChange.positive ? "\u2197" : "\u2198"}</span>
+                <span className="material-symbols-rounded" style={{ fontSize: 16 }}>{periodChange.positive ? "trending_up" : "trending_down"}</span>
                 <span className="font-data" style={{ fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
                   {`${periodChange.positive ? "+" : ""}${periodChange.pct.toFixed(2)}%`}
                 </span>
@@ -100,7 +100,7 @@ export function ChartEmptyState({
       ) : timeframe === "ALL" ? (
         <p className="text-foreground-muted text-sm">
           {chartScope === "total"
-            ? "Total history is limited right now. Switch to On-chain for full lifecycle."
+            ? "Total history is limited right now. Sync more transaction history for the full lifecycle view."
             : "Rebuilding on-chain lifecycle history. Recent balances are available now."}
         </p>
       ) : (

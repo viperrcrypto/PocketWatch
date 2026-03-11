@@ -157,9 +157,7 @@ export function ClassificationBadge({
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-data text-[10px] font-semibold tracking-wide uppercase ${style}`}
     >
       {isManual && (
-        <span className="text-[9px] opacity-70" title="Manual override">
-          {"\u270E"}
-        </span>
+        <span className="material-symbols-rounded opacity-70" style={{ fontSize: 10 }} title="Manual override">edit</span>
       )}
       {formatClassificationLabel(classification)}
     </span>
@@ -202,7 +200,7 @@ export function StatsBar({ stats }: { stats: Record<string, number> | undefined 
         ))}
         {stats.manual_overrides != null && stats.manual_overrides > 0 && (
           <span className="inline-flex items-center gap-1.5 text-xs">
-            <span className="text-[10px] opacity-60">{"\u270E"}</span>
+            <span className="material-symbols-rounded opacity-60" style={{ fontSize: 12 }}>edit</span>
             <span className="text-foreground font-data font-medium">{stats.manual_overrides}</span>
             <span className="text-foreground-muted">Manual Override{stats.manual_overrides !== 1 ? "s" : ""}</span>
           </span>

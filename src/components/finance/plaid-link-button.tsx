@@ -27,10 +27,13 @@ export function PlaidLinkButton({
   createTokenRef.current = createToken
   const onErrorRef = useRef(onError)
   onErrorRef.current = onError
+  // Track whether the fetch was triggered by the user clicking (vs. silent background prefetch)
+  const userInitiatedRef = useRef(false)
 
-  const fetchLinkToken = useCallback(() => {
+  const fetchLinkToken = useCallback((userInitiated = false) => {
     setIsLoadingToken(true)
     setTokenError(null)
+    userInitiatedRef.current = userInitiated
 
     createTokenRef.current.mutate(undefined, {
       onSuccess: (data) => {
@@ -42,13 +45,17 @@ export function PlaidLinkButton({
         setLinkToken(null)
         setTokenError(message)
         setIsLoadingToken(false)
-        onErrorRef.current?.(message)
+        // Only surface the error to the caller when the user explicitly clicked —
+        // silently swallow background prefetch failures (e.g. Plaid not configured)
+        if (userInitiatedRef.current) {
+          onErrorRef.current?.(message)
+        }
       },
     })
   }, [])
 
   useEffect(() => {
-    fetchLinkToken()
+    fetchLinkToken(false)
   }, [fetchLinkToken])
 
   const { open, ready } = usePlaidLink({
