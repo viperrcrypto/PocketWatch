@@ -93,42 +93,52 @@ export default function FinanceAccountsPage() {
   const netBalance = totalAssets - totalDebt
   const isConnecting = exchangeToken.isPending || connectSF.isPending
 
+  // Detect active provider from connected institutions (one or the other, not both)
+  const activeProvider = useMemo(() => {
+    if (!institutions?.length) return null
+    const hasSimpleFIN = institutions.some((i) => i.provider === "simplefin")
+    const hasPlaid = institutions.some((i) => i.provider === "plaid")
+    if (hasSimpleFIN) return "simplefin" as const
+    if (hasPlaid) return "plaid" as const
+    return null
+  }, [institutions])
+
   const toggleInst = (id: string) => {
     setExpandedInst((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
-  }
-
-  const handlePlaidSuccess = (publicToken: string, metadata: { institution: { institution_id: string; name: string } }) => {
-    toast.info("Connecting and syncing account...")
-    exchangeToken.mutate(
-      { publicToken, institutionId: metadata.institution.institution_id },
-      {
-        onSuccess: (result) => toast.success(`Connected ${result.institutionName} — ${result.accountCount} account${result.accountCount !== 1 ? "s" : ""} synced`),
-        onError: (err) => toast.error(err.message),
-      },
-    )
-  }
-
-  const handleSimpleFINConnect = async (token: string) => {
-    toast.info("Connecting and syncing account...")
-    const result = await connectSF.mutateAsync(token)
-    toast.success(`Connected ${result.institutionName}`)
   }
 
   const pageHeader = (
     <div className="flex items-center gap-3">
       <h1 className="text-xl font-bold tracking-tight text-foreground">Accounts</h1>
-      <PlaidLinkButton
-        onSuccess={handlePlaidSuccess}
-        onError={(message) => toast.error(message)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
-        buttonLabel="Plaid"
-      />
-      <SimpleFINConnect
-        onConnect={handleSimpleFINConnect}
-        isLoading={connectSF.isPending}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors"
-        buttonLabel="SimpleFIN"
-      />
+      {activeProvider !== "simplefin" && (
+        <PlaidLinkButton
+          onSuccess={(publicToken, metadata) => {
+            toast.info("Connecting and syncing account...")
+            exchangeToken.mutate(
+              { publicToken, institutionId: metadata.institution.institution_id },
+              {
+                onSuccess: (result) => toast.success(`Connected ${result.institutionName} — ${result.accountCount} account${result.accountCount !== 1 ? "s" : ""} synced`),
+                onError: (err) => toast.error(err.message),
+              },
+            )
+          }}
+          onError={(message) => toast.error(message)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
+          buttonLabel="Plaid"
+        />
+      )}
+      {activeProvider !== "plaid" && (
+        <SimpleFINConnect
+          onConnect={async (token) => {
+            toast.info("Connecting and syncing account...")
+            const result = await connectSF.mutateAsync(token)
+            toast.success(`Connected ${result.institutionName}`)
+          }}
+          isLoading={connectSF.isPending}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors"
+          buttonLabel="SimpleFIN"
+        />
+      )}
     </div>
   )
 

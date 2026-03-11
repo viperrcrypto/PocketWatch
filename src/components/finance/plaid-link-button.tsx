@@ -27,13 +27,10 @@ export function PlaidLinkButton({
   createTokenRef.current = createToken
   const onErrorRef = useRef(onError)
   onErrorRef.current = onError
-  // Track whether the fetch was triggered by the user clicking (vs. silent background prefetch)
-  const userInitiatedRef = useRef(false)
 
-  const fetchLinkToken = useCallback((userInitiated = false) => {
+  const fetchLinkToken = useCallback(() => {
     setIsLoadingToken(true)
     setTokenError(null)
-    userInitiatedRef.current = userInitiated
 
     createTokenRef.current.mutate(undefined, {
       onSuccess: (data) => {
@@ -45,18 +42,10 @@ export function PlaidLinkButton({
         setLinkToken(null)
         setTokenError(message)
         setIsLoadingToken(false)
-        // Only surface the error to the caller when the user explicitly clicked —
-        // silently swallow background prefetch failures (e.g. Plaid not configured)
-        if (userInitiatedRef.current) {
-          onErrorRef.current?.(message)
-        }
+        onErrorRef.current?.(message)
       },
     })
   }, [])
-
-  useEffect(() => {
-    fetchLinkToken(false)
-  }, [fetchLinkToken])
 
   const { open, ready } = usePlaidLink({
     token: linkToken,
@@ -66,18 +55,26 @@ export function PlaidLinkButton({
     onExit: () => onExit?.(),
   })
 
-  const disabled = isLoadingToken || !!tokenError || !ready
+  // Auto-open Plaid once the token arrives after a click-triggered fetch
+  const pendingOpen = useRef(false)
+  useEffect(() => {
+    if (pendingOpen.current && linkToken && ready) {
+      pendingOpen.current = false
+      open()
+    }
+  }, [linkToken, ready, open])
 
   return (
     <div className="inline-flex flex-col items-start gap-1">
       <button
         onClick={() => {
-          if (tokenError) {
+          if (isLoadingToken) return
+          if (linkToken && ready) {
+            open()
+          } else if (!linkToken) {
+            pendingOpen.current = true
             fetchLinkToken()
-            return
           }
-          if (!ready) return
-          open()
         }}
         disabled={isLoadingToken}
         className={className ?? "btn-primary flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"}
