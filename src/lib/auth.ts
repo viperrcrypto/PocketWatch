@@ -5,7 +5,7 @@ import { generateSalt, deriveKey, wrapDek, unwrapDek } from "./per-user-crypto"
 import { isEncryptionConfigured } from "./crypto"
 import { withEncryptionKey } from "./encryption-context"
 
-export const SESSION_COOKIE = "trackme_session"
+export const SESSION_COOKIE = "pocketwatch_session"
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 const SALT_ROUNDS = 12
 

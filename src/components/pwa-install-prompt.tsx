@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-const STORAGE_KEY = "trackme_pwa_install_dismissed"
+const STORAGE_KEY = "pocketwatch_pwa_install_dismissed"
 const DISMISS_DAYS = 7
 
 function getDevicePlatform(): "ios" | "android" | "desktop" {
