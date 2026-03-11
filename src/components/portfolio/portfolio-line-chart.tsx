@@ -30,28 +30,28 @@ interface PortfolioLineChartProps {
   timeframe?: "ALL" | "1Y" | "3M" | "1W" | "1D"
 }
 
-// lightweight-charts needs resolved colors, not CSS vars
+// Colors matching the AlfaDAO chart style
 const COLOR_MAP = {
   neutral: {
     line: "#818cf8",
-    areaTop: "rgba(129,140,248,0.36)",
+    areaTop: "rgba(129,140,248,0.28)",
     areaBottom: "rgba(129,140,248,0)",
     crosshair: "rgba(129,140,248,0.4)",
     crosshairHz: "rgba(129,140,248,0.15)",
   },
   positive: {
-    line: "#34C759",
-    areaTop: "rgba(52,199,89,0.32)",
-    areaBottom: "rgba(52,199,89,0)",
-    crosshair: "rgba(52,199,89,0.4)",
-    crosshairHz: "rgba(52,199,89,0.15)",
+    line: "#4ade80",
+    areaTop: "rgba(74,222,128,0.22)",
+    areaBottom: "rgba(74,222,128,0)",
+    crosshair: "rgba(74,222,128,0.4)",
+    crosshairHz: "rgba(74,222,128,0.15)",
   },
   negative: {
-    line: "#FF3B30",
-    areaTop: "rgba(255,59,48,0.32)",
-    areaBottom: "rgba(255,59,48,0)",
-    crosshair: "rgba(255,59,48,0.4)",
-    crosshairHz: "rgba(255,59,48,0.15)",
+    line: "#f87171",
+    areaTop: "rgba(248,113,113,0.22)",
+    areaBottom: "rgba(248,113,113,0)",
+    crosshair: "rgba(248,113,113,0.4)",
+    crosshairHz: "rgba(248,113,113,0.15)",
   },
 }
 
@@ -61,32 +61,14 @@ function formatPrice(price: number): string {
   return `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
 }
 
-/** Range-aware price formatter — prevents all labels from collapsing to "$177K" */
-function formatPriceLabel(price: number, dataRange: number): string {
-  if (price >= 1_000_000) {
-    const m = price / 1_000_000
-    if (dataRange < 40_000) return `$${m.toFixed(3)}M`
-    if (dataRange < 400_000) return `$${m.toFixed(2)}M`
-    return `$${m.toFixed(1)}M`
-  }
-  if (price >= 1_000) {
-    const k = price / 1_000
-    // step = dataRange / 4 → need enough decimals that ticks are distinguishable
-    if (dataRange < 400) return `$${k.toFixed(2)}K`
-    if (dataRange < 4_000) return `$${k.toFixed(1)}K`
-    return `$${k.toFixed(0)}K`
-  }
-  return `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
-}
-
 function getThemeColors() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark"
   return {
-    textColor: isDark ? "#8E8E93" : "#86868B",
+    textColor: isDark ? "#4a4a5a" : "#86868B",
     gridColor: isDark ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.04)",
-    labelBg: isDark ? "#1C1C1E" : "#F5F5F7",
+    labelBg: isDark ? "#1e1e2e" : "#F5F5F7",
     priceLabelColor: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)",
-    crosshairMarkerBorder: isDark ? "#1C1C1E" : "#FFFFFF",
+    crosshairMarkerBorder: isDark ? "#141419" : "#FFFFFF",
   }
 }
 
@@ -98,15 +80,11 @@ function renderPriceLabels(chart: IChartApi, series: ISeriesApi<"Area">, data: C
 
   if (data.length < 2) return
 
-  let min = Infinity
-  let max = -Infinity
-  for (const d of data) {
-    if (d.value < min) min = d.value
-    if (d.value > max) max = d.value
-  }
-  const range = max - min
-  if (max === min || (max > 0 && range / max < 0.001)) return
+  const min = Math.min(...data.map((d) => d.value))
+  const max = Math.max(...data.map((d) => d.value))
+  if (max === min) return
 
+  const range = max - min
   const step = range / 4
   const ticks: number[] = []
   for (let i = 0; i <= 4; i++) {
@@ -125,7 +103,7 @@ function renderPriceLabels(chart: IChartApi, series: ISeriesApi<"Area">, data: C
 
     const label = document.createElement("div")
     label.className = "price-label-overlay"
-    label.textContent = formatPriceLabel(price, range)
+    label.textContent = formatPrice(price)
     label.style.cssText = `
       position: absolute;
       right: 12px;
@@ -236,23 +214,15 @@ export function PortfolioLineChart({
         fixRightEdge: true,
         rightOffset: 0,
         lockVisibleTimeRangeOnResize: true,
-        // NOTE: The `shown` set and `lastCallMs` are captured in a closure created
-        // by this IIFE. They are reset each time `initChart` runs (the whole chart is
-        // rebuilt when data/timeframe changes), so stale-closure risk is tied to chart
-        // recreation — not to React renders.
         tickMarkFormatter: (() => {
           let shown = new Set<string>()
           let lastCallMs = 0
-
           return (time: UTCTimestamp) => {
             if (!chartRef.current) return ""
-
             const now = performance.now()
             if (now - lastCallMs > 50) shown = new Set()
             lastCallMs = now
-
             const label = formatTick(time, timeframe)
-
             if (shown.has(label)) return ""
             shown.add(label)
             return label
@@ -272,7 +242,7 @@ export function PortfolioLineChart({
       lineColor: colors.line,
       topColor: colors.areaTop,
       bottomColor: colors.areaBottom,
-      lineWidth: 3,
+      lineWidth: 2,
       lineType: LineType.Curved,
       crosshairMarkerBackgroundColor: colors.line,
       crosshairMarkerBorderColor: theme.crosshairMarkerBorder,
@@ -290,48 +260,15 @@ export function PortfolioLineChart({
     const series = chart.addSeries(AreaSeries, areaOptions)
     seriesRef.current = series
 
-    // Dynamic scale margins: when data range is tiny relative to value,
-    // compress the chart vertically so a $11 change in a $177K portfolio
-    // doesn't look like a rollercoaster.
-    let marginTop = 0.12
-    let marginBottom = 0.05
-    if (data.length >= 2) {
-      let dataMin = Infinity
-      let dataMax = -Infinity
-      for (const d of data) {
-        if (d.value < dataMin) dataMin = d.value
-        if (d.value > dataMax) dataMax = d.value
-      }
-      const dataRange = dataMax - dataMin
-      const absMax = Math.max(Math.abs(dataMin), Math.abs(dataMax))
-      const rangePct = absMax > 0 ? dataRange / absMax : 0
-
-      if (rangePct < 0.005) {
-        // < 0.5% range — nearly flat, compress heavily
-        marginTop = 0.38
-        marginBottom = 0.38
-      } else if (rangePct < 0.02) {
-        // < 2% range — moderate compression
-        marginTop = 0.28
-        marginBottom = 0.22
-      } else if (rangePct < 0.05) {
-        // < 5% range — light compression
-        marginTop = 0.18
-        marginBottom = 0.10
-      }
-    }
-
     series.priceScale().applyOptions({
-      scaleMargins: { top: marginTop, bottom: marginBottom },
+      scaleMargins: { top: 0.10, bottom: 0.02 },
     })
 
     if (data.length > 0) {
-      // Defensive: ensure data is strictly ascending by time (lightweight-charts asserts this)
       const safeData = [...data].sort((a, b) => (a.time as number) - (b.time as number))
         .filter((p, i, arr) => i === 0 || (p.time as number) > (arr[i - 1].time as number))
       series.setData(safeData)
       chart.timeScale().fitContent()
-      // Wait a frame for the chart to finish layout before rendering overlays
       requestAnimationFrame(() => {
         renderPriceLabels(chart, series, safeData, isHidden)
       })
@@ -339,7 +276,6 @@ export function PortfolioLineChart({
 
     chart.subscribeCrosshairMove((param) => {
       if (!param.time || !param.seriesData.size) {
-        // Clear immediately on mouse exit — no debounce
         cancelAnimationFrame(rafRef.current)
         pendingPoint.current = null
         onCrosshairMoveRef.current?.(null)
@@ -347,7 +283,6 @@ export function PortfolioLineChart({
       }
       const dataPoint = param.seriesData.get(series)
       if (dataPoint && 'value' in dataPoint) {
-        // Use rAF to coalesce rapid moves into one render per frame
         pendingPoint.current = { time: param.time as number, value: dataPoint.value }
         cancelAnimationFrame(rafRef.current)
         rafRef.current = requestAnimationFrame(() => {
@@ -356,7 +291,6 @@ export function PortfolioLineChart({
       }
     })
 
-    // Clean up previous mouseleave listener before adding a new one
     if (mouseleaveHandlerRef.current) {
       containerRef.current.removeEventListener("mouseleave", mouseleaveHandlerRef.current)
     }
@@ -368,7 +302,6 @@ export function PortfolioLineChart({
     mouseleaveHandlerRef.current = handleMouseLeave
     containerRef.current.addEventListener("mouseleave", handleMouseLeave)
 
-    // Click handler — report the nearest data point to the click position
     chart.subscribeClick((param) => {
       if (!param.time || !param.seriesData.size) return
       const dp = param.seriesData.get(series)
@@ -386,7 +319,6 @@ export function PortfolioLineChart({
         containerRef.current.removeEventListener("mouseleave", mouseleaveHandlerRef.current)
         mouseleaveHandlerRef.current = null
       }
-      // Clear hover state on unmount to prevent stale values
       onCrosshairMoveRef.current?.(null)
       if (chartRef.current) {
         chartRef.current.remove()
