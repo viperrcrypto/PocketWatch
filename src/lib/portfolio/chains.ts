@@ -232,6 +232,9 @@ const EXTRA_ALIASES: Record<string, string> = {
   POLYGON: "POLYGON_POS",
   AVALANCHE: "AVAX",
   POLYGON_ZKEVM: "POLYGON_POS", // fallback to Polygon explorer
+  // Zerion uses hyphenated chain IDs not present in the registry
+  "BINANCE-SMART-CHAIN": "BSC",
+  "ZKSYNC-ERA": "ZKSYNC",
 }
 for (const [alias, targetId] of Object.entries(EXTRA_ALIASES)) {
   const meta = CHAIN_LOOKUP[targetId]

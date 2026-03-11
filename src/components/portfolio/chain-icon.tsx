@@ -16,11 +16,30 @@ function getTrustWalletLogoUrl(chainId: string): string | null {
   return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${meta.trustWalletName}/info/logo.png`
 }
 
-export function ChainIcon({ chainId, size = 20, className }: ChainIconProps) {
-  const [imgError, setImgError] = useState(false)
-  const logoUrl = getTrustWalletLogoUrl(chainId)
+/**
+ * Fallback logos for chains not yet in the Trust Wallet assets repository.
+ * Keys are trustWalletName values from the chain registry.
+ */
+const ALT_LOGO_URLS: Record<string, string> = {
+  mantle: "https://icons.llamao.fi/icons/chains/rsz_mantle.jpg",
+  mode: "https://icons.llamao.fi/icons/chains/rsz_mode.jpg",
+  monad: "https://icons.llamao.fi/icons/chains/rsz_monad.jpg",
+  zora: "https://icons.llamao.fi/icons/chains/rsz_zora.jpg",
+}
 
-  if (logoUrl && !imgError) {
+function getAltLogoUrl(chainId: string): string | null {
+  const meta = getChainMeta(chainId)
+  if (!meta?.trustWalletName) return null
+  return ALT_LOGO_URLS[meta.trustWalletName] ?? null
+}
+
+export function ChainIcon({ chainId, size = 20, className }: ChainIconProps) {
+  const [twError, setTwError] = useState(false)
+  const [altError, setAltError] = useState(false)
+  const logoUrl = getTrustWalletLogoUrl(chainId)
+  const altUrl = getAltLogoUrl(chainId)
+
+  if (logoUrl && !twError) {
     return (
       <img
         src={logoUrl}
@@ -29,13 +48,28 @@ export function ChainIcon({ chainId, size = 20, className }: ChainIconProps) {
         height={size}
         className={`inline-flex flex-shrink-0 ${className ?? ""}`}
         style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }}
-        onError={() => setImgError(true)}
+        onError={() => setTwError(true)}
         loading="lazy"
       />
     )
   }
 
-  // Fallback: colored circle with first letter
+  if (altUrl && !altError) {
+    return (
+      <img
+        src={altUrl}
+        alt={chainId}
+        width={size}
+        height={size}
+        className={`inline-flex flex-shrink-0 ${className ?? ""}`}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }}
+        onError={() => setAltError(true)}
+        loading="lazy"
+      />
+    )
+  }
+
+  // Final fallback: colored circle with first letter
   const color = getChainColor(chainId)
   return (
     <span
