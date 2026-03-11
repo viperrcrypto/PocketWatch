@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export function LandingPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [mode, setMode] = useState<"loading" | "setup" | "unlock">("loading")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -50,7 +51,11 @@ export function LandingPage() {
         return
       }
 
-      router.push("/portfolio")
+      // Clear the auth redirect flag so future 401s can trigger a redirect again
+      if (typeof window !== "undefined") sessionStorage.removeItem("__pw_auth_redirect")
+      // Redirect to the page they were trying to visit, or default to portfolio
+      const redirectTo = searchParams.get("redirect") || "/portfolio"
+      router.push(redirectTo)
     } catch {
       setError("Network error. Please try again.")
     } finally {
