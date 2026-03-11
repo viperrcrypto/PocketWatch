@@ -261,7 +261,7 @@ export function PortfolioLineChart({
     seriesRef.current = series
 
     series.priceScale().applyOptions({
-      scaleMargins: { top: 0.10, bottom: 0.02 },
+      scaleMargins: { top: 0.10, bottom: 0.10 },
     })
 
     if (data.length > 0) {
