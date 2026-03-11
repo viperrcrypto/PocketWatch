@@ -31,7 +31,10 @@ export const metadata: Metadata = {
   description: "See everything you own. In one place.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/img/logo-circle.png",
+    icon: [
+      { url: "/img/favicon.svg", type: "image/svg+xml" },
+      { url: "/img/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
     apple: "/img/apple-icon.png",
   },
   appleWebApp: {
