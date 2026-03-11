@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useOnboardingStatus } from "@/hooks/use-portfolio-tracker"
 import PortfolioSetupWizard from "@/components/portfolio/portfolio-setup-wizard"
 import { PortfolioDashboard } from "@/components/portfolio/portfolio-dashboard"
+import { SetupRequiredState } from "@/components/portfolio/setup-required-state"
 
 export default function PortfolioPage() {
   const {
@@ -40,23 +41,8 @@ export default function PortfolioPage() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <span className="material-symbols-rounded text-4xl text-error">
-          cloud_off
-        </span>
-        <h2 className="text-foreground text-lg font-semibold">
-          Portfolio Service Unavailable
-        </h2>
-        <p className="text-foreground-muted max-w-md text-center text-sm">
-          Could not reach the portfolio backend. This usually resolves within
-          a few minutes. Try refreshing the page.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors rounded-xl text-xs tracking-wide"
-        >
-          Retry
-        </button>
+      <div className="py-10">
+        <SetupRequiredState service="zerion" feature="your portfolio overview" />
       </div>
     )
   }
