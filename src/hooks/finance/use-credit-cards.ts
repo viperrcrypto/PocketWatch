@@ -102,6 +102,7 @@ export function useSaveCreditCard() {
       totalEarned?: number
       totalRedeemed?: number
       cardImageUrl?: string
+      annualFeeDate?: string
     }) => financeFetch("/cards", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.cards() }),
   })

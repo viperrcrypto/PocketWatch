@@ -14,7 +14,7 @@ const KNOWN_CARDS: readonly KnownCard[] = [
   {
     keywords: ["sapphire", "reserve"],
     imageUrl: "https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/sapphire_reserve_card_Halo.png",
-    annualFee: 550,
+    annualFee: 795,
   },
   {
     keywords: ["sapphire", "preferred"],
@@ -70,12 +70,12 @@ const KNOWN_CARDS: readonly KnownCard[] = [
   {
     keywords: ["american express", "platinum"],
     imageUrl: "https://icm.aexp-static.com/Internet/Acquisition/US_en/AppContent/OneSite/category/cardarts/platinum-card.png",
-    annualFee: 695,
+    annualFee: 895,
   },
   {
     keywords: ["platinum", "card"],
     imageUrl: "https://icm.aexp-static.com/Internet/Acquisition/US_en/AppContent/OneSite/category/cardarts/platinum-card.png",
-    annualFee: 695,
+    annualFee: 895,
   },
   {
     keywords: ["american express", "gold"],

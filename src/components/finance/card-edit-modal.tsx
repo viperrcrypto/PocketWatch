@@ -13,6 +13,7 @@ interface CardEditModalProps {
     readonly cardNetwork: string
     readonly annualFee: number
     readonly rewardType: string
+    readonly annualFeeDate?: string | null
     readonly cardImageUrl?: string | null
   }
 }
@@ -35,6 +36,9 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
   const [cardNetwork, setCardNetwork] = useState(card.cardNetwork)
   const [annualFee, setAnnualFee] = useState(String(card.annualFee))
   const [rewardType, setRewardType] = useState(card.rewardType)
+  const [annualFeeDate, setAnnualFeeDate] = useState(
+    card.annualFeeDate ? card.annualFeeDate.slice(0, 10) : ""
+  )
   const [cardImageUrl, setCardImageUrl] = useState(card.cardImageUrl ?? "")
 
   const saveCreditCard = useSaveCreditCard()
@@ -47,6 +51,7 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
         cardNetwork,
         annualFee: parseFloat(annualFee) || 0,
         rewardType,
+        annualFeeDate: annualFeeDate ? `${annualFeeDate}T00:00:00.000Z` : undefined,
         cardImageUrl: cardImageUrl.trim() || undefined,
       },
       { onSuccess: onClose },
@@ -124,19 +129,32 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
             </div>
           </div>
 
-          {/* Annual Fee */}
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted block mb-1.5">
-              Annual Fee
-            </label>
-            <input
-              type="number"
-              value={annualFee}
-              onChange={(e) => setAnnualFee(e.target.value)}
-              min={0}
-              step={1}
-              className="w-full px-3 py-2.5 rounded-lg bg-background border border-card-border text-sm text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary transition-colors"
-            />
+          {/* Annual Fee + Fee Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted block mb-1.5">
+                Annual Fee
+              </label>
+              <input
+                type="number"
+                value={annualFee}
+                onChange={(e) => setAnnualFee(e.target.value)}
+                min={0}
+                step={1}
+                className="w-full px-3 py-2.5 rounded-lg bg-background border border-card-border text-sm text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted block mb-1.5">
+                Fee Date
+              </label>
+              <input
+                type="date"
+                value={annualFeeDate}
+                onChange={(e) => setAnnualFeeDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg bg-background border border-card-border text-sm text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
           </div>
 
           {/* Card Image URL */}

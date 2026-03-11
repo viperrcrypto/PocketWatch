@@ -74,6 +74,35 @@ export async function GET() {
       Promise.all(updates).catch(() => { /* best-effort cleanup */ })
     }
 
+    // Background: detect annual fee dates from transaction history
+    const noFeeDate = result.filter((c) => !c.annualFeeDate)
+    if (noFeeDate.length > 0) {
+      const feePatterns = [
+        "ANNUAL MEMBERSHIP FEE", "ANNUAL FEE", "CARD MEMBER FEE",
+        "CARDMEMBER FEE", "AF CHARGE", "ANNUAL CARD FEE",
+      ]
+      db.financeTransaction.findMany({
+        where: {
+          userId: user.id,
+          accountId: { in: noFeeDate.map((c) => c.accountId) },
+          OR: feePatterns.map((p) => ({ name: { contains: p, mode: "insensitive" as const } })),
+        },
+        select: { accountId: true, date: true },
+        orderBy: { date: "desc" },
+      }).then((feeTxs) => {
+        return Promise.all(noFeeDate.flatMap((card) => {
+          const match = feeTxs.find((t) => t.accountId === card.accountId)
+          if (!match) return []
+          const nextFeeDate = new Date(match.date)
+          nextFeeDate.setFullYear(nextFeeDate.getFullYear() + 1)
+          return db.creditCardProfile.update({
+            where: { id: card.id },
+            data: { annualFeeDate: nextFeeDate },
+          })
+        }))
+      }).catch(() => { /* best-effort fee date detection */ })
+    }
+
     return NextResponse.json(result)
   } catch (err) {
     const mapped = mapFinanceError(err, "Failed to fetch card profiles")

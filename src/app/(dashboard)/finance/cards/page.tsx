@@ -18,6 +18,7 @@ import { PerksTracker } from "@/components/finance/perks-tracker"
 import { PointsPortfolio } from "@/components/finance/points-portfolio"
 import { detectIssuer } from "@/components/finance/credit-card-visual"
 import { looksLikePersonName, deriveCardName } from "@/components/finance/cards-page-helpers"
+import { getKnownAnnualFee } from "@/components/finance/card-image-map"
 
 const TABS = ["Overview", "Card Strategy"] as const
 type Tab = typeof TABS[number]
@@ -240,11 +241,13 @@ export default function FinanceCardsPage() {
                   for (const acct of creditAccounts) {
                     const hasProfile = cards?.some((c) => c.accountId === acct.id)
                     if (!hasProfile) {
+                      const knownFee = getKnownAnnualFee(acct.name, acct.institutionName)
                       saveCreditCard.mutate({
                         accountId: acct.id,
                         cardName: deriveCardName(acct),
                         cardNetwork: "visa",
                         rewardType: "cashback",
+                        annualFee: knownFee ?? 0,
                       })
                     }
                   }
