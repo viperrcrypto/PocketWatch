@@ -11,7 +11,7 @@ import {
 
 export function useChartData(
   netValue: any,
-  _chartScope: ChartScope,
+  chartScope: ChartScope,
   totalValue: number,
   onchainValue: number,
 ) {
@@ -24,7 +24,7 @@ export function useChartData(
       byTime.set(point.time, point)
     }
 
-    const liveAnchor = totalValue > 0 ? totalValue : onchainValue
+    const liveAnchor = chartScope === "total" ? totalValue : onchainValue
     if (Number.isFinite(liveAnchor) && liveAnchor > 0) {
       const nowSec = (Math.floor(Date.now() / 60_000) * 60) as UTCTimestamp
       const points = Array.from(byTime.values()).sort((a, b) => a.time - b.time)
@@ -37,27 +37,8 @@ export function useChartData(
       }
     }
 
-    let sorted = Array.from(byTime.values()).sort((a, b) => a.time - b.time)
-
-    // Filter outlier spikes: if a point is >5x the median value and its neighbors
-    // are much lower, it's likely bad cached data from Zerion
-    if (sorted.length >= 5) {
-      const values = sorted.map((p) => p.value).sort((a, b) => a - b)
-      const median = values[Math.floor(values.length / 2)]
-      if (median > 0) {
-        sorted = sorted.filter((p, i) => {
-          if (p.value <= median * 5) return true
-          // Check neighbors — if both neighbors are <30% of this point, it's a spike
-          const prev = sorted[i - 1]?.value ?? p.value
-          const next = sorted[i + 1]?.value ?? p.value
-          const neighborAvg = (prev + next) / 2
-          return neighborAvg > p.value * 0.3
-        })
-      }
-    }
-
-    return sorted
-  }, [netValue, totalValue, onchainValue])
+    return Array.from(byTime.values()).sort((a, b) => a.time - b.time)
+  }, [netValue, chartScope, totalValue, onchainValue])
 }
 
 export function usePeriodChange(chartData: { time: UTCTimestamp; value: number }[]) {
