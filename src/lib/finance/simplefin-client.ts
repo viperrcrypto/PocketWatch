@@ -248,13 +248,8 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
       provider: "simplefin",
       institutionName: acct.org.name,
       accountName: acct.name,
-<<<<<<< Updated upstream
-      type: inferAccountType(acct.name, balance, acct.org.name),
-      mask: null, // SimpleFIN doesn't provide last 4 digits
-=======
       type: inferAccountType(acct.name, acct.org.name, balance),
       mask: extractMask(acct.name),
->>>>>>> Stashed changes
       currentBalance: balance,
       availableBalance: available,
       creditLimit: null,
