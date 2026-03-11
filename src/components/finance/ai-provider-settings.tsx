@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useAISettings, useSaveAIProvider, useDeleteAIProvider } from "@/hooks/use-finance"
 import { cn } from "@/lib/utils"
@@ -51,10 +51,32 @@ export function AIProviderSettings() {
 
   const [editingProvider, setEditingProvider] = useState<string | null>(null)
   const [apiKeyInput, setApiKeyInput] = useState("")
+  const autoEnabledRef = useRef(false)
 
   const configuredProviders = new Map(
-    data?.providers?.map((p) => [p.provider, p]) ?? []
+    data?.providers?.map((p: { provider: string }) => [p.provider, p]) ?? []
   )
+
+  // Auto-enable Claude CLI if detected on the server and not yet configured
+  useEffect(() => {
+    if (
+      autoEnabledRef.current ||
+      isLoading ||
+      !data?.claudeCliDetected ||
+      configuredProviders.has("ai_claude_cli")
+    ) return
+    autoEnabledRef.current = true
+    saveProvider.mutate(
+      { provider: "ai_claude_cli" },
+      {
+        onSuccess: (result) => {
+          if (result.verified) {
+            toast.success("Claude CLI detected and enabled automatically")
+          }
+        },
+      }
+    )
+  }, [isLoading, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = (providerId: string, requiresKey: boolean) => {
     if (requiresKey && !apiKeyInput.trim()) {

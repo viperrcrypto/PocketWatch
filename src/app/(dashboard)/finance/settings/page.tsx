@@ -52,7 +52,7 @@ export default function FinanceSettingsPage() {
 
   const [clientId, setClientId] = useState("")
   const [secret, setSecret] = useState("")
-  const [environment, setEnvironment] = useState("sandbox")
+  const [environment, setEnvironment] = useState("development")
   const [error, setError] = useState("")
   const [saved, setSaved] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -70,7 +70,7 @@ export default function FinanceSettingsPage() {
 
   useEffect(() => {
     if (!plaidConfig) {
-      setEnvironment("sandbox")
+      setEnvironment("development")
       setVerificationState("unknown")
       setVerifyError(null)
       setVerifyCode("unknown")
@@ -152,7 +152,7 @@ export default function FinanceSettingsPage() {
         setShowDeleteConfirm(false)
         setClientId("")
         setSecret("")
-        setEnvironment("sandbox")
+        setEnvironment("development")
         setVerificationState("unknown")
         setVerifyError(null)
         setVerifyCode("unknown")

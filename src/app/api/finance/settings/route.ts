@@ -48,7 +48,7 @@ const saveSchema = z.object({
   service: z.literal("plaid"),
   clientId: z.string().min(1, "Client ID is required"),
   secret: z.string().min(1, "Secret is required"),
-  environment: z.enum(["sandbox", "development", "production"]).default("sandbox"),
+  environment: z.enum(["sandbox", "development", "production"]).default("development"),
 })
 
 export async function POST(req: NextRequest) {

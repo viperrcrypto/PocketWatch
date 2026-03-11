@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { encryptCredential, decryptCredential } from "@/lib/finance/crypto"
-import { verifyProvider, type AIProviderType } from "@/lib/finance/ai-providers"
+import { verifyProvider, detectClaudeCLI, type AIProviderType } from "@/lib/finance/ai-providers"
 import { financeRateLimiters, getClientId } from "@/lib/rate-limit"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -35,7 +35,9 @@ export async function GET() {
     updatedAt: k.updatedAt.toISOString(),
   }))
 
-  return NextResponse.json({ providers })
+  const claudeCliDetected = await detectClaudeCLI()
+
+  return NextResponse.json({ providers, claudeCliDetected })
 }
 
 /**

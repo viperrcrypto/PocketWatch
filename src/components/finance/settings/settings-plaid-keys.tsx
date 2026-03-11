@@ -197,7 +197,7 @@ export function SettingsPlaidKeys({
             >
               dashboard.plaid.com
             </a>
-            . For testing, use Sandbox credentials with user_good / pass_good.
+            . Apply for free Development access to connect real bank accounts with limited usage.
           </p>
         </div>
       )}

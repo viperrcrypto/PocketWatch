@@ -25,6 +25,18 @@ function resolveClaudeBin(): string {
   return "claude" // fall back to PATH
 }
 
+/** Check if Claude CLI binary is available on this machine. */
+export async function detectClaudeCLI(): Promise<boolean> {
+  const bin = resolveClaudeBin()
+  if (bin !== "claude") return true
+  try {
+    await execFileAsync("which", ["claude"], { timeout: 3_000 })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export type AIProviderType = "ai_claude_cli" | "ai_claude_api" | "ai_openai" | "ai_gemini"
 
 export interface AIProviderConfig {
