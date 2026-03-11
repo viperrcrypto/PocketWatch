@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="public/img/logo-circle.png" width="100" height="100" alt="PocketWatch" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/img/logo-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="public/img/logo.svg" />
+    <img src="public/img/logo.svg" width="80" height="80" alt="PocketWatch" />
+  </picture>
 </p>
 
 <h1 align="center">PocketWatch</h1>
