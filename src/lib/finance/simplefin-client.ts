@@ -137,13 +137,27 @@ export async function getAccountsAndTransactions(
  * Map SimpleFIN account type from name heuristics.
  */
 function inferAccountType(
-  name: string
+  name: string,
+  balance: number,
+  orgName: string
 ): "checking" | "savings" | "credit" | "investment" | "loan" {
   const lower = name.toLowerCase()
+  const orgLower = orgName.toLowerCase()
+
+  // Explicit type keywords
   if (lower.includes("credit")) return "credit"
   if (lower.includes("saving")) return "savings"
   if (lower.includes("invest") || lower.includes("brokerage")) return "investment"
   if (lower.includes("loan") || lower.includes("mortgage")) return "loan"
+
+  // Credit card heuristics: card-related keywords
+  const cardPatterns = ["card", "visa", "mastercard", "amex", "platinum", "gold", "rewards", "cash back", "cashback", "blue cash", "everyday"]
+  if (cardPatterns.some((p) => lower.includes(p))) return "credit"
+
+  // Known credit card issuers as org
+  const cardIssuers = ["american express", "amex", "chase", "citi", "capital one", "discover", "barclays", "synchrony"]
+  if (cardIssuers.some((p) => orgLower.includes(p)) && balance <= 0) return "credit"
+
   return "checking"
 }
 
@@ -192,7 +206,7 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
       provider: "simplefin",
       institutionName: acct.org.name,
       accountName: acct.name,
-      type: inferAccountType(acct.name),
+      type: inferAccountType(acct.name, balance, acct.org.name),
       mask: null, // SimpleFIN doesn't provide last 4 digits
       currentBalance: balance,
       availableBalance: available,

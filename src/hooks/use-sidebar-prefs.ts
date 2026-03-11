@@ -27,7 +27,6 @@ export const PORTFOLIO_NAV_ITEMS: NavItem[] = [
   { id: "history",      label: "Activity",      href: "/portfolio/history",      icon: "history" },
   { id: "accounts",     label: "Wallets",       href: "/portfolio/accounts",     icon: "wallet" },
   { id: "staking",      label: "Staking",       href: "/portfolio/staking",      icon: "layers" },
-  { id: "nfts",         label: "NFTs",          href: "/portfolio/nfts",         icon: "collections" },
   { id: "settings",     label: "Settings",      href: "/portfolio/settings",     icon: "settings" },
 ]
 

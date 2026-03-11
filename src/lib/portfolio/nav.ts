@@ -6,7 +6,6 @@ export const PORTFOLIO_NAV_TABS = [
   { label: "Wallets", href: "/portfolio/accounts", icon: "wallet" },
   { label: "Balances", href: "/portfolio/balances", icon: "account_balance" },
   { label: "Activity", href: "/portfolio/history", icon: "history" },
-  { label: "NFTs", href: "/portfolio/nfts", icon: "collections" },
   { label: "Settings", href: "/portfolio/settings", icon: "tune" },
 ]
 

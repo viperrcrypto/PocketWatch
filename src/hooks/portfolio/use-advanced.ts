@@ -105,38 +105,6 @@ export function useRepairAction() {
   })
 }
 
-// ─── 31. NFT Portfolio ───
-
-export function useNFTPortfolio() {
-  return useQuery({
-    queryKey: portfolioKeys.nftPortfolio(),
-    queryFn: () => portfolioFetch<any>("/balances/nfts"),
-    staleTime: 15 * 60_000,
-    gcTime: 30 * 60_000,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  })
-}
-
-export function useNFTOverride() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (params: { contractAddress: string; action: "show" | "hide" | "reset" }) => {
-      const res = await fetch("/api/portfolio/balances/nfts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(params),
-      })
-      if (!res.ok) throw new Error("Failed to update NFT override")
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: portfolioKeys.nftPortfolio() })
-    },
-  })
-}
-
 // ─── 32. LP Positions (Uniswap V3) ───
 
 export function useLPPositions() {

@@ -12,7 +12,7 @@ import {
  * Prefetch essential portfolio data in the layout.
  *
  * - overview + trackedAccounts: needed by all portfolio sub-pages (kept eager)
- * - netValueHistory, latestPrices, NFTs, LP positions, staking: deferred to idle
+ * - netValueHistory, latestPrices, LP positions, staking: deferred to idle
  * - exchangeBalances, manualBalances, externalServices,
  *   portfolioSettings: load on-demand in their sub-pages
  */
@@ -55,14 +55,6 @@ function PortfolioPrefetch() {
       })
     }, 2000)
 
-    const cancel3 = scheduleIdle(() => {
-      qc.prefetchQuery({
-        queryKey: ["portfolio", "balances", "nfts"],
-        queryFn: () => fetchJSON("/api/portfolio/balances/nfts"),
-        staleTime: 15 * 60_000,
-      })
-    }, 3000)
-
     const cancel4 = scheduleIdle(() => {
       qc.prefetchQuery({
         queryKey: ["portfolio", "balances", "lp"],
@@ -79,7 +71,7 @@ function PortfolioPrefetch() {
       })
     }, 4000)
 
-    return () => { cancel1(); cancel2(); cancel3(); cancel4(); cancel5() }
+    return () => { cancel1(); cancel2(); cancel4(); cancel5() }
   }, [qc])
 
   return null

@@ -7,7 +7,6 @@ const QUICK_ACTIONS = [
   { label: "Exchange Balances", subtitle: "CEX holdings", href: "/portfolio/balances/exchange", icon: "swap_horiz" },
   { label: "DeFi & LP", subtitle: "Yield & liquidity positions", href: "/portfolio/defi", icon: "account_tree" },
   { label: "Analytics", subtitle: "Cost basis & realized gains", href: "/portfolio/history/pnl", icon: "analytics" },
-  { label: "NFT Portfolio", subtitle: "Collections & floor prices", href: "/portfolio/nfts", icon: "collections" },
   { label: "Manual Balances", subtitle: "Cold storage & custom", href: "/portfolio/balances/manual", icon: "edit_note" },
 ] as const
 
