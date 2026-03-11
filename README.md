@@ -45,7 +45,7 @@ Your financial life is scattered across bank apps, brokerage accounts, credit ca
   Fidelity  ·  Schwab  ·  Vanguard         Arbitrum  ·  Base  ·  20+ chains
   Amex  ·  Citi  ·  Discover               Binance  ·  Coinbase  ·  40+ CEXs
           │                                          │
-          │         Plaid · SimpleFIN                │        Zerion · Alchemy · CCXT
+          │         Plaid · SimpleFIN                │        Zerion · Helius · CCXT
           │                                          │
           ▼                                          ▼
   ┌──────────────────────────────────────────────────────────────┐
@@ -135,7 +135,7 @@ No cloud. No subscriptions. No one else sees your data.
    │   Banking       │  │  Market Data │  │  Blockchain       │
    │                 │  │              │  │                   │
    │  Plaid          │  │  CoinGecko   │  │  Zerion           │
-   │  SimpleFIN      │  │  DefiLlama   │  │  Alchemy          │
+   │  SimpleFIN      │  │  DefiLlama   │  │  Helius           │
    │                 │  │              │  │  Etherscan         │
    │                 │  │              │  │  CCXT (40+ CEXs)  │
    └────────┬────────┘  └──────┬───────┘  └────────┬──────────┘
@@ -280,7 +280,7 @@ Each provider unlocks a set of features. Add them as needed:
 |----------|---------|-----------------|
 | `ZERION_API_KEY` | Multi-chain wallet balances | [zerion.io/developers](https://zerion.io/developers) |
 | `COINGECKO_API_KEY` | Token prices & market data | [coingecko.com/en/api](https://www.coingecko.com/en/api) |
-| `NEXT_PUBLIC_ALCHEMY_API_KEY` | EVM RPC, tx history, NFTs | [alchemy.com](https://www.alchemy.com/) |
+| `HELIUS_API_KEY` | Solana RPC, tx history, token metadata | [dev.helius.xyz](https://dev.helius.xyz) |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Browser wallet connection | [cloud.walletconnect.com](https://cloud.walletconnect.com) |
 
 > Plaid and SimpleFIN credentials are configured through the in-app settings UI.
@@ -304,7 +304,7 @@ Generate each: `openssl rand -hex 16`
 |----------|---------|-------------|
 | `PORTFOLIO_REFRESH_TTL_MS` | `300000` | 5 min cooldown between refreshes |
 | `ZERION_MIN_INTERVAL_MS` | `20000` | 20s between Zerion calls |
-| `ALCHEMY_MIN_INTERVAL_MS` | `500` | 500ms between Alchemy calls |
+| `HELIUS_MIN_INTERVAL_MS` | `500` | 500ms between Helius calls |
 | `CCXT_MIN_INTERVAL_MS` | `15000` | 15s between exchange calls |
 | `DEFI_LLAMA_MIN_INTERVAL_MS` | `1000` | 1s between DefiLlama calls |
 
@@ -383,7 +383,7 @@ PocketWatch connects to multiple data sources. All credentials are encrypted at 
 | Provider | What it does | Key needed? |
 |----------|-------------|-------------|
 | **Zerion** | Multi-chain wallet balance aggregation | Yes (free tier) |
-| **Alchemy** | EVM transaction history, NFT metadata, RPC | Yes (free tier) |
+| **Helius** | Solana RPC, transaction history, token metadata | Yes (free tier) |
 | **Etherscan** | EVM transaction scanning (+ Arbiscan, Basescan, etc.) | Optional |
 | **CCXT** | Centralized exchange balances & history (40+ exchanges) | Exchange API keys |
 | **WalletConnect / Reown** | Browser wallet connection | Optional |

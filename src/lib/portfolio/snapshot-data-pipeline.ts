@@ -257,11 +257,114 @@ export function buildSnapshotPoints(params: BuildSnapshotPointsParams): ChartPoi
   const usableReconstructed = hasUsableReconstructedHistory(reconstructedPoints, latestLiveSnapshot)
 
   const hasZerionBackbone = cachedChartRows.length > 0
-  return usableReconstructed
+  const result = usableReconstructed
     ? snapshotPoints
     : hasZerionBackbone
       ? snapshotPoints.filter((p) => p.source !== "reconstructed")
       : snapshotPoints
+
+  return trimReconstructionRamp(result)
+}
+
+/**
+ * Clean reconstructed data: trim the initial "discovery ramp" and smooth
+ * outlier spikes that revert within a few days.
+ *
+ * The value reconstructor has two artifact patterns:
+ * 1. **Discovery ramp**: positions found incrementally → $15K/day staircase
+ * 2. **Transient spikes**: intermittent reward accruals or stale prices →
+ *    sudden $3-5K jumps that revert back within days
+ *
+ * This function handles both by:
+ * - Trimming the initial ramp up to the stabilization point
+ * - Replacing spike values with the local median of surrounding points
+ */
+function trimReconstructionRamp(points: ChartPoint[]): ChartPoint[] {
+  const reconstructed = points
+    .filter((p) => p.source === "reconstructed")
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  if (reconstructed.length < 7) return points
+
+  // ── Phase 1: Trim initial discovery ramp ──
+  const RAMP_THRESHOLD = 0.05
+  const STABLE_DAYS_REQUIRED = 3
+  let lastRampIdx = -1
+
+  for (let i = 1; i < reconstructed.length; i++) {
+    const prev = reconstructed[i - 1].value
+    const curr = reconstructed[i].value
+    const changePct = prev > 0 ? Math.abs(curr - prev) / prev : 0
+    if (changePct > RAMP_THRESHOLD) {
+      lastRampIdx = i
+    }
+  }
+
+  let cutoffTimestamp = -1
+  if (lastRampIdx >= 0) {
+    let stableDays = 0
+    for (let i = lastRampIdx + 1; i < reconstructed.length; i++) {
+      const prev = reconstructed[i - 1].value
+      const curr = reconstructed[i].value
+      const changePct = prev > 0 ? Math.abs(curr - prev) / prev : 0
+      if (changePct <= RAMP_THRESHOLD) {
+        stableDays++
+        if (stableDays >= STABLE_DAYS_REQUIRED) break
+      } else {
+        stableDays = 0
+      }
+    }
+    if (stableDays >= STABLE_DAYS_REQUIRED) {
+      cutoffTimestamp = reconstructed[lastRampIdx].timestamp
+    }
+  }
+
+  // ── Phase 2: Smooth transient spikes ──
+  // Compute the rolling median of stable (non-spike) values, then replace
+  // any point that deviates >2% from its local neighborhood median.
+  const SPIKE_THRESHOLD = 0.02
+  const WINDOW = 3 // days on each side
+
+  const smoothed = reconstructed.map((p, i) => {
+    // Skip points that will be trimmed anyway
+    if (cutoffTimestamp >= 0 && p.timestamp < cutoffTimestamp) return p
+
+    const windowStart = Math.max(0, i - WINDOW)
+    const windowEnd = Math.min(reconstructed.length - 1, i + WINDOW)
+    const neighbors: number[] = []
+    for (let j = windowStart; j <= windowEnd; j++) {
+      if (j !== i) neighbors.push(reconstructed[j].value)
+    }
+    if (neighbors.length < 2) return p
+
+    neighbors.sort((a, b) => a - b)
+    const median = neighbors[Math.floor(neighbors.length / 2)]
+    const deviation = median > 0 ? Math.abs(p.value - median) / median : 0
+
+    if (deviation > SPIKE_THRESHOLD) {
+      return { ...p, value: median }
+    }
+    return p
+  })
+
+  // Build a map of timestamp → smoothed value for reconstructed points
+  const smoothedMap = new Map<number, number>()
+  for (const p of smoothed) {
+    smoothedMap.set(p.timestamp, p.value)
+  }
+
+  return points.filter((p) => {
+    if (p.source !== "reconstructed") return true
+    if (cutoffTimestamp >= 0 && p.timestamp < cutoffTimestamp) return false
+    return true
+  }).map((p) => {
+    if (p.source !== "reconstructed") return p
+    const sv = smoothedMap.get(p.timestamp)
+    if (sv !== undefined && sv !== p.value) {
+      return { ...p, value: sv }
+    }
+    return p
+  })
 }
 
 // ── On-chain reference computation ──

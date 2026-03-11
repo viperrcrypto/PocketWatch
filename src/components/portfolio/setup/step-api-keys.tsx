@@ -265,7 +265,7 @@ export function StepApiKeys({ onNext, hasSharedKey }: { onNext: () => void; hasS
             optional
           />
           <p className="mt-4 text-foreground-muted text-center text-xs">
-            Additional integrations (CoinGecko, Alchemy) can be added later in Settings.
+            Additional integrations (CoinGecko) can be added later in Settings.
           </p>
         </div>
       )}
