@@ -137,17 +137,9 @@ export async function GET(request: Request) {
     // A flat projection produces bad blend values since it's constant.
     const projectedIsFlat = isProjectedChartFlat(projectedPoints)
 
-    // Suppress projected data when it diverges wildly from the live reference.
-    // This catches cases where the projected chart returns stale/incorrect DeFi
-    // positions that don't match the actual portfolio value.
     const liveRef = onchainRefPoint ?? latestLiveSnapshot
-    const projectedMedian = projectedPoints.length > 0
-      ? [...projectedPoints].sort((a, b) => a.value - b.value)[Math.floor(projectedPoints.length / 2)].value
-      : 0
-    const projectedDivergent = liveRef && liveRef.value > 0 && projectedMedian > 0
-      && (projectedMedian / liveRef.value > SCALE_FACTOR_MAX || liveRef.value / projectedMedian > SCALE_FACTOR_MAX)
 
-    if (projectedPoints.length > 0 && zerionPoints.length > 0 && !projectedIsFlat && !projectedDivergent) {
+    if (projectedPoints.length > 0 && zerionPoints.length > 0 && !projectedIsFlat) {
       // Projected chart has meaningful variance (volatile DeFi assets) —
       // force-scale Zerion to match live reference and blend-merge.
       const ref = onchainRefPoint ?? latestLiveSnapshot
@@ -167,7 +159,7 @@ export async function GET(request: Request) {
         ? projectedPoints.map((p) => p.value > projCapRef * 5 ? { ...p, value: projCapRef } : p)
         : projectedPoints
       zerionPoints = mergeWithProjectedChart(zerionPoints, projectedCapped)
-    } else if (projectedPoints.length > 0 && projectedIsFlat && !projectedDivergent && zerionPoints.length > 0) {
+    } else if (projectedPoints.length > 0 && projectedIsFlat && zerionPoints.length > 0) {
       // Flat projected chart = stablecoin-heavy DeFi portfolio.
       // Zerion chart only shows wallet remnants (not protocol-deposited value).
       // Suppress Zerion only if we have reconstructed/live snapshots as a backbone.
