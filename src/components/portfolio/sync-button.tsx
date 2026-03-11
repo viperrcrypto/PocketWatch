@@ -127,12 +127,12 @@ export function SyncButton({
           </span>
           {progressPct > 0 && (
             <span className="text-foreground-muted font-data">
-              \u00b7 {progressPct}%
+              {"\u00b7"} {progressPct}%
             </span>
           )}
           {etaLabel && !isThrottled && (
             <span className="text-foreground-muted font-data">
-              \u00b7 {etaLabel}
+              {"\u00b7"} {etaLabel}
             </span>
           )}
         </div>

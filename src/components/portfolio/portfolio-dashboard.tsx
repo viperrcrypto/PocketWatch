@@ -52,7 +52,7 @@ import { useSyncStatus, useWalletInfoList } from "@/hooks/use-portfolio-sync-sta
 
 export function PortfolioDashboard() {
   const [timeframe, setTimeframe] = useState<Timeframe>("ALL")
-  const [chartScope, setChartScope] = useState<ChartScope>("total")
+  const chartScope: ChartScope = "total"
   const {
     data: overview,
     isLoading: balancesLoading,
@@ -151,9 +151,9 @@ export function PortfolioDashboard() {
     ? (periodChange.positive ? "positive" : "negative")
     : "neutral"
 
-  const chartDisplayValue = chartScope === "total"
-    ? (effectiveTotalValue > 0 ? effectiveTotalValue : (balancesSettled && chartLatestValue > 0 ? chartLatestValue : 0))
-    : (onchainValue > 0 ? onchainValue : (balancesSettled && chartLatestValue > 0 ? chartLatestValue : 0))
+  const chartDisplayValue = effectiveTotalValue > 0
+    ? effectiveTotalValue
+    : (balancesSettled && chartLatestValue > 0 ? chartLatestValue : 0)
 
   const historyWarning = useHistoryWarning(chartMeta, chartScope)
 
@@ -224,7 +224,7 @@ export function PortfolioDashboard() {
 
       <ChartHeroSection
         timeframes={TIMEFRAMES} timeframe={timeframe} onTimeframeChange={(tf) => setTimeframe(tf as Timeframe)}
-        chartScopes={CHART_SCOPES} chartScope={chartScope} onChartScopeChange={setChartScope}
+        chartScopes={CHART_SCOPES} chartScope={chartScope} onChartScopeChange={() => {}}
         isLoading={isLoading} headlineLoading={headlineLoading} isHidden={isHidden} togglePrivacy={togglePrivacy}
         chartDisplayValue={chartDisplayValue} hoveredPoint={hoveredPoint} onCrosshairMove={setHoveredPoint}
         onPointClick={setClickedPoint}

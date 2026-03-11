@@ -58,26 +58,7 @@ export function ChartHeroSection({
       onTimeframeChange={onTimeframeChange}
       isLoading={isLoading}
       headerActions={
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg">
-            {chartScopes.map((scope) => {
-              const active = chartScope === scope
-              return (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => onChartScopeChange(scope)}
-                  className={active
-                    ? "px-2.5 py-1 text-[10px] font-medium rounded-md bg-primary text-white"
-                    : "px-2.5 py-1 text-[10px] font-medium rounded-md text-foreground-muted hover:text-foreground"}
-                >
-                  {scope === "total" ? "TOTAL" : "ON-CHAIN"}
-                </button>
-              )
-            })}
-          </div>
-          <PrivacyToggle isHidden={isHidden} onToggle={togglePrivacy} />
-        </div>
+        <PrivacyToggle isHidden={isHidden} onToggle={togglePrivacy} />
       }
     >
       {historyWarning && (
