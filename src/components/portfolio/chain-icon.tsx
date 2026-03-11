@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { getChainColor } from "@/lib/portfolio/chains"
+import { getChainColor, getChainMeta } from "@/lib/portfolio/chains"
 
 interface ChainIconProps {
   chainId: string
@@ -9,41 +9,16 @@ interface ChainIconProps {
   className?: string
 }
 
-/** Map internal chain IDs → DefiLlama icon slug */
-const LLAMA_SLUG: Record<string, string> = {
-  ETH: "ethereum",
-  ETHEREUM: "ethereum",
-  BTC: "bitcoin",
-  SOL: "solana",
-  SOLANA: "solana",
-  OPTIMISM: "optimism",
-  ARBITRUM_ONE: "arbitrum",
-  BASE: "base",
-  POLYGON_POS: "polygon",
-  AVAX: "avalanche",
-  GNOSIS: "gnosis",
-  BSC: "bsc",
-  ZKSYNC: "zksync%20era",
-  LINEA: "linea",
-  SCROLL: "scroll",
-  BLAST: "blast",
-  MANTLE: "mantle",
-  MODE: "mode",
-  FANTOM: "fantom",
-  ZORA: "zora",
-  BERACHAIN: "berachain",
-  MONAD: "monad",
-}
-
-function getLogoUrl(chainId: string): string | null {
-  const slug = LLAMA_SLUG[chainId.toUpperCase()]
-  if (!slug) return null
-  return `https://icons.llamao.fi/icons/chains/rsz_${slug}.jpg`
+/** Official logos from Trust Wallet assets repository */
+function getTrustWalletLogoUrl(chainId: string): string | null {
+  const meta = getChainMeta(chainId)
+  if (!meta?.trustWalletName || meta.trustWalletName === "exchange") return null
+  return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${meta.trustWalletName}/info/logo.png`
 }
 
 export function ChainIcon({ chainId, size = 20, className }: ChainIconProps) {
   const [imgError, setImgError] = useState(false)
-  const logoUrl = getLogoUrl(chainId)
+  const logoUrl = getTrustWalletLogoUrl(chainId)
 
   if (logoUrl && !imgError) {
     return (

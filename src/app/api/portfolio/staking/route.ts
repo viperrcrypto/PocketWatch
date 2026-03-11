@@ -66,9 +66,15 @@ export async function GET() {
     return NextResponse.json({ ...cached.data, meta: { fromCache: true, revalidating: true, ...refreshMeta } })
   }
 
-  // No cache — blocking fetch (first request only)
+  // No cache — blocking fetch with timeout (first request only)
   try {
-    const data = await buildStakingResponse(user.id)
+    const STAKING_TIMEOUT_MS = 45_000
+    const data = await Promise.race([
+      buildStakingResponse(user.id),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Staking build timed out")), STAKING_TIMEOUT_MS),
+      ),
+    ])
     cacheSet(user.id, data)
     const refreshMeta = await getRefreshMeta(user.id)
     return NextResponse.json({ ...data, meta: { fromCache: false, ...refreshMeta } })

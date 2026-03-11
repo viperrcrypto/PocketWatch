@@ -15,8 +15,7 @@ export function useStakingPositions() {
     refetchOnWindowFocus: false,
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+    retry: 0,
   })
 }
 

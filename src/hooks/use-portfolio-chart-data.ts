@@ -111,7 +111,7 @@ export function useHistoryWarning(chartMeta: any, chartScope: ChartScope) {
       return "On-chain history sync is still running. Pre-coverage points are hidden until data is complete."
     }
     if (chartMeta.warningCode === "total_sparse_history" && chartScope === "total") {
-      return "Historical total is limited; switch to On-chain for full lifecycle."
+      return "Historical total is limited; sync more transaction history for the full lifecycle view."
     }
     if (chartMeta.warningCode === "onchain_missing_coverage" && chartScope === "onchain") {
       return "Not enough trusted on-chain history yet for older dates."

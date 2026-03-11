@@ -117,11 +117,15 @@ export async function syncStakingLifecycle(
       const unpricedCount = await prisma.transactionCache.count({
         where: { userId, usdValue: null, value: { not: null } },
       })
-      if (unpricedCount > 0) {
+      // Skip bulk resolution in the read path — too many unpriced txs will hang the request
+      if (unpricedCount > 0 && unpricedCount <= 200) {
         console.log(`[staking-lifecycle] resolving ${unpricedCount} unpriced transactions before flow reconstruction`)
         const result = await resolveUnpricedTransactions(userId)
         console.log(`[staking-lifecycle] price resolution: ${result.resolved} resolved, ${result.failed} failed of ${result.total}`)
         priceResolutionCooldown.set(userId, { at: Date.now(), count: result.resolved })
+      } else if (unpricedCount > 200) {
+        console.log(`[staking-lifecycle] skipping price resolution (${unpricedCount} unpriced txs — too many for read path)`)
+        priceResolutionCooldown.set(userId, { at: Date.now(), count: 0 })
       }
     }
   } catch (err) {
@@ -162,9 +166,11 @@ export async function syncStakingLifecycle(
       return entries.length === 0
     })
 
-    if (positionsWithNoTxs.length > 0) {
-      console.log(`[staking-lifecycle] ${positionsWithNoTxs.length} position(s) have zero txs — trying explorer fallback`)
-      for (const p of positionsWithNoTxs) {
+    // Cap explorer backfill to avoid hanging the read path
+    const backfillCandidates = positionsWithNoTxs.slice(0, 5)
+    if (backfillCandidates.length > 0) {
+      console.log(`[staking-lifecycle] ${backfillCandidates.length} position(s) have zero txs — trying explorer fallback`)
+      for (const p of backfillCandidates) {
         const result = await backfillFromExplorer(userId, p.wallet, p.chain, p.contractAddress!)
         if (result.inserted > 0) explorerBackfilled = true
         if (result.error) console.warn(`[staking-lifecycle] explorer fallback for ${p.symbol}: ${result.error}`)
