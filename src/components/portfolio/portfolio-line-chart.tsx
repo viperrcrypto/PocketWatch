@@ -30,7 +30,7 @@ interface PortfolioLineChartProps {
   timeframe?: "ALL" | "1Y" | "3M" | "1W" | "1D"
 }
 
-// Colors matching the AlfaDAO chart style
+// Chart color palettes
 const COLOR_MAP = {
   neutral: {
     line: "#818cf8",

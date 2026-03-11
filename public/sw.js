@@ -1,6 +1,6 @@
-// AlfaDAO Service Worker — caching + push notifications
-const CACHE_NAME = "alfadao-shell-v1";
-const SHELL_URLS = ["/offline", "/img/logo-circle.png", "/img/pwa-icon-192.png"];
+// PocketWatch Service Worker — caching + push notifications
+const CACHE_NAME = "pocketwatch-shell-v2";
+const SHELL_URLS = ["/offline.html"];
 
 // ─── Install: pre-cache the offline shell ───
 self.addEventListener("install", (event) => {
@@ -10,7 +10,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// ─── Activate: clean old caches ───
+// ─── Activate: clean old caches (including old alfadao caches) ───
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
@@ -28,7 +28,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return;
   event.respondWith(
-    fetch(event.request).catch(() => caches.match("/offline"))
+    fetch(event.request).catch(() => caches.match("/offline.html"))
   );
 });
 
@@ -39,15 +39,15 @@ self.addEventListener("push", (event) => {
     const payload = event.data.json();
     const options = {
       body: payload.body,
-      icon: payload.icon || "/img/pwa-icon-192.png",
-      badge: "/img/favicon-32.png",
-      tag: payload.tag || "alfadao-alert",
+      icon: payload.icon || "/favicon.ico",
+      badge: "/favicon.ico",
+      tag: payload.tag || "pocketwatch-alert",
       renotify: true,
       vibrate: [200, 100, 200],
-      data: { url: payload.url || "/tracker" },
+      data: { url: payload.url || "/portfolio" },
     };
     event.waitUntil(
-      self.registration.showNotification(payload.title || "AlfaDAO", options)
+      self.registration.showNotification(payload.title || "PocketWatch", options)
     );
   } catch {
     // Ignore malformed push payloads
@@ -57,12 +57,11 @@ self.addEventListener("push", (event) => {
 // ─── Notification Click: open/focus the app ───
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/tracker";
+  const url = event.notification.data?.url || "/portfolio";
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        // Compare only the pathname portion (strips query params from notification url)
         const targetPath = url.split("?")[0];
         const existing = clients.find((c) => {
           try { return new URL(c.url).pathname === targetPath; } catch { return false; }
