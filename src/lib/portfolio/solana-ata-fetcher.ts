@@ -5,11 +5,10 @@
 import { db } from "@/lib/db"
 import { isProviderThrottleError, withProviderPermitRotating } from "./provider-governor"
 import type { ServiceKeyEntry } from "./service-keys"
-import { resolveSPLToken } from "./vesting-claims/rpc"
 import { heliusTxToRecords } from "./solana-tx-mapper"
 import type { HeliusTransaction, TransactionCacheRecord } from "./solana-tx-mapper"
 import type { SyncErrorDetail } from "./transaction-fetcher"
-import { discoverTokenAccounts, getSignaturesForAddress } from "./solana-rpc"
+import { discoverTokenAccounts, getSignaturesForAddress, resolveSPLToken } from "./solana-rpc"
 
 /** Parse transaction signatures via Helius POST /v0/transactions. */
 async function parseTransactionsViaHelius(

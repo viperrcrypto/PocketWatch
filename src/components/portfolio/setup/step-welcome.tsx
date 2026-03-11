@@ -44,8 +44,8 @@ export function StepWelcome({ onNext }: { onNext: () => void }) {
           },
           {
             icon: "layers",
-            title: "Staking & Airdrops",
-            desc: "Monitor staking rewards and airdrop eligibility",
+            title: "Staking & NFTs",
+            desc: "Monitor staking rewards and NFT collections",
           },
         ].map((card) => (
           <div

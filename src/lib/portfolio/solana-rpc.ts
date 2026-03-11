@@ -69,3 +69,26 @@ export async function getSignaturesForAddress(
   // Only return successful transactions
   return (data.result ?? []).filter((s) => s.err === null)
 }
+
+/** Resolve SPL token metadata (symbol + decimals) from a mint address via Solana RPC. */
+export async function resolveSPLToken(mint: string): Promise<{ symbol: string; decimals: number }> {
+  const res = await fetch(SOLANA_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getAccountInfo",
+      params: [mint, { encoding: "jsonParsed" }],
+    }),
+    signal: AbortSignal.timeout(10_000),
+  })
+  const data = await res.json() as {
+    result?: { value?: { data?: { parsed?: { info?: { symbol?: string; decimals?: number } } } } }
+  }
+  const info = data.result?.value?.data?.parsed?.info
+  return {
+    symbol: info?.symbol ?? mint.slice(0, 6),
+    decimals: info?.decimals ?? 9,
+  }
+}

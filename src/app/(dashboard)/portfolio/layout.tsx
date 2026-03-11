@@ -13,8 +13,8 @@ import {
  *
  * - overview + trackedAccounts: needed by all portfolio sub-pages (kept eager)
  * - netValueHistory, latestPrices, NFTs, LP positions, staking: deferred to idle
- * - exchangeBalances, manualBalances, airdrops, vestingClaims,
- *   externalServices, portfolioSettings: load on-demand in their sub-pages
+ * - exchangeBalances, manualBalances, externalServices,
+ *   portfolioSettings: load on-demand in their sub-pages
  */
 function PortfolioPrefetch() {
   // Essential — needed across all portfolio tabs

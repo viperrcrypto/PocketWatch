@@ -35,34 +35,25 @@
 Your financial life is scattered across bank apps, brokerage accounts, credit card portals, and maybe a spreadsheet or two. PocketWatch pulls it all into a single dashboard that **you own and control** — running on your own server, encrypted with a password only you know.
 
 ```
- ┌──────────────────────────────────────────────────────────────────┐
- │                                                                  │
- │        Bank Accounts     Investments     Credit Cards            │
- │       ┌───────────┐    ┌───────────┐    ┌───────────┐           │
- │       │  Chase     │    │  Fidelity │    │  Amex     │           │
- │       │  BofA      │    │  Schwab   │    │  Chase    │           │
- │       │  Wells     │    │  Vanguard │    │  Citi     │           │
- │       └─────┬─────┘    └─────┬─────┘    └─────┬─────┘           │
- │             │                │                │                  │
- │             └────────────────┼────────────────┘                  │
- │                              ▼                                   │
- │                    ┌──────────────────┐                          │
- │                    │                  │                          │
- │                    │   PocketWatch    │                          │
- │                    │                  │                          │
- │                    └──────────────────┘                          │
- │                              ▲                                   │
- │             ┌────────────────┼────────────────┐                  │
- │             │                │                │                  │
- │       ┌─────┴─────┐    ┌────┴──────┐    ┌────┴──────┐           │
- │       │  Wallets   │    │ Exchanges │    │  Staking  │           │
- │       │  ETH, SOL  │    │ Binance   │    │  Yields   │           │
- │       │  20+ chains│    │ Coinbase  │    │  DeFi     │           │
- │       └───────────┘    └───────────┘    └───────────┘           │
- │                                                                  │
- │       Digital Assets     Exchanges       Yield & DeFi            │
- │                                                                  │
- └──────────────────────────────────────────────────────────────────┘
+        YOUR MONEY                                YOUR CRYPTO
+  ──────────────────────                    ──────────────────────
+  Chase  ·  BofA  ·  Wells                 ETH  ·  SOL  ·  BTC
+  Fidelity  ·  Schwab  ·  Vanguard         Arbitrum  ·  Base  ·  20+ chains
+  Amex  ·  Citi  ·  Discover               Binance  ·  Coinbase  ·  40+ CEXs
+          │                                          │
+          │         Plaid · SimpleFIN                │        Zerion · Alchemy · CCXT
+          │                                          │
+          ▼                                          ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │                                                              │
+  │                     ⚙  PocketWatch                           │
+  │                                                              │
+  │   Balances     Transactions     Budgets      Net Worth       │
+  │   Staking      NFTs             PnL          Insights        │
+  │   Cards        Subscriptions    Investments   History        │
+  │                                                              │
+  │          Encrypted  ·  Self-hosted  ·  Single-user           │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 No cloud. No subscriptions. No one else sees your data.
@@ -97,9 +88,8 @@ No cloud. No subscriptions. No one else sees your data.
 | **Multi-chain wallets** | Track balances across 20+ blockchains (Ethereum, Solana, Base, Arbitrum, and more) |
 | **Exchange accounts** | Connect Binance, Coinbase, Kraken, OKX, and 40+ exchanges |
 | **Transaction history** | Full history with spam filtering, classification, and cost-basis tracking |
-| **Staking & DeFi** | Monitor staking positions, LP pools, lending, and yield farming |
+| **Staking** | Monitor staking positions, rewards, and APY tracking |
 | **NFTs** | View your collection with metadata |
-| **Airdrops** | Scan for unclaimed airdrops across protocols |
 | **PnL & tax prep** | Lot-based cost tracking with realized gains |
 
 ### Platform
@@ -130,7 +120,7 @@ No cloud. No subscriptions. No one else sees your data.
 │  Next.js 16 API Layer                                               │
 │                                                                     │
 │  /api/finance/*  ──── Bank sync, budgets, cards, transactions       │
-│  /api/portfolio/* ─── Wallets, balances, history, staking, DeFi     │
+│  /api/portfolio/* ─── Wallets, balances, history, staking, NFTs     │
 │  /api/auth/*  ─────── Vault setup, unlock, lock, reset              │
 │  /api/internal/* ──── Background workers (cron-triggered)           │
 └───────────────────────────────┬─────────────────────────────────────┘
@@ -340,9 +330,7 @@ PocketWatch/
 │   │   │       ├── balances/        #   On-chain, exchange, manual
 │   │   │       ├── history/         #   Transactions, PnL, snapshots
 │   │   │       ├── staking/         #   Staking positions & APY
-│   │   │       ├── defi/            #   DeFi analytics
-│   │   │       ├── nfts/            #   NFT gallery
-│   │   │       └── airdrops/        #   Airdrop scanner
+│   │   │       └── nfts/            #   NFT gallery
 │   │   └── api/
 │   │       ├── auth/                #   Vault auth (setup/unlock/lock/reset)
 │   │       ├── finance/             #   Banking data endpoints
@@ -359,8 +347,7 @@ PocketWatch/
 │   ├── lib/
 │   │   ├── finance/                 # Plaid sync, categorization, analytics
 │   │   ├── portfolio/               # Wallet sync, staking, cost-basis, tx
-│   │   ├── defillama/               # Protocol data
-│   │   └── contracts/               # Smart contract ABIs
+│   │   └── defillama/               # Protocol data
 │   └── types/                       # Shared TypeScript interfaces
 ├── .env.example
 ├── next.config.ts                   # Next.js config + security headers

@@ -1,7 +1,6 @@
 /**
  * Shared multi-chain viem client factory.
- * Extracted from vesting-claims/rpc.ts for reuse across yield readers,
- * rewards checkers, and any other on-chain data needs.
+ * Used across yield readers, rewards checkers, and on-chain data needs.
  */
 
 import { createPublicClient, http, type PublicClient, type Chain } from "viem"
