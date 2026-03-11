@@ -5,8 +5,8 @@
 <h1 align="center">PocketWatch</h1>
 
 <p align="center">
-  <strong>Your personal finance and digital asset command center.</strong><br/>
-  Self-hosted. Single-user vault. Everything encrypted at rest.
+  <strong>See everything you own. In one place.</strong><br/>
+  Self-hosted wealth tracker. Bank accounts, investments, credit cards, digital assets — unified.
 </p>
 
 <p align="center">
@@ -14,14 +14,13 @@
   <img src="https://img.shields.io/badge/React-19-blue?logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss" alt="Tailwind 4" />
-  <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma" alt="Prisma 7" />
   <img src="https://img.shields.io/badge/PostgreSQL-14+-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
 </p>
 
 <p align="center">
-  <a href="#-features">Features</a> &nbsp;&bull;&nbsp;
-  <a href="#-architecture">Architecture</a> &nbsp;&bull;&nbsp;
+  <a href="#-what-it-tracks">What It Tracks</a> &nbsp;&bull;&nbsp;
+  <a href="#-how-it-works">How It Works</a> &nbsp;&bull;&nbsp;
   <a href="#-getting-started">Getting Started</a> &nbsp;&bull;&nbsp;
   <a href="#-environment-variables">Environment Variables</a> &nbsp;&bull;&nbsp;
   <a href="#-project-structure">Project Structure</a> &nbsp;&bull;&nbsp;
@@ -31,184 +30,177 @@
 
 ---
 
-## What is PocketWatch?
+## Why PocketWatch?
 
-PocketWatch is a **self-hosted personal finance dashboard** that brings your crypto portfolio, bank accounts, credit cards, investments, and DeFi positions together in one place. It runs entirely on your own infrastructure with a single-user encrypted vault — no cloud accounts, no third-party data access, no tracking.
+Your financial life is scattered across bank apps, brokerage accounts, credit card portals, and maybe a spreadsheet or two. PocketWatch pulls it all into a single dashboard that **you own and control** — running on your own server, encrypted with a password only you know.
 
-> **Think of it as your own private Bloomberg terminal for personal finance.**
+```
+ ┌──────────────────────────────────────────────────────────────────┐
+ │                                                                  │
+ │        Bank Accounts     Investments     Credit Cards            │
+ │       ┌───────────┐    ┌───────────┐    ┌───────────┐           │
+ │       │  Chase     │    │  Fidelity │    │  Amex     │           │
+ │       │  BofA      │    │  Schwab   │    │  Chase    │           │
+ │       │  Wells     │    │  Vanguard │    │  Citi     │           │
+ │       └─────┬─────┘    └─────┬─────┘    └─────┬─────┘           │
+ │             │                │                │                  │
+ │             └────────────────┼────────────────┘                  │
+ │                              ▼                                   │
+ │                    ┌──────────────────┐                          │
+ │                    │                  │                          │
+ │                    │   PocketWatch    │                          │
+ │                    │                  │                          │
+ │                    └──────────────────┘                          │
+ │                              ▲                                   │
+ │             ┌────────────────┼────────────────┐                  │
+ │             │                │                │                  │
+ │       ┌─────┴─────┐    ┌────┴──────┐    ┌────┴──────┐           │
+ │       │  Wallets   │    │ Exchanges │    │  Staking  │           │
+ │       │  ETH, SOL  │    │ Binance   │    │  Yields   │           │
+ │       │  20+ chains│    │ Coinbase  │    │  DeFi     │           │
+ │       └───────────┘    └───────────┘    └───────────┘           │
+ │                                                                  │
+ │       Digital Assets     Exchanges       Yield & DeFi            │
+ │                                                                  │
+ └──────────────────────────────────────────────────────────────────┘
+```
+
+No cloud. No subscriptions. No one else sees your data.
 
 ---
 
-## Overview
+## What It Tracks
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐        │
-│   │  Portfolio   │    │   Finance   │    │  Settings   │        │
-│   │             │    │             │    │             │        │
-│   │  Balances   │    │  Accounts   │    │  API Keys   │        │
-│   │  History    │    │  Budgets    │    │  Exchanges  │        │
-│   │  Staking    │    │  Cards      │    │  Sync       │        │
-│   │  DeFi       │    │  Investments│    │  Diagnostics│        │
-│   │  NFTs       │    │  Categories │    │             │        │
-│   │  Airdrops   │    │  Transactions│   │             │        │
-│   └──────┬──────┘    └──────┬──────┘    └─────────────┘        │
-│          │                  │                                   │
-│          ▼                  ▼                                   │
-│   ┌─────────────────────────────────────────────────────┐      │
-│   │               Data Provider Layer                    │      │
-│   │                                                      │      │
-│   │  Zerion    Alchemy    CoinGecko    Plaid             │      │
-│   │  CCXT      DefiLlama  Etherscan    SimpleFIN         │      │
-│   └──────────────────────┬───────────────────────────────┘      │
-│                          │                                      │
-│                          ▼                                      │
-│   ┌─────────────────────────────────────────────────────┐      │
-│   │         PostgreSQL  +  AES-256-GCM Vault            │      │
-│   │         40+ models  ·  Encrypted credentials        │      │
-│   └─────────────────────────────────────────────────────┘      │
-│                                                                 │
-│                        PocketWatch                              │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Features
-
-### Portfolio Module — Digital Assets
+### Banking & Spending
 
 | Feature | Description |
 |---------|-------------|
-| **Multi-chain balances** | Aggregate wallets across 20+ chains (Ethereum, Solana, Arbitrum, Base, Optimism, Polygon, BSC, Avalanche, and more) via Zerion |
-| **Exchange integration** | Connect Binance, Coinbase, Kraken, OKX, Bybit, and 40+ exchanges via CCXT |
-| **Transaction history** | Full EVM tx history with spam filtering, classification, and cost-basis tracking |
-| **Staking analytics** | Track positions, APY, rewards earned, and hourly snapshot history |
-| **DeFi positions** | Monitor liquidity pools, lending, and yield farming |
-| **NFT gallery** | View your collection with metadata from Alchemy |
-| **Airdrop scanner** | Discover unclaimed airdrops across supported protocols |
-| **Cost basis & PnL** | Lot-based cost tracking with realized gains for tax prep |
-| **Historical snapshots** | Net worth over time with interactive charts |
+| **Bank account sync** | Connect checking, savings, and money market accounts via Plaid or SimpleFIN |
+| **Budget management** | Set spending budgets by category with visual progress bars |
+| **Transaction categorization** | Auto-categorize transactions with AI assistance and custom rules |
+| **Subscription detection** | Automatically find recurring charges, track renewals, get cancel guidance |
+| **Spending insights** | Trends, forecasts, category breakdowns, and financial health scoring |
 
-### Finance Module — Traditional Banking
+### Investments & Net Worth
 
 | Feature | Description |
 |---------|-------------|
-| **Bank account sync** | Connect accounts via Plaid or SimpleFIN |
-| **Budget management** | Set category-based spending budgets with visual progress |
-| **Subscription detection** | Automatically find and manage recurring charges |
-| **Credit card tracking** | Track cards, rewards points, and spending by issuer |
-| **Investment accounts** | View brokerage holdings synced through Plaid |
-| **Smart categorization** | AI-assisted transaction categorization with custom rules |
-| **Insights & analytics** | Spending trends, forecasts, and financial health breakdown |
+| **Investment accounts** | Brokerage holdings synced through Plaid (Fidelity, Schwab, Vanguard, etc.) |
+| **Credit card tracking** | Cards, balances, rewards points, and spending by issuer |
+| **Net worth snapshots** | Historical net worth chart combining all account types |
+| **Spending vs. income** | Recurring income and expense stream detection |
 
-### Core Platform
+### Digital Assets
 
 | Feature | Description |
 |---------|-------------|
-| **Encrypted vault** | Single-user, password-derived AES-256-GCM encryption |
+| **Multi-chain wallets** | Track balances across 20+ blockchains (Ethereum, Solana, Base, Arbitrum, and more) |
+| **Exchange accounts** | Connect Binance, Coinbase, Kraken, OKX, and 40+ exchanges |
+| **Transaction history** | Full history with spam filtering, classification, and cost-basis tracking |
+| **Staking & DeFi** | Monitor staking positions, LP pools, lending, and yield farming |
+| **NFTs** | View your collection with metadata |
+| **Airdrops** | Scan for unclaimed airdrops across protocols |
+| **PnL & tax prep** | Lot-based cost tracking with realized gains |
+
+### Platform
+
+| Feature | Description |
+|---------|-------------|
+| **Encrypted vault** | Single-user, password-derived AES-256-GCM encryption for all stored credentials |
 | **Dark / light mode** | System-aware with manual toggle |
-| **PWA installable** | Works as a native-like app on mobile and desktop |
-| **Customizable sidebar** | Drag, reorder, show/hide navigation items |
-| **Responsive design** | Full mobile support with bottom tab navigation |
-| **Background sync** | Automated portfolio refresh, staking snapshots, and tx sync |
+| **PWA installable** | Add to home screen on mobile, use like a native app |
+| **Customizable sidebar** | Drag, reorder, and hide navigation items to match your workflow |
+| **Mobile responsive** | Full mobile support with bottom tab navigation |
+| **Background sync** | Automated balance refresh, staking snapshots, and transaction sync |
 
 ---
 
-## Architecture
+## How It Works
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Browser / PWA                                                      │
+│  React 19 · Tailwind 4 · Recharts · TanStack Query                 │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Next.js 16 API Layer                                               │
+│                                                                     │
+│  /api/finance/*  ──── Bank sync, budgets, cards, transactions       │
+│  /api/portfolio/* ─── Wallets, balances, history, staking, DeFi     │
+│  /api/auth/*  ─────── Vault setup, unlock, lock, reset              │
+│  /api/internal/* ──── Background workers (cron-triggered)           │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                │
+              ┌─────────────────┼─────────────────┐
+              ▼                 ▼                  ▼
+   ┌────────────────┐  ┌──────────────┐  ┌──────────────────┐
+   │   Banking       │  │  Market Data │  │  Blockchain       │
+   │                 │  │              │  │                   │
+   │  Plaid          │  │  CoinGecko   │  │  Zerion           │
+   │  SimpleFIN      │  │  DefiLlama   │  │  Alchemy          │
+   │                 │  │              │  │  Etherscan         │
+   │                 │  │              │  │  CCXT (40+ CEXs)  │
+   └────────┬────────┘  └──────┬───────┘  └────────┬──────────┘
+            │                  │                    │
+            └──────────────────┼────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  PostgreSQL · Prisma ORM · 40+ models                               │
+│                                                                     │
+│  Accounts · Transactions · Snapshots · Budgets · Subscriptions      │
+│  Wallets · Balances · Staking · Cards · Investments · NFTs          │
+│                                                                     │
+│  All credentials encrypted with AES-256-GCM                        │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ### Tech Stack
 
 ```
-Frontend                          Backend                         Data
-─────────────────────────────     ──────────────────────────      ──────────────────────
-Next.js 16 (App Router)           API Routes (Next.js)            PostgreSQL
-React 19                          Prisma ORM 7                    40+ models
-Tailwind CSS 4                    bcrypt + AES-256-GCM            Encrypted at rest
-React Query (TanStack)            Session cookies                 Snapshot history
-Recharts + Lightweight Charts     Rate limiting                   Sync state tracking
-Material Symbols                  Background workers              Provider call gates
-wagmi v2 + viem                   CCXT (exchange connector)
-Reown AppKit                      Plaid / SimpleFIN SDK
+Layer             Technology                       Purpose
+────────────────  ───────────────────────────────  ────────────────────────────
+Frontend          Next.js 16, React 19             App framework
+Styling           Tailwind CSS 4, Material Symbols Theme & icons
+Charts            Recharts, Lightweight Charts     Visualizations
+State             TanStack Query (React Query)     Data fetching & caching
+Database          PostgreSQL + Prisma ORM 7        Persistence (40+ models)
+Auth              bcrypt + AES-256-GCM             Vault encryption
+Banking           Plaid SDK, SimpleFIN             Bank account sync
+Blockchain        wagmi v2, viem, Reown AppKit     Wallet connection
+Exchanges         CCXT                             40+ exchange connectors
+Prices            CoinGecko, DefiLlama             Market data
 ```
 
-### How Data Flows
+### Vault Model
+
+PocketWatch is a **single-user vault**. No user accounts, no sign-ups. One password, one owner.
 
 ```
-                    ┌──────────────────────────┐
-                    │     Browser / PWA         │
-                    │     (React 19 + wagmi)    │
-                    └────────────┬─────────────┘
-                                 │
-                                 ▼
-                    ┌──────────────────────────┐
-                    │    Next.js API Routes     │
-                    │    /api/portfolio/*       │
-                    │    /api/finance/*         │
-                    │    /api/auth/*            │
-                    └────────────┬─────────────┘
-                                 │
-                    ┌────────────┼─────────────┐
-                    ▼            ▼              ▼
-            ┌────────────┐ ┌──────────┐ ┌────────────┐
-            │  Zerion    │ │  Plaid   │ │   CCXT     │
-            │  Alchemy   │ │ SimpleFIN│ │  Binance   │
-            │  CoinGecko │ │          │ │  Coinbase  │
-            │  DefiLlama │ │          │ │  Kraken    │
-            │  Etherscan │ │          │ │  40+ more  │
-            └─────┬──────┘ └────┬─────┘ └─────┬──────┘
-                  │             │              │
-                  └─────────────┼──────────────┘
-                                │
-                                ▼
-                    ┌──────────────────────────┐
-                    │       PostgreSQL          │
-                    │                          │
-                    │  Wallets · Balances       │
-                    │  Transactions · Snapshots │
-                    │  Budgets · Subscriptions  │
-                    │  Staking · DeFi · NFTs    │
-                    │  Cards · Investments      │
-                    │                          │
-                    │  All credentials          │
-                    │  AES-256-GCM encrypted    │
-                    └──────────────────────────┘
+  First visit                         Return visit
+  ───────────                         ────────────
+
+  Set password (min 8 chars)          Enter password
+        │                                   │
+        ▼                                   ▼
+  PBKDF2 ──▶ Encryption Key          Derive key ──▶ Decrypt vault
+        │                                   │
+        ▼                                   ▼
+  Create encrypted vault              Load dashboard
+  Set session cookie                  Set session cookie
+        │                                   │
+        ▼                                   ▼
+  ┌──────────────────┐                ┌──────────────────┐
+  │    Dashboard      │                │    Dashboard      │
+  └──────────────────┘                └──────────────────┘
+
+  Session: httpOnly · secure · sameSite=strict · 7-day expiry
+
+  ⚠ Forget the password → data is unrecoverable. Vault can only be wiped.
 ```
-
-### Vault Authentication
-
-PocketWatch uses a **single-user vault** model — no user accounts, no sign-ups. The first person to set a password owns the vault.
-
-```
-  ┌───────────────┐        ┌───────────────────────┐
-  │  First Visit  │───────▶│  Set vault password   │
-  │  (no vault)   │        │  (min 8 characters)   │
-  └───────────────┘        └───────────┬───────────┘
-                                       │
-                                       ▼
-                           ┌───────────────────────┐
-                           │  PBKDF2 key derivation │
-                           │         +              │
-                           │  AES-256-GCM vault     │
-                           │  created & encrypted   │
-                           └───────────┬───────────┘
-                                       │
-                                       ▼
-                           ┌───────────────────────┐
-  ┌───────────────┐        │  Session cookie set    │
-  │ Return Visit  │───────▶│  (httpOnly, strict,    │
-  │ (vault exists)│        │   7-day expiry)        │
-  └───────────────┘        └───────────┬───────────┘
-         │                             │
-         ▼                             ▼
-  ┌───────────────┐        ┌───────────────────────┐
-  │ Enter password│───────▶│     /portfolio         │
-  │ to unlock     │        │  (dashboard loads)     │
-  └───────────────┘        └───────────────────────┘
-```
-
-> **If you forget the password, data cannot be recovered.** You can only wipe the vault and start fresh.
 
 ---
 
@@ -219,7 +211,7 @@ PocketWatch uses a **single-user vault** model — no user accounts, no sign-ups
 | Requirement | Version |
 |-------------|---------|
 | Node.js | 18+ (20+ recommended) |
-| PostgreSQL | 14+ |
+| PostgreSQL | 14+ (local, Supabase, Neon, Railway) |
 | npm | comes with Node.js |
 
 ### 1. Clone and install
@@ -242,7 +234,7 @@ Generate an encryption key:
 openssl rand -hex 32
 ```
 
-Set the minimum required variables in `.env`:
+Minimum `.env`:
 
 ```env
 DATABASE_URL="postgresql://user:pass@localhost:5432/pocketwatch"
@@ -258,15 +250,15 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
-### 4. Start the dev server
+### 4. Start
 
 ```bash
 npm run dev
 ```
 
-Open **http://localhost:3000** and set your vault password.
+Open **http://localhost:3000** and set your vault password. That's it.
 
-### Production build
+### Production
 
 ```bash
 npm run build
@@ -283,43 +275,43 @@ npm start
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string (pooled) |
 | `DATABASE_URL_UNPOOLED` | PostgreSQL direct connection (for migrations) |
-| `ENCRYPTION_KEY` | 32-byte hex string — generate with `openssl rand -hex 32` |
+| `ENCRYPTION_KEY` | 32-byte hex — `openssl rand -hex 32` |
 | `NEXT_PUBLIC_APP_URL` | Your app's public URL |
 
-### Recommended
+### Data Providers
 
-These unlock the core data integrations:
+Each provider unlocks a set of features. Add them as needed:
 
-| Variable | What it enables | Get it at |
-|----------|----------------|-----------|
-| `ZERION_API_KEY` | Multi-chain portfolio balances | [zerion.io/developers](https://zerion.io/developers) |
+| Variable | Unlocks | Where to get it |
+|----------|---------|-----------------|
+| `ZERION_API_KEY` | Multi-chain wallet balances | [zerion.io/developers](https://zerion.io/developers) |
 | `COINGECKO_API_KEY` | Token prices & market data | [coingecko.com/en/api](https://www.coingecko.com/en/api) |
 | `NEXT_PUBLIC_ALCHEMY_API_KEY` | EVM RPC, tx history, NFTs | [alchemy.com](https://www.alchemy.com/) |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Browser wallet connection | [cloud.walletconnect.com](https://cloud.walletconnect.com) |
 
-### Background Workers
+> Plaid and SimpleFIN credentials are configured through the in-app settings UI.
 
-For automatic data refresh via scheduled cron jobs:
+### Background Sync
 
-| Variable | Protects |
+For automatic data refresh, set secrets for the cron worker endpoints:
+
+| Variable | Endpoint |
 |----------|----------|
 | `STAKING_CRON_SECRET` | `/api/internal/staking/snapshot-hourly` |
 | `HISTORY_CRON_SECRET` | `/api/internal/history/sync-worker` |
 | `PORTFOLIO_REFRESH_CRON_SECRET` | `/api/internal/portfolio/refresh-worker` |
 | `SNAPSHOT_WORKER_SECRET` | `/api/internal/snapshot-worker` |
 
-Generate each with `openssl rand -hex 16`.
+Generate each: `openssl rand -hex 16`
 
-### Provider Throttling
-
-Sensible defaults — tune if you hit rate limits:
+### Rate Limit Tuning
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORTFOLIO_REFRESH_TTL_MS` | `300000` | 5 min cooldown between refreshes |
-| `ZERION_MIN_INTERVAL_MS` | `20000` | 20s between Zerion API calls |
+| `ZERION_MIN_INTERVAL_MS` | `20000` | 20s between Zerion calls |
 | `ALCHEMY_MIN_INTERVAL_MS` | `500` | 500ms between Alchemy calls |
-| `CCXT_MIN_INTERVAL_MS` | `15000` | 15s between exchange API calls |
+| `CCXT_MIN_INTERVAL_MS` | `15000` | 15s between exchange calls |
 | `DEFI_LLAMA_MIN_INTERVAL_MS` | `1000` | 1s between DefiLlama calls |
 
 ---
@@ -329,58 +321,49 @@ Sensible defaults — tune if you hit rate limits:
 ```
 PocketWatch/
 ├── prisma/
-│   └── schema.prisma              # Database schema (40+ models)
-├── public/
-│   └── img/                       # Logos, PWA icons, OG images
+│   └── schema.prisma               # Database schema (40+ models)
+├── public/img/                      # Logos, PWA icons, OG images
 ├── src/
 │   ├── app/
-│   │   ├── (dashboard)/           # All authenticated pages
-│   │   │   ├── portfolio/         # Digital asset pages
-│   │   │   │   ├── page.tsx       #   Overview dashboard
-│   │   │   │   ├── accounts/      #   Wallet & exchange management
-│   │   │   │   ├── balances/      #   On-chain, exchange, manual
-│   │   │   │   ├── history/       #   Transactions, PnL, snapshots
-│   │   │   │   ├── settings/      #   API keys, sync controls
-│   │   │   │   ├── staking/       #   Staking positions & APY
-│   │   │   │   ├── defi/          #   DeFi position analytics
-│   │   │   │   ├── nfts/          #   NFT gallery
-│   │   │   │   └── airdrops/      #   Airdrop scanner
-│   │   │   └── finance/           # Traditional finance pages
-│   │   │       ├── page.tsx       #   Finance dashboard
-│   │   │       ├── accounts/      #   Bank accounts (Plaid/SimpleFIN)
-│   │   │       ├── budgets/       #   Budgets & subscriptions
-│   │   │       ├── cards/         #   Credit card tracking
-│   │   │       ├── categorize/    #   Transaction categorization
-│   │   │       ├── investments/   #   Brokerage holdings
-│   │   │       ├── settings/      #   Provider settings
-│   │   │       └── transactions/  #   Transaction list
+│   │   ├── (dashboard)/
+│   │   │   ├── finance/             # Banking, budgets, cards, investments
+│   │   │   │   ├── page.tsx         #   Finance dashboard
+│   │   │   │   ├── accounts/        #   Bank accounts (Plaid/SimpleFIN)
+│   │   │   │   ├── budgets/         #   Budgets & subscription management
+│   │   │   │   ├── cards/           #   Credit card tracking
+│   │   │   │   ├── categorize/      #   Transaction categorization
+│   │   │   │   ├── investments/     #   Brokerage holdings
+│   │   │   │   └── transactions/    #   Transaction list & search
+│   │   │   └── portfolio/           # Digital assets
+│   │   │       ├── page.tsx         #   Portfolio overview
+│   │   │       ├── accounts/        #   Wallet & exchange management
+│   │   │       ├── balances/        #   On-chain, exchange, manual
+│   │   │       ├── history/         #   Transactions, PnL, snapshots
+│   │   │       ├── staking/         #   Staking positions & APY
+│   │   │       ├── defi/            #   DeFi analytics
+│   │   │       ├── nfts/            #   NFT gallery
+│   │   │       └── airdrops/        #   Airdrop scanner
 │   │   └── api/
-│   │       ├── auth/              #   Vault auth (setup/unlock/lock/reset)
-│   │       ├── portfolio/         #   Portfolio data endpoints
-│   │       ├── finance/           #   Finance data endpoints
-│   │       └── internal/          #   Background worker endpoints
+│   │       ├── auth/                #   Vault auth (setup/unlock/lock/reset)
+│   │       ├── finance/             #   Banking data endpoints
+│   │       ├── portfolio/           #   Digital asset endpoints
+│   │       └── internal/            #   Background sync workers
 │   ├── components/
-│   │   ├── portfolio/             # Portfolio UI (overview, balances, history, ...)
-│   │   ├── finance/               # Finance UI (budgets, cards, insights, ...)
-│   │   ├── layout/                # Sidebar, header, mobile bottom nav
-│   │   └── ui/                    # Shared primitives (inputs, buttons, modals)
+│   │   ├── finance/                 # Banking UI (budgets, cards, insights)
+│   │   ├── portfolio/               # Digital asset UI (balances, history)
+│   │   ├── layout/                  # Sidebar, header, mobile nav
+│   │   └── ui/                      # Shared primitives
 │   ├── hooks/
-│   │   ├── portfolio/             # React Query hooks (one file per domain)
-│   │   └── finance/               # Finance hooks (accounts, budgets, ...)
+│   │   ├── finance/                 # Banking hooks (one per domain)
+│   │   └── portfolio/               # Portfolio hooks (one per domain)
 │   ├── lib/
-│   │   ├── portfolio/             # Business logic
-│   │   │   ├── transaction-fetcher/   # Multi-chain tx fetching
-│   │   │   ├── staking/               # Staking analytics engine
-│   │   │   ├── cost-basis/            # Tax lot tracking
-│   │   │   ├── vesting-claims/        # Vesting schedule scanners
-│   │   │   └── yields/                # Yield aggregation
-│   │   ├── finance/               # Plaid sync, categorization, crypto
-│   │   ├── defillama/             # Protocol data integration
-│   │   └── contracts/             # Smart contract ABIs
-│   └── types/                     # Shared TypeScript interfaces
-├── .env.example                   # Environment variable template
-├── next.config.ts                 # Next.js + security headers
-├── tailwind.config.ts             # Theme + design tokens
+│   │   ├── finance/                 # Plaid sync, categorization, analytics
+│   │   ├── portfolio/               # Wallet sync, staking, cost-basis, tx
+│   │   ├── defillama/               # Protocol data
+│   │   └── contracts/               # Smart contract ABIs
+│   └── types/                       # Shared TypeScript interfaces
+├── .env.example
+├── next.config.ts                   # Next.js config + security headers
 └── package.json
 ```
 
@@ -388,101 +371,83 @@ PocketWatch/
 
 ## Data Providers
 
-PocketWatch aggregates data from multiple sources. All credentials are encrypted at rest.
+PocketWatch connects to multiple data sources. All credentials are encrypted at rest with AES-256-GCM.
 
-### Crypto & Blockchain
+### Banking & Brokerage
 
 | Provider | What it does | Key needed? |
 |----------|-------------|-------------|
-| **Zerion** | Multi-chain balance aggregation, positions, portfolio charts | Yes (free tier available) |
-| **Alchemy** | EVM transaction history, NFT metadata, RPC provider | Yes (free tier available) |
-| **CoinGecko** | Token prices, market data, historical prices | Yes (free tier available) |
-| **DefiLlama** | Protocol TVL, yields, token prices | No (fully free) |
+| **Plaid** | Bank accounts, transactions, credit cards, investment holdings | Yes (configured in-app) |
+| **SimpleFIN** | Alternative bank sync (community-driven) | Yes (configured in-app) |
+
+### Market Data
+
+| Provider | What it does | Key needed? |
+|----------|-------------|-------------|
+| **CoinGecko** | Token prices, market data, historical prices | Yes (free tier) |
+| **DefiLlama** | Protocol TVL, yields, DeFi token prices | No (fully free) |
+
+### Blockchain & Exchanges
+
+| Provider | What it does | Key needed? |
+|----------|-------------|-------------|
+| **Zerion** | Multi-chain wallet balance aggregation | Yes (free tier) |
+| **Alchemy** | EVM transaction history, NFT metadata, RPC | Yes (free tier) |
 | **Etherscan** | EVM transaction scanning (+ Arbiscan, Basescan, etc.) | Optional |
-| **CCXT** | Centralized exchange balances & history | Exchange API keys |
-
-### Traditional Finance
-
-| Provider | What it does | Key needed? |
-|----------|-------------|-------------|
-| **Plaid** | Bank account sync, transactions, investment holdings | Yes |
-| **SimpleFIN** | Alternative bank sync (community-driven) | Yes |
-
-### Other Integrations
-
-| Provider | What it does |
-|----------|-------------|
-| **WalletConnect / Reown** | Browser wallet connection (MetaMask, Coinbase, etc.) |
-| **Telegram** | Alert & notification delivery via bot |
-| **Google Sheets** | Portfolio data export |
+| **CCXT** | Centralized exchange balances & history (40+ exchanges) | Exchange API keys |
+| **WalletConnect / Reown** | Browser wallet connection | Optional |
 
 ---
 
 ## Database
 
-PocketWatch uses **PostgreSQL** with **Prisma ORM**. The schema has **40+ models** organized around:
+**PostgreSQL** with **Prisma ORM**. 40+ models covering:
 
 ```
-User & Auth               Portfolio                    Finance
-─────────────             ─────────────                ─────────────
-User                      TrackedWallet                FinanceCredential
-Session (encrypted DEK)   PortfolioSnapshot            FinanceInstitution
-ExternalApiKey            TransactionCache             FinanceBudget
-                          TransactionSyncState         FinanceSubscription
-                          ManualBalance                FinanceCategoryRule
-                          StakingSnapshot              FinanceSnapshot
-                          StakingPosition              FinanceInvestmentHolding
-                          CostBasisLot                 CreditCardProfile
-                          RealizedGain                 FinanceRecurringStream
-                          ChartCache                   PlaidDataSnapshot
+Banking & Spending            Investments & Net Worth       Digital Assets
+──────────────────            ──────────────────────        ──────────────
+FinanceCredential             FinanceInvestmentHolding      TrackedWallet
+FinanceInstitution            FinanceInvestmentSecurity     PortfolioSnapshot
+FinanceBudget                 FinanceInvestmentTransaction  TransactionCache
+FinanceSubscription           CreditCardProfile             StakingSnapshot
+FinanceCategoryRule           FinanceRecurringStream        StakingPosition
+FinanceSnapshot               PortfolioSnapshot             CostBasisLot
+PlaidDataSnapshot             ChartCache                    RealizedGain
+
+Auth & System
+──────────────
+User · Session (encrypted DEK) · ExternalApiKey · ProviderCallGate
 ```
 
-### Key design decisions
+### Design decisions
 
-- **Encrypted fields** — API keys and credentials use AES-256-GCM with a per-user DEK, wrapped by the master `ENCRYPTION_KEY`
-- **Snapshot history** — Balances are periodically captured for historical charts
-- **Sync state** — Each provider has dedicated sync state tables for incremental updates
-- **Rate limiting** — `ProviderCallGate` model enforces per-provider rate limits
-
-### Common commands
-
-```bash
-npx prisma migrate deploy          # Apply pending migrations
-npx prisma migrate dev --name xxx  # Create new migration (dev)
-npx prisma studio                  # Visual database browser
-```
+- **Encrypted credentials** — AES-256-GCM with per-user DEK wrapped by master key
+- **Snapshot history** — Balances captured periodically for historical net worth charts
+- **Incremental sync** — Dedicated sync state tables per provider to avoid redundant API calls
+- **Provider rate limiting** — `ProviderCallGate` model prevents API bans
 
 ---
 
 ## Security
 
-### Threat Model
-
-PocketWatch is designed for **single-user self-hosting**. It assumes:
-
-- The server runs on trusted infrastructure (your machine, VPS, or PaaS)
-- Network access is restricted (local or behind HTTPS reverse proxy)
-- The attacker does not have filesystem access
-
-### Encryption & Auth
+### What's encrypted
 
 ```
 Vault Password
       │
-      ▼
-   bcrypt (cost 12)  ──────▶  Stored hash (auth check)
+      ├──▶ bcrypt (cost 12)  ──────▶  Stored hash (auth verification)
       │
-      ▼
-   PBKDF2 derivation ──────▶  Data Encryption Key (DEK)
-      │
-      ▼
-   AES-256-GCM  ───────────▶  Encrypts all:
-                                 • API keys (Zerion, Alchemy, etc.)
-                                 • Bank tokens (Plaid access tokens)
-                                 • Exchange credentials (CCXT)
+      └──▶ PBKDF2 derivation ──────▶  Data Encryption Key (DEK)
+                                             │
+                                             ▼
+                                       AES-256-GCM encrypts:
+                                         • Bank tokens (Plaid)
+                                         • Brokerage credentials
+                                         • Exchange API keys
+                                         • Blockchain provider keys
 ```
 
-### Security Headers
+### Security headers
 
 | Header | Value |
 |--------|-------|
@@ -493,43 +458,42 @@ Vault Password
 | Referrer-Policy | `strict-origin-when-cross-origin` |
 | Permissions-Policy | Camera, microphone, geolocation disabled |
 
-### Session Security
+### Session
 
 | Property | Value |
 |----------|-------|
 | Cookie flags | `httpOnly`, `secure`, `sameSite=strict` |
-| Session duration | 7 days |
+| Duration | 7 days |
 | Rate limiting | Per-IP, per-endpoint |
 
-### Deployment Checklist
+### Deployment checklist
 
-- [ ] Use HTTPS in production (TLS termination via reverse proxy)
-- [ ] Generate real cron secrets: `openssl rand -hex 16`
-- [ ] Restrict network access (firewall / Cloudflare Access)
-- [ ] Back up the `ENCRYPTION_KEY` — lose it and all encrypted data is gone
-- [ ] Regular `pg_dump` for database backups
-- [ ] Run `npm audit` periodically
+- [ ] HTTPS in production (reverse proxy with TLS)
+- [ ] Set real cron secrets: `openssl rand -hex 16`
+- [ ] Restrict network access (firewall / Cloudflare Access / VPN)
+- [ ] Back up `ENCRYPTION_KEY` — lose it and encrypted data is gone forever
+- [ ] Regular `pg_dump` backups
+- [ ] `npm audit` periodically
 
 ---
 
 ## Deployment
 
-PocketWatch works with any platform that supports Node.js + PostgreSQL.
+Works with any platform that supports Node.js + PostgreSQL.
 
 ### Railway / Render / Fly.io
 
 1. Connect your GitHub repo
 2. Set environment variables in the platform dashboard
-3. Build: `npm run build`
-4. Start: `npm start`
-5. Add PostgreSQL and set `DATABASE_URL` + `DATABASE_URL_UNPOOLED`
+3. Build: `npm run build` &nbsp;|&nbsp; Start: `npm start`
+4. Add PostgreSQL and set `DATABASE_URL` + `DATABASE_URL_UNPOOLED`
 
-### Background Jobs
+### Background Sync
 
-Set up cron jobs for automatic data sync:
+Set up cron jobs for automatic data refresh:
 
 ```bash
-# Every 15 min — refresh portfolio balances
+# Every 15 min — refresh balances
 curl -X POST https://your-app.com/api/internal/portfolio/refresh-worker \
   -H "Authorization: Bearer $PORTFOLIO_REFRESH_CRON_SECRET"
 
@@ -537,12 +501,10 @@ curl -X POST https://your-app.com/api/internal/portfolio/refresh-worker \
 curl -X POST https://your-app.com/api/internal/staking/snapshot-hourly \
   -H "x-staking-cron-secret: $STAKING_CRON_SECRET"
 
-# Every 6 hours — transaction history sync
+# Every 6 hours — transaction history
 curl -X POST https://your-app.com/api/internal/history/sync-worker \
   -H "x-history-cron-secret: $HISTORY_CRON_SECRET"
 ```
-
-Most PaaS platforms (Railway, Render, Vercel) support scheduled jobs natively.
 
 ---
 
@@ -552,45 +514,32 @@ Most PaaS platforms (Railway, Render, Vercel) support scheduled jobs natively.
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start dev server on port 3000 |
+| `npm run dev` | Dev server on port 3000 |
 | `npm run build` | Production build |
-| `npm start` | Start production server |
-| `npm run lint` | ESLint check |
+| `npm start` | Production server |
+| `npm run lint` | ESLint |
 | `npm run db:prepare` | Prisma generate + migrate |
 
-### Code Conventions
+### Code conventions
 
 | Rule | Limit |
 |------|-------|
-| Page files | Max 400 lines |
+| Pages | Max 400 lines |
 | Components | Max 300 lines, one per file |
 | API routes | Max 200 lines |
 | Hooks | React Query with query key factories |
-| Styling | Tailwind + CSS variables (`var(--foreground)`, etc.) |
+| Styling | Tailwind + CSS variables |
 | Icons | Material Symbols Rounded |
 | Toasts | sonner |
-| Errors | `apiError()` helper, never expose raw DB errors |
-
-### Adding a New Data Provider
-
-```
-1. Create client         src/lib/portfolio/your-provider.ts
-2. Add API route         src/app/api/portfolio/your-endpoint/route.ts
-3. Create hook           src/hooks/portfolio/use-your-data.ts
-4. Wire up UI            src/components/portfolio/your-component.tsx
-5. (Optional) Add key    ExternalApiKey model via settings UI
-```
 
 ---
 
 ## Contributing
 
-Contributions are welcome!
-
 1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/amazing-thing`
-3. Follow the code conventions above
-4. Verify the build: `npm run build`
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Follow the code conventions
+4. Verify: `npm run build`
 5. Open a pull request
 
 ---
@@ -602,5 +551,5 @@ Contributions are welcome!
 ---
 
 <p align="center">
-  <sub>Built with Next.js, Prisma, and too many API keys.</sub>
+  <sub>Built for people who want to see their full financial picture without trusting a third party.</sub>
 </p>

@@ -145,7 +145,7 @@ async function main() {
     </defs>
     <rect width="1200" height="630" fill="url(#bg)"/>
     <!-- Subtle grid pattern -->
-    <g opacity="0.05" stroke="white" stroke-width="0.5">
+    <g opacity="0.04" stroke="white" stroke-width="0.5">
       ${Array.from({length: 20}, (_, i) => `<line x1="${i * 60}" y1="0" x2="${i * 60}" y2="630"/>`).join("")}
       ${Array.from({length: 11}, (_, i) => `<line x1="0" y1="${i * 60}" x2="1200" y2="${i * 60}"/>`).join("")}
     </g>
@@ -165,11 +165,21 @@ async function main() {
       <circle cx="-14" cy="0" r="1.2" fill="white" opacity="0.4"/>
     </g>
     <!-- Text -->
-    <text x="520" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white">Pocket</text>
-    <text x="520" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white" dx="280">Watch</text>
-    <text x="520" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="white" opacity="0.6">Personal finance &amp; digital asset tracker</text>
+    <text x="520" y="270" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white">PocketWatch</text>
+    <text x="520" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="white" opacity="0.6">See everything you own. In one place.</text>
     <!-- Accent line -->
-    <rect x="520" y="360" width="120" height="3" rx="1.5" fill="url(#accent)" opacity="0.8"/>
+    <rect x="520" y="345" width="120" height="3" rx="1.5" fill="url(#accent)" opacity="0.8"/>
+    <!-- Feature pills -->
+    <g font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="white">
+      <rect x="520" y="370" width="120" height="28" rx="14" fill="white" opacity="0.08"/>
+      <text x="555" y="389" opacity="0.5">Banking</text>
+      <rect x="650" y="370" width="140" height="28" rx="14" fill="white" opacity="0.08"/>
+      <text x="678" y="389" opacity="0.5">Investments</text>
+      <rect x="800" y="370" width="100" height="28" rx="14" fill="white" opacity="0.08"/>
+      <text x="823" y="389" opacity="0.5">Cards</text>
+      <rect x="910" y="370" width="150" height="28" rx="14" fill="white" opacity="0.08"/>
+      <text x="934" y="389" opacity="0.5">Digital Assets</text>
+    </g>
   </svg>`;
 
   const ogBuf = await sharp(Buffer.from(ogSvg)).resize(1200, 630).png().toBuffer();

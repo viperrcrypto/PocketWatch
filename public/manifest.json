@@ -1,7 +1,7 @@
 {
   "name": "PocketWatch",
   "short_name": "PocketWatch",
-  "description": "Your personal finance and digital asset tracker.",
+  "description": "See everything you own. In one place.",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#FFFFFF",

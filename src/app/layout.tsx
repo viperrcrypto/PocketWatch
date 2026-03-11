@@ -27,8 +27,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: "PocketWatch - Finance & Digital Assets",
-  description: "Your personal finance and digital asset tracker.",
+  title: "PocketWatch — Personal Wealth Tracker",
+  description: "See everything you own. In one place.",
   manifest: "/manifest.json",
   icons: {
     icon: "/img/logo-circle.png",
@@ -40,22 +40,22 @@ export const metadata: Metadata = {
     title: "PocketWatch",
   },
   openGraph: {
-    title: "PocketWatch - Finance & Digital Assets",
-    description: "Your personal finance and digital asset tracker.",
+    title: "PocketWatch — Personal Wealth Tracker",
+    description: "See everything you own. In one place.",
     type: "website",
     images: [
       {
         url: "/img/og-banner.jpg",
         width: 1200,
         height: 630,
-        alt: "PocketWatch - Finance & Digital Assets",
+        alt: "PocketWatch — Personal Wealth Tracker",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PocketWatch - Finance & Digital Assets",
-    description: "Your personal finance and digital asset tracker.",
+    title: "PocketWatch — Personal Wealth Tracker",
+    description: "See everything you own. In one place.",
     images: ["/img/og-banner.jpg"],
   },
 }
