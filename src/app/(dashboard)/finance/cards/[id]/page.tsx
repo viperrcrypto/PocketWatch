@@ -4,7 +4,7 @@ import { use, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   useCreditCards, useFinanceAccounts, useCardRewardRates,
-  useLiabilities, useAISettings,
+  useLiabilities, useAISettings, useCardPerks, useToggleCardPerk,
 } from "@/hooks/use-finance"
 import { useAutoEnrichCards } from "@/hooks/finance/use-card-enrichment"
 import { formatCurrency } from "@/lib/utils"
@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import type { CardAIEnrichedData } from "@/app/api/finance/cards/ai-enrich/route"
 import { CardChat } from "@/components/finance/cards/card-chat"
+import { CardPerksChecklist } from "@/components/finance/card-perks-checklist"
 
 export default function CardDetailPage({
   params,
@@ -33,6 +34,8 @@ export default function CardDetailPage({
 
   const { data: rewardRates } = useCardRewardRates(id)
   const { data: liabilities } = useLiabilities()
+  const { data: perks } = useCardPerks(id)
+  const togglePerk = useToggleCardPerk()
   const autoEnrich = useAutoEnrichCards()
   const { data: aiSettings } = useAISettings()
   const [aiError, setAiError] = useState<string | null>(null)
@@ -210,7 +213,45 @@ export default function CardDetailPage({
       />
 
       {autoEnrich.isPending && !aiData && <CardAILoadingSkeleton />}
-      {liability && <CardPaymentDetails liability={liability} />}
+
+      {liability ? (
+        <CardPaymentDetails liability={liability} />
+      ) : card.paymentDueDay ? (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-rounded text-primary" style={{ fontSize: 20 }}>calendar_today</span>
+            <h3 className="text-sm font-semibold text-foreground">Payment Details</h3>
+          </div>
+          <div className="p-4 rounded-xl bg-card border border-card-border">
+            <p className="text-foreground-muted text-[10px] font-medium uppercase tracking-widest">Payment Due Day</p>
+            <p className="text-foreground text-lg font-bold mt-1">{ordinal(card.paymentDueDay)} of each month</p>
+          </div>
+        </section>
+      ) : null}
+
+      {perks && perks.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-rounded text-primary" style={{ fontSize: 20 }}>card_giftcard</span>
+            <h3 className="text-sm font-semibold text-foreground">Card Perks</h3>
+          </div>
+          <div className="bg-card border border-card-border rounded-xl p-4">
+            <CardPerksChecklist
+              cardName={card.cardName}
+              annualFee={card.annualFee ?? 0}
+              perks={perks.map((p) => ({
+                id: p.id,
+                perkName: p.name,
+                perkType: p.perkType,
+                maxValue: p.maxValue,
+                isUsed: p.isUsed,
+              }))}
+              onTogglePerk={(perkId, data) => togglePerk.mutate({ perkId, ...data })}
+            />
+          </div>
+        </section>
+      )}
+
       <CardRewardMultipliers multipliers={multipliers} />
       <CardTransferPartners partners={transferPartners} />
       <CardChat cardId={id} cardName={card.cardName} aiData={aiData} />
@@ -220,4 +261,10 @@ export default function CardDetailPage({
       <CardEditModal open={editOpen} onClose={() => setEditOpen(false)} card={card} />
     </div>
   )
+}
+
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"]
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
 }

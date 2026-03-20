@@ -160,6 +160,7 @@ const cardSchema = z.object({
   })).max(20).optional(),
   rewardProgram: z.string().optional(),
   annualFeeDate: z.string().datetime().optional(),
+  paymentDueDay: z.number().int().min(1).max(31).optional(),
   transferPartners: z.array(z.object({
     name: z.string(),
     ratio: z.string().optional(),

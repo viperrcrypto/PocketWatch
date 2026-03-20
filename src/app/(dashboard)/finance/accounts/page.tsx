@@ -221,6 +221,9 @@ export default function FinanceAccountsPage() {
               onSync={() => syncMutation.mutate(inst.id)}
               onDisconnect={() => setDisconnecting({ id: inst.id, name: inst.institutionName })}
               onRenameAccount={(accountId, name) => updateAccount.mutate({ accountId, name })}
+              onChangeAccountType={(accountId, type) =>
+                updateAccount.mutate({ accountId, type }, { onSuccess: () => toast.success(`Account type changed to ${type}`) })
+              }
               onToggleHidden={(accountId, isHidden) =>
                 updateAccount.mutate({ accountId, isHidden }, { onSuccess: () => toast.success(isHidden ? "Account hidden" : "Account shown") })
               }

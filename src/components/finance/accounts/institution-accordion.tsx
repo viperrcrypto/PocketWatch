@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { formatCurrency, cn } from "@/lib/utils"
 import { InstitutionLogo } from "@/components/finance/institution-logo"
 import { AccountTypeBadge } from "@/components/finance/account-type-badge"
+import { AccountTypeSelector } from "@/components/finance/account-type-selector"
 import { EditableName } from "./editable-name"
 import { TYPE_ICONS } from "./accounts-constants"
 
@@ -38,6 +39,7 @@ export function InstitutionAccordion({
   onSync,
   onDisconnect,
   onRenameAccount,
+  onChangeAccountType,
   onToggleHidden,
   syncPending,
 }: {
@@ -49,6 +51,7 @@ export function InstitutionAccordion({
   onSync: () => void
   onDisconnect: () => void
   onRenameAccount: (accountId: string, name: string) => void
+  onChangeAccountType: (accountId: string, type: string) => void
   onToggleHidden: (accountId: string, isHidden: boolean) => void
   syncPending: boolean
 }) {
@@ -138,7 +141,7 @@ export function InstitutionAccordion({
                 <div className="flex-1 min-w-0">
                   <EditableName value={acct.name} onSave={(name) => onRenameAccount(acct.id, name)} />
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <AccountTypeBadge type={acct.type} />
+                    <AccountTypeSelector type={acct.type} onChangeType={(type) => onChangeAccountType(acct.id, type)} />
                     {acct.mask && <span className="text-[10px] text-foreground-muted tabular-nums">••{acct.mask}</span>}
                     {acct.officialName && acct.officialName !== acct.name && (
                       <span className="text-[10px] text-foreground-muted truncate max-w-[200px]">{acct.officialName}</span>

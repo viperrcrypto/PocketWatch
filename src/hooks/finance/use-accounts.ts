@@ -52,7 +52,7 @@ export function useFinanceAccounts() {
 export function useUpdateAccount() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { accountId: string; name?: string; isHidden?: boolean }) =>
+    mutationFn: (data: { accountId: string; name?: string; isHidden?: boolean; type?: string }) =>
       financeFetch("/accounts", { method: "PATCH", body: JSON.stringify(data) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.accounts() }),
   })

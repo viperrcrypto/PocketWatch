@@ -37,16 +37,30 @@ export default function FinanceCardsPage() {
   const autoIdentify = useAutoIdentifyCards()
   const autoEnrich = useAutoEnrichCards()
 
-  // Get credit accounts from institutions
+  // All accounts indexed by ID (for balance lookups — SimpleFIN often misclassifies
+  // credit cards as "checking", so we can't rely on type for account matching)
+  const allAccountsMap = useMemo(() => {
+    const map = new Map<string, { currentBalance: number | null; creditLimit: number | null; mask: string | null; name: string; officialName?: string | null; type: string; institutionName: string }>()
+    for (const inst of institutions ?? []) {
+      for (const a of inst.accounts) {
+        map.set(a.id, { ...a, institutionName: inst.institutionName })
+      }
+    }
+    return map
+  }, [institutions])
+
+  // Credit accounts for header totals — include accounts with card profiles
+  // even if SimpleFIN misclassified their type
+  const cardAccountIds = useMemo(() => new Set((cards ?? []).map((c) => c.accountId)), [cards])
   const creditAccounts = useMemo(() => {
     return institutions?.flatMap((inst) =>
       inst.accounts
-        .filter((a) => a.type === "credit" || a.type === "business_credit")
+        .filter((a) => a.type === "credit" || a.type === "business_credit" || cardAccountIds.has(a.id))
         .map((a) => ({ ...a, institutionName: inst.institutionName }))
     ) ?? []
-  }, [institutions])
+  }, [institutions, cardAccountIds])
 
-  // Merge card profiles with credit account data
+  // Merge card profiles with account data
   type MergedCard = {
     id: string; cardName: string; cardNetwork: string; accountId: string;
     annualFee: number; rewardType: string; rewardProgram: string | null;
@@ -61,7 +75,7 @@ export default function FinanceCardsPage() {
   const mergedCards = useMemo(() => {
     const creditCardLiabilities = liabilities?.creditCards ?? []
     return (cards ?? []).map((c): MergedCard => {
-      const acct = creditAccounts.find((a) => a.id === c.accountId)
+      const acct = allAccountsMap.get(c.accountId)
       const liab = creditCardLiabilities.find((l: { accountId: string }) => l.accountId === c.accountId)
       const instName = acct?.institutionName ?? ""
 
@@ -96,7 +110,7 @@ export default function FinanceCardsPage() {
         accountType: acct?.type ?? "credit",
       }
     })
-  }, [cards, creditAccounts, liabilities])
+  }, [cards, allAccountsMap, liabilities])
 
   // Auto-identify unidentified cards (generic names like "Chase Card ••••3132")
   const identifyTriggered = useRef(false)

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { getKnownCardImage } from "./card-image-map"
-import { PerkProgressRow } from "./perk-progress-row"
+import { CardPerksChecklist } from "./card-perks-checklist"
 import { computeAnnualizedValue } from "@/lib/finance/perk-periods"
 import type { PerkPeriod } from "@/types/card-perks"
 
@@ -226,52 +226,19 @@ function CardPerksSection({ card, isExpanded, onToggleExpand, onTogglePerk }: {
 
       {isExpanded && (
         <div className="px-5 pb-4 animate-in slide-in-from-top-1 duration-150">
-          {/* Tracked Credits */}
-          {limited.length > 0 && (
-            <div className="mb-4">
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-foreground-muted mb-2.5">
-                Tracked Credits
-              </p>
-              <div className="space-y-2">
-                {limited.map((perk) => (
-                  <PerkProgressRow
-                    key={perk.id}
-                    id={perk.id}
-                    name={perk.perkName}
-                    maxValue={perk.maxValue}
-                    usedValue={perk.usedValue}
-                    percentUsed={perk.percentUsed}
-                    period={perk.period}
-                    periodLabel={perk.periodLabel}
-                    daysRemaining={perk.daysRemaining}
-                    cardId={card.cardId}
-                    onUpdate={(cId, pId, data) => onTogglePerk?.(cId, pId, data)}
-                  />
-                ))}
-              </div>
-              {card.annualFee > 0 && (
-                <div className="mt-3 pt-2.5 border-t border-card-border/30 flex items-center justify-between">
-                  <span className="text-[10px] text-foreground-muted">{formatCurrency(usedAnnual)} of {formatCurrency(totalAnnual)} annualized</span>
-                  <span className={cn("text-[10px] font-data font-semibold tabular-nums", usedAnnual >= card.annualFee ? "text-success" : "text-foreground")}>
-                    {usedAnnual >= card.annualFee ? `+${formatCurrency(usedAnnual - card.annualFee)} profit` : `${formatCurrency(card.annualFee - usedAnnual)} to break even`}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Benefits (unlimited perks) */}
-          {unlimited.length > 0 && (
-            <div>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-foreground-muted mb-2">Benefits</p>
-              <div className="flex flex-wrap gap-1.5">
-                {unlimited.map((perk) => (
-                  <span key={perk.id} className="inline-flex items-center gap-1 px-2 py-1 bg-success/5 border border-success/10 rounded-md text-[10px] text-foreground-muted">
-                    <span className="material-symbols-rounded text-success" style={{ fontSize: 10 }}>verified</span>
-                    {perk.perkName}
-                  </span>
-                ))}
-              </div>
+          <CardPerksChecklist
+            cardName={card.cardName}
+            annualFee={card.annualFee}
+            perks={card.perks}
+            onTogglePerk={(perkId, data) => onTogglePerk?.(card.cardId, perkId, data)}
+            showHeader={false}
+          />
+          {card.annualFee > 0 && limited.length > 0 && (
+            <div className="mt-3 pt-2.5 border-t border-card-border/30 flex items-center justify-between">
+              <span className="text-[10px] text-foreground-muted">{formatCurrency(usedAnnual)} of {formatCurrency(totalAnnual)} annualized</span>
+              <span className={cn("text-[10px] font-data font-semibold tabular-nums", usedAnnual >= card.annualFee ? "text-success" : "text-foreground")}>
+                {usedAnnual >= card.annualFee ? `+${formatCurrency(usedAnnual - card.annualFee)} profit` : `${formatCurrency(card.annualFee - usedAnnual)} to break even`}
+              </span>
             </div>
           )}
         </div>

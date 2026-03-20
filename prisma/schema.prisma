@@ -840,6 +840,7 @@ model CreditCardProfile {
   bonusCategories  Json
   statementCredits Json?
   annualFeeDate    DateTime?
+  paymentDueDay    Int?
   transferPartners Json?
   cardImageUrl     String?
   aiEnrichedData   Json?

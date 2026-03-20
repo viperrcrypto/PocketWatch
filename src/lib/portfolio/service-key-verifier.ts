@@ -317,7 +317,7 @@ async function verifyHeliusKey(apiKey: string): Promise<ServiceVerifyResult> {
 }
 
 async function verifyMoralisKey(apiKey: string): Promise<ServiceVerifyResult> {
-  const url = "https://deep-index.moralis.io/api/v2.2/info"
+  const url = "https://deep-index.moralis.io/api/v2.2/web3/version"
 
   try {
     const res = await fetch(url, {
@@ -341,27 +341,23 @@ async function verifyMoralisKey(apiKey: string): Promise<ServiceVerifyResult> {
 }
 
 async function verifyCoinGeckoKey(apiKey: string): Promise<ServiceVerifyResult> {
-  const url = "https://pro-api.coingecko.com/api/v3/ping"
+  // Try pro endpoint first, then demo endpoint (free-tier keys use different host + header)
+  const endpoints = [
+    { url: "https://pro-api.coingecko.com/api/v3/ping", header: "x-cg-pro-api-key" },
+    { url: "https://api.coingecko.com/api/v3/ping", header: "x-cg-demo-api-key" },
+  ]
 
-  try {
-    const res = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "x-cg-pro-api-key": apiKey,
-      },
-      signal: AbortSignal.timeout(VERIFY_TIMEOUT_MS),
-    })
-    const text = await res.text().catch(() => "")
-
-    if (res.ok) return ok("CoinGecko key verified")
-    if (res.status === 401 || res.status === 403 || isLikelyInvalidKey(text)) {
-      return fail("invalid_key", "Invalid CoinGecko API key")
-    }
-    if (isRateLimited(res.status, text)) return fail("rate_limited", "CoinGecko rate limit reached while verifying")
-    return fail("upstream_error", `CoinGecko verification failed (${res.status})`)
-  } catch (err) {
-    return fail("network_error", networkFailureMessage(err))
+  for (const { url, header } of endpoints) {
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: "application/json", [header]: apiKey },
+        signal: AbortSignal.timeout(VERIFY_TIMEOUT_MS),
+      })
+      if (res.ok) return ok("CoinGecko key verified")
+    } catch { /* try next endpoint */ }
   }
+
+  return fail("invalid_key", "Invalid CoinGecko API key")
 }
 
 export async function verifyServiceKey(

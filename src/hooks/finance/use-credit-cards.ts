@@ -24,6 +24,7 @@ interface CreditCardProfile {
   bonusCategories: unknown
   statementCredits: unknown
   annualFeeDate: string | null
+  paymentDueDay: number | null
   transferPartners: unknown
   cardImageUrl: string | null
   aiEnrichedData: unknown

@@ -9,7 +9,9 @@ import { formatCurrency, cn } from "@/lib/utils"
 import { FinanceHeroCard } from "@/components/finance/finance-hero-card"
 import { BillsCalendar } from "@/components/finance/bills-calendar"
 import { BillAvatar } from "@/components/finance/bill-avatar"
+import { BillDetailPanel } from "@/components/finance/bill-detail-panel"
 import { getCancelUrl } from "@/lib/finance/cancel-links"
+import { useUpcomingBills } from "@/hooks/use-finance"
 
 interface Bill {
   id: string
@@ -22,6 +24,9 @@ interface Bill {
   billType?: string | null
   isPaid?: boolean
   logoUrl?: string | null
+  accountName?: string | null
+  accountMask?: string | null
+  institutionName?: string | null
 }
 
 interface CardsBillsSectionProps {
@@ -68,10 +73,26 @@ export function CardsBillsSection({
 
 type BillTab = "subscriptions" | "card_payments"
 
-function BillsGrid({ bills }: { bills: Bill[] }) {
+function BillsGrid({ bills: defaultBills }: { bills: Bill[] }) {
   const calRef = useRef<HTMLDivElement>(null)
   const [calHeight, setCalHeight] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<BillTab>("subscriptions")
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
+
+  // Track calendar month to re-fetch bills (CC bills are month-specific)
+  const now = new Date()
+  const [calendarMonth, setCalendarMonth] = useState(
+    () => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+  )
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+  const isCurrentMonth = calendarMonth === currentMonth
+
+  const { data: monthData } = useUpcomingBills(isCurrentMonth ? undefined : calendarMonth)
+  const bills = isCurrentMonth ? defaultBills : (monthData?.bills ?? defaultBills)
+
+  const handleMonthChange = useCallback((year: number, month: number) => {
+    setCalendarMonth(`${year}-${String(month + 1).padStart(2, "0")}`)
+  }, [])
 
   useEffect(() => {
     const el = calRef.current
@@ -102,7 +123,7 @@ function BillsGrid({ bills }: { bills: Bill[] }) {
             Manage Subscriptions
           </a>
         </div>
-        <BillsCalendar bills={bills} />
+        <BillsCalendar bills={bills} onSelectBill={setSelectedBill} onMonthChange={handleMonthChange} />
       </div>
 
       <TabbedBillPanel
@@ -112,7 +133,10 @@ function BillsGrid({ bills }: { bills: Bill[] }) {
         subsCount={subscriptions.length}
         ccCount={cardPayments.length}
         maxHeight={calHeight}
+        onSelectBill={setSelectedBill}
       />
+
+      <BillDetailPanel bill={selectedBill} onClose={() => setSelectedBill(null)} />
     </div>
   )
 }
@@ -124,6 +148,7 @@ function TabbedBillPanel({
   subsCount,
   ccCount,
   maxHeight,
+  onSelectBill,
 }: {
   activeTab: BillTab
   onTabChange: (tab: BillTab) => void
@@ -131,6 +156,7 @@ function TabbedBillPanel({
   subsCount: number
   ccCount: number
   maxHeight: number | null
+  onSelectBill: (bill: Bill) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(false)
@@ -206,7 +232,7 @@ function TabbedBillPanel({
           {bills.length === 0 ? (
             <p className="text-sm text-foreground-muted text-center py-8">{emptyText}</p>
           ) : bills.map((bill) => (
-            <BillRow key={bill.id} bill={bill} />
+            <BillRow key={bill.id} bill={bill} onClick={() => onSelectBill(bill)} />
           ))}
         </div>
         {!isAtBottom && bills.length > 0 && (
@@ -221,15 +247,18 @@ function TabbedBillPanel({
   )
 }
 
-function BillRow({ bill }: { bill: Bill }) {
+function BillRow({ bill, onClick }: { bill: Bill; onClick: () => void }) {
   const cancelInfo = getCancelUrl(bill.merchantName)
   const isSubscription = bill.billType !== "cc_payment"
 
   return (
-    <div className={cn(
-      "px-5 py-2.5",
-      bill.isPaid && "opacity-60"
-    )}>
+    <div
+      className={cn(
+        "px-5 py-2.5 cursor-pointer hover:bg-background-secondary/50 transition-colors",
+        bill.isPaid && "opacity-60"
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <BillAvatar merchantName={bill.merchantName} logoUrl={bill.logoUrl} size="sm" />

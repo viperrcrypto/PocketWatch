@@ -1,4 +1,5 @@
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
+import { timingSafeEqual } from "crypto"
 import { db } from "./db"
 import bcrypt from "bcryptjs"
 import { generateSalt, deriveKey, wrapDek, unwrapDek } from "./per-user-crypto"
@@ -8,6 +9,22 @@ import { withEncryptionKey } from "./encryption-context"
 export const SESSION_COOKIE = "pocketwatch_session"
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 const SALT_ROUNDS = 12
+
+function secureCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
+
+async function isValidApiKey(): Promise<boolean> {
+  const apiKey = process.env.POCKETWATCH_API_KEY
+  if (!apiKey) return false
+  const headerStore = await headers()
+  const authHeader = headerStore.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) return false
+  return secureCompare(authHeader.slice(7), apiKey)
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS)
@@ -69,22 +86,31 @@ export async function getSession() {
   const cookieStore = await cookies()
   const sessionId = cookieStore.get(SESSION_COOKIE)?.value
 
-  if (!sessionId) {
-    return null
-  }
+  if (sessionId) {
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+    })
 
-  const session = await db.session.findUnique({
-    where: { id: sessionId },
-  })
+    if (session && session.expiresAt >= new Date()) {
+      return session
+    }
 
-  if (!session || session.expiresAt < new Date()) {
     if (session) {
       await db.session.delete({ where: { id: sessionId } })
     }
-    return null
   }
 
-  return session
+  // Fallback: API key auth — borrow the most recent active session for DEK
+  if (await isValidApiKey()) {
+    const owner = await db.user.findFirst()
+    if (!owner) return null
+    return db.session.findFirst({
+      where: { userId: owner.id, expiresAt: { gte: new Date() } },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  return null
 }
 
 export async function getCurrentUser() {

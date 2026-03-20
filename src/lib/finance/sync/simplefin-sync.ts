@@ -16,11 +16,64 @@ import { categorizeTransaction, cleanMerchantName } from "../categorize"
 import { withRetry } from "../retry"
 import type { SyncResult } from "./helpers"
 
+const CREDIT_CARD_PATTERNS = [
+  /\bcard\b/i,
+  /\bcredit\b/i,
+  /\bplatinum\b/i,
+  /\bsapphire\b/i,
+  /\bfreedom\b/i,
+  /\bink\b/i,
+  /\bventure\b/i,
+  /\bdiscover\b/i,
+  /\bquicksilver\b/i,
+  /\bstrata\b/i,
+  /\baadvantage\b/i,
+  /\bbilt\b/i,
+  /\bapple card\b/i,
+  /\bsavorone\b/i,
+  /\bdouble cash\b/i,
+  /\bcash rewards\b/i,
+  /\brewards.*mastercard\b/i,
+  /\bworld elite\b/i,
+  /\bpremier.*card\b/i,
+]
+
+function looksLikeCreditCard(name: string): boolean {
+  return CREDIT_CARD_PATTERNS.some((p) => p.test(name))
+}
+
+// SimpleFIN data refreshes at most once per day. Throttle API calls to stay
+// well under their 24-request/day limit. With a 2-hour interval we make at
+// most 12 calls/day per user, and redundant calls for sibling institutions
+// (which share the same access URL) are also suppressed since all
+// institutions get their lastSyncedAt updated in the same sync cycle.
+const SIMPLEFIN_MIN_SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
+
 export async function syncSimpleFIN(
   institution: Awaited<ReturnType<typeof db.financeInstitution.findUnique>> & { accounts: Array<{ id: string; externalId: string }> }
 ): Promise<SyncResult> {
   if (!institution!.simplefinAccessUrl) {
     throw new Error("No SimpleFIN access URL")
+  }
+
+  // Throttle: skip if this institution was synced recently
+  if (institution!.lastSyncedAt) {
+    const sinceLastSync = Date.now() - new Date(institution!.lastSyncedAt).getTime()
+    if (sinceLastSync < SIMPLEFIN_MIN_SYNC_INTERVAL_MS) {
+      console.log(
+        `[SimpleFIN] Skipping sync for "${institution!.institutionName}" — ` +
+        `last synced ${Math.round(sinceLastSync / 60000)}m ago (min interval: 2h)`
+      )
+      return {
+        institutionId: institution!.id,
+        provider: "simplefin",
+        accountsUpdated: 0,
+        transactionsAdded: 0,
+        transactionsModified: 0,
+        transactionsRemoved: 0,
+        error: null,
+      }
+    }
   }
 
   const accessUrl = await decryptCredential(institution!.simplefinAccessUrl)
@@ -236,14 +289,30 @@ export async function syncSimpleFIN(
     })
   }
 
-  // Auto-create CreditCardProfile for SimpleFIN credit accounts that don't have one yet
-  const creditAccounts = await db.financeAccount.findMany({
+  // Auto-create CreditCardProfile for SimpleFIN credit accounts that don't have one yet.
+  // SimpleFIN sometimes misclassifies credit cards as "checking", so we also detect
+  // cards by institution name and account name patterns.
+  const allSimplefinAccounts = await db.financeAccount.findMany({
     where: {
       userId: institution!.userId,
-      type: "credit",
       institution: { provider: "simplefin" },
     },
-    select: { id: true, name: true, mask: true, creditLimit: true, institutionId: true },
+    select: { id: true, name: true, mask: true, creditLimit: true, institutionId: true, type: true },
+  })
+  const institutionNames = new Map<string, string>()
+  for (const a of allSimplefinAccounts) {
+    if (!institutionNames.has(a.institutionId)) {
+      const inst = await db.financeInstitution.findUnique({
+        where: { id: a.institutionId },
+        select: { institutionName: true },
+      })
+      institutionNames.set(a.institutionId, inst?.institutionName ?? "")
+    }
+  }
+  const creditAccounts = allSimplefinAccounts.filter((a) => {
+    if (a.type === "credit" || a.type === "business_credit") return true
+    const instName = institutionNames.get(a.institutionId) ?? ""
+    return looksLikeCreditCard(a.name) || looksLikeCreditCard(instName)
   })
   if (creditAccounts.length > 0) {
     const existingProfiles = await db.creditCardProfile.findMany({
@@ -254,14 +323,24 @@ export async function syncSimpleFIN(
 
     for (const acct of creditAccounts) {
       if (profiledIds.has(acct.id)) continue
+
+      // Fix misclassified account type so the rest of the app treats it as credit
+      if (acct.type !== "credit" && acct.type !== "business_credit") {
+        await db.financeAccount.update({
+          where: { id: acct.id },
+          data: { type: "credit" },
+        }).catch(() => { /* ignore if locked */ })
+      }
+
       const inst = await db.financeInstitution.findUnique({
         where: { id: acct.institutionId },
         select: { institutionName: true },
       })
       const instName = inst?.institutionName?.toLowerCase() ?? ""
+      const acctName = acct.name?.toLowerCase() ?? ""
       const network = instName.includes("amex") || instName.includes("american express") ? "amex"
         : instName.includes("discover") ? "discover"
-        : instName.includes("mastercard") ? "mastercard"
+        : acctName.includes("mastercard") || instName.includes("mastercard") ? "mastercard"
         : "visa"
       const cardName = acct.name && acct.name.length > 3
         ? acct.name

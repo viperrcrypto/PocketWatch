@@ -86,6 +86,12 @@ export function createExchange(ccxtId: string, credentials: ExchangeCredentials)
     config.password = credentials.passphrase
   }
 
+  // Route through SOCKS5 proxy for geo-blocked exchanges (Binance, Bybit, etc.)
+  const proxy = process.env.EXCHANGE_PROXY
+  if (proxy) {
+    config.socksProxy = proxy
+  }
+
   return new ExchangeClass(config) as Exchange
 }
 

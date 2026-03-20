@@ -18,16 +18,21 @@ export interface BillItem {
   category: string | null
   isPaid?: boolean
   logoUrl?: string | null
+  accountName?: string | null
+  accountMask?: string | null
+  institutionName?: string | null
 }
 
 interface BillsCalendarProps {
   bills: BillItem[]
   className?: string
+  onSelectBill?: (bill: BillItem) => void
+  onMonthChange?: (year: number, month: number) => void
 }
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-export function BillsCalendar({ bills = [], className }: BillsCalendarProps) {
+export function BillsCalendar({ bills = [], className, onSelectBill, onMonthChange }: BillsCalendarProps) {
   const now = new Date()
   const [viewMonth, setViewMonth] = useState(now.getMonth())
   const [viewYear, setViewYear] = useState(now.getFullYear())
@@ -53,21 +58,30 @@ export function BillsCalendar({ bills = [], className }: BillsCalendarProps) {
 
   const goToPrevMonth = useCallback(() => {
     setSelectedDay(null)
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) }
-    else setViewMonth(viewMonth - 1)
-  }, [viewMonth, viewYear])
+    const newYear = viewMonth === 0 ? viewYear - 1 : viewYear
+    const newMonth = viewMonth === 0 ? 11 : viewMonth - 1
+    setViewMonth(newMonth)
+    setViewYear(newYear)
+    onMonthChange?.(newYear, newMonth)
+  }, [viewMonth, viewYear, onMonthChange])
 
   const goToNextMonth = useCallback(() => {
     setSelectedDay(null)
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) }
-    else setViewMonth(viewMonth + 1)
-  }, [viewMonth, viewYear])
+    const newYear = viewMonth === 11 ? viewYear + 1 : viewYear
+    const newMonth = viewMonth === 11 ? 0 : viewMonth + 1
+    setViewMonth(newMonth)
+    setViewYear(newYear)
+    onMonthChange?.(newYear, newMonth)
+  }, [viewMonth, viewYear, onMonthChange])
 
   const goToToday = useCallback(() => {
     setSelectedDay(null)
-    setViewMonth(now.getMonth())
-    setViewYear(now.getFullYear())
-  }, [now])
+    const todayMonth = now.getMonth()
+    const todayYear = now.getFullYear()
+    setViewMonth(todayMonth)
+    setViewYear(todayYear)
+    onMonthChange?.(todayYear, todayMonth)
+  }, [now, onMonthChange])
 
   const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
@@ -177,6 +191,7 @@ export function BillsCalendar({ bills = [], className }: BillsCalendarProps) {
         viewYear={viewYear}
         viewMonth={viewMonth}
         onClose={() => setSelectedDay(null)}
+        onSelectBill={onSelectBill}
       />
 
       {/* Bottom stats bar */}
@@ -195,12 +210,13 @@ export function BillsCalendar({ bills = [], className }: BillsCalendarProps) {
   )
 }
 
-function SelectedDayPanel({ selectedDay, billsByDay, viewYear, viewMonth, onClose }: {
+function SelectedDayPanel({ selectedDay, billsByDay, viewYear, viewMonth, onClose, onSelectBill }: {
   selectedDay: number | null
   billsByDay: Map<number, BillItem[]>
   viewYear: number
   viewMonth: number
   onClose: () => void
+  onSelectBill?: (bill: BillItem) => void
 }) {
   if (selectedDay === null || !billsByDay.has(selectedDay)) return null
   const dayBills = billsByDay.get(selectedDay)!
@@ -219,7 +235,14 @@ function SelectedDayPanel({ selectedDay, billsByDay, viewYear, viewMonth, onClos
         {dayBills.map((bill) => {
           const cancelInfo = !bill.isPaid ? getCancelUrl(bill.merchantName) : null
           return (
-            <div key={bill.id} className={cn(bill.isPaid && "opacity-50")}>
+            <div
+              key={bill.id}
+              className={cn(
+                bill.isPaid && "opacity-50",
+                onSelectBill && "cursor-pointer hover:bg-background-secondary/50 rounded-lg transition-colors -mx-1 px-1",
+              )}
+              onClick={() => onSelectBill?.(bill)}
+            >
               <div className="flex items-center gap-2.5">
                 <BillAvatar merchantName={bill.merchantName} logoUrl={bill.logoUrl} size="lg" />
                 <div className="flex-1 min-w-0">

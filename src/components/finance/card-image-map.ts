@@ -89,7 +89,7 @@ const KNOWN_CARDS: readonly KnownCard[] = [
     annualFee: 895,
   },
   {
-    keywords: ["platinum", "card"],
+    keywords: ["amex", "platinum"],
     imageUrl: "/card-art/amex-platinum.png",
     annualFee: 895,
   },
@@ -146,6 +146,11 @@ const KNOWN_CARDS: readonly KnownCard[] = [
   },
   // Citi
   {
+    keywords: ["aadvantage", "platinum"],
+    imageUrl: "/card-art/citi-aadvantage-platinum.webp",
+    annualFee: 99,
+  },
+  {
     keywords: ["strata", "elite"],
     imageUrl: "/card-art/citi-strata-elite.webp",
     annualFee: 595,
@@ -164,6 +169,23 @@ const KNOWN_CARDS: readonly KnownCard[] = [
     keywords: ["citi", "premier"],
     imageUrl: "/card-art/citi-strata-premier.webp",
     annualFee: 95,
+  },
+  {
+    keywords: ["citi", "strata", "premier"],
+    imageUrl: "/card-art/citi-strata-premier.webp",
+    annualFee: 95,
+  },
+  // Apple
+  {
+    keywords: ["apple", "card"],
+    imageUrl: "/card-art/apple-card.jpg",
+    annualFee: 0,
+  },
+  // BILT
+  {
+    keywords: ["bilt"],
+    imageUrl: "",
+    annualFee: 0,
   },
   // Discover
   {

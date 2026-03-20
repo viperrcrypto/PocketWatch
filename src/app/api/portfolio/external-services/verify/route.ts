@@ -17,7 +17,7 @@ import {
   type ExchangeVerifyResult,
 } from "@/lib/portfolio/verification"
 
-const STANDARD_SERVICES = new Set(["zerion", "etherscan", "coingecko", "alchemy", "helius"])
+const STANDARD_SERVICES = new Set(["zerion", "etherscan", "coingecko", "alchemy", "helius", "moralis"])
 
 /** POST /api/portfolio/external-services/verify — re-verify exchange credentials */
 export async function POST(request: NextRequest) {

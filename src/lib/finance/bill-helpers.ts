@@ -69,6 +69,9 @@ export interface BillItem {
   billType: BillType | "cc_payment"
   isPaid?: boolean
   logoUrl?: string | null
+  accountName?: string | null
+  accountMask?: string | null
+  institutionName?: string | null
 }
 
 type AccountInfo = { mask: string | null; institution: { institutionName: string | null } | null }

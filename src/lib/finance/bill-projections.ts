@@ -10,7 +10,7 @@ import {
   PLAID_FREQ, buildSubDisplayName, buildCCDisplayName, type BillItem,
 } from "./bill-helpers"
 
-type AccountMap = Map<string, { type: string; subtype: string | null; mask: string | null; institution: { institutionName: string | null } | null }>
+type AccountMap = Map<string, { type: string; subtype: string | null; name: string; mask: string | null; institution: { institutionName: string | null } | null }>
 
 /** Project a materialized subscription into the target month */
 export function projectSubBill(
@@ -59,6 +59,9 @@ export function projectSubBill(
     id: s.id, merchantName: displayName, amount: s.amount, frequency: s.frequency,
     nextDueDate: next.toISOString().slice(0, 10), daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
     category: s.category, billType, isPaid,
+    accountName: acct?.name ?? null,
+    accountMask: acct?.mask ?? null,
+    institutionName: acct?.institution?.institutionName ?? null,
   }
 }
 
@@ -116,6 +119,9 @@ export function projectPlaidBill(
     id: `plaid:${ps.streamId}`, merchantName: displayName, amount, frequency: freq,
     nextDueDate: next.toISOString().slice(0, 10), daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
     category: ps.category ?? null, billType, isPaid,
+    accountName: acct?.name ?? null,
+    accountMask: acct?.mask ?? null,
+    institutionName: acct?.institution?.institutionName ?? null,
   }
 }
 
@@ -133,6 +139,7 @@ function projectIntoMonth(date: Date, frequency: string, targetMonth: string, mo
 /** Get credit card payment bills for the target month */
 export async function getCCBills(userId: string, targetMonth: string, now: Date): Promise<BillItem[]> {
   const bills: BillItem[] = []
+  const source1AccountIds = new Set<string>()
 
   // Source 1: Plaid liability data (has explicit nextPaymentDueDate)
   const liabilities = await db.financeLiabilityCreditCard.findMany({
@@ -150,6 +157,8 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     const stmtBal = cc.lastStatementBalance ?? 0
     if (minPay <= 0 && stmtBal <= 0) continue
 
+    source1AccountIds.add(cc.accountId)
+
     const nextDue = new Date(cc.nextPaymentDueDate)
     const daysUntil = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     bills.push({
@@ -161,51 +170,61 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
       daysUntil: Math.max(0, daysUntil),
       category: "Credit Card Payment",
       billType: "cc_payment" as const,
+      accountName: cc.account?.name ?? null,
+      accountMask: cc.account?.mask ?? null,
+      institutionName: cc.account?.institution?.institutionName ?? null,
     })
   }
 
-  // Source 2: Non-Plaid credit accounts (e.g. SimpleFIN)
-  // Plaid accounts get liability data via Source 1; SimpleFIN accounts don't,
-  // so we project a synthetic monthly minimum payment from current balance.
-  const creditAccounts = await db.financeAccount.findMany({
-    where: {
-      userId,
-      type: "credit",
-      institution: { provider: { not: "plaid" } },
-    },
-    select: {
-      id: true, name: true, mask: true,
-      currentBalance: true, creditLimit: true,
-      institution: { select: { institutionName: true } },
-    },
+  // Source 2: All accounts with card profiles not already handled by Source 1.
+  // SimpleFIN often misclassifies credit cards as "checking", so we query by
+  // CreditCardProfile linkage instead of relying on account type.
+  const cardProfiles = await db.creditCardProfile.findMany({
+    where: { userId, accountId: { notIn: [...source1AccountIds] } },
+    select: { accountId: true, paymentDueDay: true, cardName: true },
   })
+  const dueDayMap = new Map(cardProfiles.map((p) => [p.accountId, p.paymentDueDay]))
+  const cardNameMap = new Map(cardProfiles.map((p) => [p.accountId, p.cardName]))
+  const profileAccountIds = cardProfiles.map((p) => p.accountId)
+
+  const creditAccounts = profileAccountIds.length > 0
+    ? await db.financeAccount.findMany({
+        where: { id: { in: profileAccountIds } },
+        select: {
+          id: true, name: true, mask: true,
+          currentBalance: true, creditLimit: true,
+          institution: { select: { institutionName: true } },
+        },
+      })
+    : []
 
   const [targetYear, targetMon] = targetMonth.split("-").map(Number)
   for (const acct of creditAccounts) {
     const balance = Math.abs(acct.currentBalance ?? 0)
     if (balance <= 0) continue
-
-    const minPayment = Math.max(25, Math.round(balance * 0.02 * 100) / 100)
-    const dueDate = new Date(targetYear, targetMon - 1, 25)
+    const dueDay = dueDayMap.get(acct.id) ?? 25
+    const dueDate = new Date(targetYear, targetMon - 1, dueDay)
     if (!isInMonth(dueDate, targetMonth)) continue
 
     const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     const isPaid = daysUntil < 0
 
-    const inst = acct.institution?.institutionName ?? ""
-    const displayName = acct.name ?? `${inst} Card`
+    const displayName = cardNameMap.get(acct.id) ?? acct.name ?? `${acct.institution?.institutionName ?? ""} Card`
     const maskSuffix = acct.mask ? ` ••••${acct.mask}` : ""
 
     bills.push({
       id: `cc-sfin-${acct.id}`,
       merchantName: `${displayName}${maskSuffix}`,
-      amount: minPayment,
+      amount: balance,
       frequency: "monthly",
-      nextDueDate: dueDate.toISOString().slice(0, 10),
+      nextDueDate: `${targetYear}-${String(targetMon).padStart(2, "0")}-${String(dueDay).padStart(2, "0")}`,
       daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
       category: "Credit Card Payment",
       billType: "cc_payment" as const,
       isPaid,
+      accountName: acct.name ?? null,
+      accountMask: acct.mask ?? null,
+      institutionName: acct.institution?.institutionName ?? null,
     })
   }
 

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     const accounts = allAccountIds.length > 0
       ? await db.financeAccount.findMany({
           where: { id: { in: allAccountIds } },
-          select: { id: true, type: true, subtype: true, mask: true, institution: { select: { institutionName: true } } },
+          select: { id: true, type: true, subtype: true, name: true, mask: true, institution: { select: { institutionName: true } } },
         })
       : []
     const accountMap = new Map(accounts.map((a) => [a.id, a]))

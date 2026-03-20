@@ -96,10 +96,13 @@ export async function GET() {
   }
 }
 
+const VALID_ACCOUNT_TYPES = ["checking", "savings", "credit", "business_credit", "investment", "loan", "mortgage"] as const
+
 const accountPatchSchema = z.object({
   accountId: z.string().min(1, "accountId required"),
   name: z.string().min(1).max(200).optional(),
   isHidden: z.boolean().optional(),
+  type: z.enum(VALID_ACCOUNT_TYPES).optional(),
 })
 
 export async function PATCH(req: NextRequest) {
@@ -112,11 +115,12 @@ export async function PATCH(req: NextRequest) {
     return apiError("F3011", parsed.error.issues[0]?.message ?? "Invalid request", 400)
   }
 
-  const { accountId, name, isHidden } = parsed.data
+  const { accountId, name, isHidden, type } = parsed.data
 
   try {
     const account = await db.financeAccount.findFirst({
       where: { id: accountId, userId: user.id },
+      include: { institution: { select: { institutionName: true } } },
     })
     if (!account) return apiError("F3012", "Account not found", 404)
 
@@ -125,8 +129,34 @@ export async function PATCH(req: NextRequest) {
       data: {
         ...(name !== undefined && { name }),
         ...(isHidden !== undefined && { isHidden }),
+        ...(type !== undefined && { type }),
       },
     })
+
+    // Auto-create card profile when reclassifying to credit
+    if (type === "credit" || type === "business_credit") {
+      const existingProfile = await db.creditCardProfile.findFirst({ where: { accountId } })
+      if (!existingProfile) {
+        const cardName = name ?? account.name
+        await db.creditCardProfile.create({
+          data: {
+            userId: user.id,
+            accountId,
+            cardName,
+            cardNetwork: "visa",
+            rewardType: "cashback",
+            baseRewardRate: 1,
+            annualFee: 0,
+            bonusCategories: [],
+          },
+        }).catch(() => { /* ignore duplicate */ })
+      }
+    }
+
+    // Remove card profile when reclassifying away from credit
+    if (type && type !== "credit" && type !== "business_credit" && account.type !== type) {
+      await db.creditCardProfile.deleteMany({ where: { accountId } }).catch(() => {})
+    }
 
     return NextResponse.json(updated)
   } catch (err) {

@@ -20,7 +20,7 @@ import {
 } from "@/lib/portfolio/verification"
 
 const VALID_SERVICES = [
-  "zerion", "etherscan", "coingecko", "alchemy", "helius",
+  "zerion", "etherscan", "coingecko", "alchemy", "helius", "moralis",
   // Etherscan-compatible block explorers
   "bscscan", "arbiscan", "basescan", "polygonscan", "optimism_etherscan",
   "lineascan", "scrollscan", "zksync_explorer",

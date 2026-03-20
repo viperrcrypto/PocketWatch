@@ -205,7 +205,7 @@ export default function ExchangeBalancesPage() {
     },
   ]
 
-  const hasNoExchanges = !isLoading && !isError && rows.length === 0
+  const hasNoExchanges = !isLoading && !isError && rows.length === 0 && exchanges.length === 0
 
   return (
     <div className="space-y-0">
