@@ -7,7 +7,7 @@
  * 3. If a session endpoint is discovered, exchange ID token for session cookie
  */
 
-const FIREBASE_API_KEY = "AIzaSyDtfYjmIThV5JR6jAJeVZFz6-i4yLcsxko"
+const FIREBASE_API_KEY = process.env.ROAME_FIREBASE_API_KEY || ""
 const FIREBASE_TOKEN_URL = `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`
 
 interface FirebaseTokenResponse {
