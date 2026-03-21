@@ -51,20 +51,26 @@ export const TRAVEL_NAV_ITEMS: NavItem[] = [
   { id: "travel-settings", label: "Settings", href: "/travel/settings", icon: "settings" },
 ]
 
+export const AI_NAV_ITEMS: NavItem[] = [
+  { id: "ai-chat", label: "PocketLLM", href: "/chat", icon: "smart_toy" },
+]
+
 export const NAV_CATEGORIES: Record<string, { label: string; items: NavItem[] }> = {
   netWorth:  { label: "",              items: NET_WORTH_NAV_ITEMS },
   finance:   { label: "Finance",       items: FINANCE_NAV_ITEMS },
   travel:    { label: "Travel",        items: TRAVEL_NAV_ITEMS },
+  ai:        { label: "AI",            items: AI_NAV_ITEMS },
   portfolio: { label: "Digital Assets", items: PORTFOLIO_NAV_ITEMS },
 }
 
 function buildDefaultPrefs(): SidebarPrefs {
   return {
-    categoryOrder: ["netWorth", "finance", "travel", "portfolio"],
+    categoryOrder: ["netWorth", "finance", "travel", "ai", "portfolio"],
     categories: {
       netWorth:  { order: NET_WORTH_NAV_ITEMS.map((i) => i.id), hidden: [] },
       finance:   { order: FINANCE_NAV_ITEMS.map((i) => i.id),   hidden: [] },
       travel:    { order: TRAVEL_NAV_ITEMS.map((i) => i.id),    hidden: [] },
+      ai:        { order: AI_NAV_ITEMS.map((i) => i.id),        hidden: [] },
       portfolio: { order: PORTFOLIO_NAV_ITEMS.map((i) => i.id), hidden: [] },
     },
   }
@@ -98,6 +104,20 @@ function migratePrefs(prefs: SidebarPrefs): SidebarPrefs {
       travelCat.order.splice(settingsIdx, 0, "travel-hotels")
     } else {
       travelCat.order.push("travel-hotels")
+    }
+    savePrefs(prefs)
+  }
+  // Inject ai category if missing (PocketLLM)
+  if (!prefs.categoryOrder.includes("ai")) {
+    const portfolioIdx = prefs.categoryOrder.indexOf("portfolio")
+    if (portfolioIdx >= 0) {
+      prefs.categoryOrder.splice(portfolioIdx, 0, "ai")
+    } else {
+      prefs.categoryOrder.push("ai")
+    }
+    prefs.categories.ai = {
+      order: AI_NAV_ITEMS.map((i) => i.id),
+      hidden: [],
     }
     savePrefs(prefs)
   }

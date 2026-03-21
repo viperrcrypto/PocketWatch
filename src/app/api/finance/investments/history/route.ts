@@ -1,125 +1,10 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
+import {
+  rangeToDate, toDateKey, ensureTodaySnapshot, detectSwingAnnotation,
+} from "@/lib/finance/investment-snapshots"
 import { NextResponse, type NextRequest } from "next/server"
-
-type RangeKey = "1w" | "1m" | "3m" | "6m" | "1y" | "all"
-
-function rangeToDate(range: string): Date {
-  const now = new Date()
-  const start = new Date(now)
-
-  switch (range as RangeKey) {
-    case "1w":
-      start.setDate(start.getDate() - 7)
-      break
-    case "1m":
-      start.setMonth(start.getMonth() - 1)
-      break
-    case "3m":
-      start.setMonth(start.getMonth() - 3)
-      break
-    case "6m":
-      start.setMonth(start.getMonth() - 6)
-      break
-    case "1y":
-      start.setFullYear(start.getFullYear() - 1)
-      break
-    case "all":
-      return new Date(Date.UTC(2000, 0, 1))
-    default:
-      start.setFullYear(start.getFullYear() - 1)
-      break
-  }
-
-  return start
-}
-
-function toDateKey(date: Date): string {
-  const y = date.getUTCFullYear()
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0")
-  const d = String(date.getUTCDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
-
-function todayUtc(): Date {
-  const n = new Date()
-  return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()))
-}
-
-/**
- * Ensure today has a holding snapshot by copying from current FinanceInvestmentHolding
- * (Plaid) and from current balance of SimpleFIN investment accounts.
- * This guarantees at least one data point exists without waiting for the next sync.
- */
-async function ensureTodaySnapshot(userId: string): Promise<void> {
-  const today = todayUtc()
-
-  const existingCount = await db.financeInvestmentHoldingSnapshot.count({
-    where: { userId, date: today },
-  })
-  if (existingCount > 0) return
-
-  // Plaid holdings → snapshots
-  const holdings = await db.financeInvestmentHolding.findMany({
-    where: { userId },
-    select: {
-      accountId: true,
-      securityId: true,
-      quantity: true,
-      institutionPrice: true,
-      institutionValue: true,
-      costBasis: true,
-    },
-  })
-
-  const snapshotData: Array<{
-    userId: string; accountId: string; securityId: string | null;
-    date: Date; quantity: number | null; institutionPrice: number | null;
-    institutionValue: number | null; costBasis: number | null;
-  }> = holdings.map((h) => ({
-    userId,
-    accountId: h.accountId,
-    securityId: h.securityId,
-    date: today,
-    quantity: h.quantity,
-    institutionPrice: h.institutionPrice,
-    institutionValue: h.institutionValue,
-    costBasis: h.costBasis,
-  }))
-
-  // SimpleFIN/manual investment accounts without holdings → balance snapshots
-  const holdingAccountIds = new Set(holdings.map((h) => h.accountId))
-  const investmentAccounts = await db.financeAccount.findMany({
-    where: {
-      userId,
-      type: { in: ["investment", "brokerage"] },
-      currentBalance: { gt: 0 },
-      id: { notIn: [...holdingAccountIds] },
-    },
-    select: { id: true, currentBalance: true },
-  })
-
-  for (const acct of investmentAccounts) {
-    snapshotData.push({
-      userId,
-      accountId: acct.id,
-      securityId: `balance_${acct.id}`,
-      date: today,
-      quantity: 1,
-      institutionPrice: acct.currentBalance,
-      institutionValue: acct.currentBalance,
-      costBasis: null,
-    })
-  }
-
-  if (snapshotData.length === 0) return
-
-  await db.financeInvestmentHoldingSnapshot.createMany({
-    data: snapshotData,
-    skipDuplicates: true,
-  })
-}
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
@@ -134,6 +19,13 @@ export async function GET(req: NextRequest) {
 
     const startDate = rangeToDate(range)
 
+    // Fetch valid account IDs so we can exclude orphaned snapshots
+    const validAccounts = await db.financeAccount.findMany({
+      where: { userId: user.id },
+      select: { id: true },
+    })
+    const validAccountIds = new Set(validAccounts.map((a) => a.id))
+
     // Get all holding snapshots in date range
     const snapshots = await db.financeInvestmentHoldingSnapshot.findMany({
       where: {
@@ -143,34 +35,52 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "asc" },
       select: {
         date: true,
+        accountId: true,
         institutionValue: true,
         costBasis: true,
       },
     })
 
-    if (snapshots.length === 0) {
+    // Filter out orphaned snapshots (account was deleted but snapshots remain)
+    const liveSnapshots = snapshots.filter((s) => validAccountIds.has(s.accountId))
+
+    if (liveSnapshots.length === 0) {
       return NextResponse.json({ entries: [], source: "none" })
     }
 
-    // Aggregate by date: sum all holding values per day
-    const byDate = new Map<string, { totalValue: number; totalCostBasis: number }>()
-    for (const snap of snapshots) {
+    // Aggregate by date: sum all holding values per day + track account counts
+    const byDate = new Map<string, { totalValue: number; totalCostBasis: number; accountIds: Set<string> }>()
+    for (const snap of liveSnapshots) {
       const key = toDateKey(snap.date)
-      const existing = byDate.get(key) ?? { totalValue: 0, totalCostBasis: 0 }
-      byDate.set(key, {
-        totalValue: existing.totalValue + (snap.institutionValue ?? 0),
-        totalCostBasis: existing.totalCostBasis + (snap.costBasis ?? 0),
-      })
+      const existing = byDate.get(key) ?? { totalValue: 0, totalCostBasis: 0, accountIds: new Set<string>() }
+      existing.totalValue += snap.institutionValue ?? 0
+      existing.totalCostBasis += snap.costBasis ?? 0
+      existing.accountIds.add(snap.accountId)
+      byDate.set(key, existing)
     }
 
-    const entries = Array.from(byDate.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, { totalValue, totalCostBasis }]) => ({
+    const sorted = Array.from(byDate.entries()).sort(([a], [b]) => a.localeCompare(b))
+
+    // Build entries with swing annotations
+    const entries: Array<{
+      date: string; totalValue: number; totalCostBasis: number
+      gainLoss: number; annotation?: string
+    }> = []
+
+    for (let i = 0; i < sorted.length; i++) {
+      const [date, { totalValue, totalCostBasis, accountIds }] = sorted[i]
+      const annotation = i > 0
+        ? detectSwingAnnotation(totalValue, sorted[i - 1][1].totalValue, accountIds, sorted[i - 1][1].accountIds)
+        : undefined
+
+      entries.push({
         date,
         totalValue,
         totalCostBasis,
         gainLoss: totalValue - totalCostBasis,
-      }))
+        ...(annotation ? { annotation } : {}),
+      })
+    }
 
     return NextResponse.json({ entries, source: "holdings_snapshots" })
   } catch (err) {

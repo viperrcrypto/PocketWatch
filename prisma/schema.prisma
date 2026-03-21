@@ -701,7 +701,8 @@ model FinanceAccount {
   liabilityCreditCards  FinanceLiabilityCreditCard[]
   liabilityMortgages    FinanceLiabilityMortgage[]
   liabilityStudentLoans FinanceLiabilityStudentLoan[]
-  investmentHoldings    FinanceInvestmentHolding[]
+  investmentHoldings          FinanceInvestmentHolding[]
+  investmentHoldingSnapshots  FinanceInvestmentHoldingSnapshot[]
 
   @@unique([userId, externalId])
   @@index([userId])
@@ -1103,8 +1104,9 @@ model FinanceInvestmentHoldingSnapshot {
   institutionPrice Float?
   institutionValue Float?
   costBasis        Float?
-  createdAt        DateTime @default(now())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account          FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([userId, accountId, securityId, date])
   @@index([userId, date])

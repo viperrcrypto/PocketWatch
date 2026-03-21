@@ -38,6 +38,7 @@ interface InvestmentHistoryEntry {
   totalValue: number
   totalCostBasis: number
   gainLoss: number
+  annotation?: string
 }
 
 interface InvestmentHistoryData {

@@ -95,7 +95,7 @@ export default function InvestmentsPage() {
       d.setDate(d.getDate() - 1)
       return d.toISOString().slice(0, 10)
     }
-    const padSingle = (entries: { date: string; fiatNetWorth: number; totalNetWorth: number }[]) => {
+    const padSingle = (entries: { date: string; fiatNetWorth: number; totalNetWorth: number; annotation?: string }[]) => {
       if (entries.length === 1) {
         return [{ ...entries[0], date: syntheticYesterday(entries[0].date) }, entries[0]]
       }
@@ -103,7 +103,12 @@ export default function InvestmentsPage() {
     }
 
     if (invHistory?.entries && invHistory.entries.length >= 1) {
-      const mapped = invHistory.entries.map((e) => ({ date: e.date, fiatNetWorth: e.totalValue, totalNetWorth: e.totalValue }))
+      const mapped = invHistory.entries.map((e) => ({
+        date: e.date,
+        fiatNetWorth: e.totalValue,
+        totalNetWorth: e.totalValue,
+        ...(e.annotation ? { annotation: e.annotation } : {}),
+      }))
       return padSingle(mapped)
     }
     return null

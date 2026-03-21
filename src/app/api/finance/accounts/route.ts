@@ -223,6 +223,10 @@ export async function DELETE(req: NextRequest) {
         db.financeRecurringStream.deleteMany({
           where: { userId: user.id, accountId: { in: accountIds } },
         }),
+        // FinanceInvestmentHoldingSnapshot: no FK to FinanceAccount
+        db.financeInvestmentHoldingSnapshot.deleteMany({
+          where: { userId: user.id, accountId: { in: accountIds } },
+        }),
       ])
     }
 
@@ -283,6 +287,7 @@ async function deleteAccount(userId: string, accountId: string) {
       db.creditCardProfile.deleteMany({ where: { userId, accountId } }),
       db.financeSubscription.deleteMany({ where: { userId, accountId } }),
       db.financeRecurringStream.deleteMany({ where: { userId, accountId } }),
+      db.financeInvestmentHoldingSnapshot.deleteMany({ where: { userId, accountId } }),
     ])
 
     // Delete the account (cascades to transactions, liabilities, holdings, identities)

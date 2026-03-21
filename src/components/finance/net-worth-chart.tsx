@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 
 interface NetWorthChartProps {
-  data: Array<{ date: string; fiatNetWorth: number; totalNetWorth: number }>
+  data: Array<{ date: string; fiatNetWorth: number; totalNetWorth: number; annotation?: string }>
   range: "1w" | "1m" | "3m" | "6m" | "1y" | "all"
   height?: number
   color?: string
@@ -112,8 +112,8 @@ export function NetWorthChart({ data, range, height = 300, color }: NetWorthChar
   }, [])
 
   const points = useMemo(() => {
-    if (!data || data.length === 0) return [] as Array<{ t: number; v: number }>
-    const mapped = data.map((d) => ({ t: new Date(d.date).getTime(), v: d.totalNetWorth }))
+    if (!data || data.length === 0) return [] as Array<{ t: number; v: number; annotation?: string }>
+    const mapped = data.map((d) => ({ t: new Date(d.date).getTime(), v: d.totalNetWorth, annotation: d.annotation }))
     // If only 1 data point, synthesize a second point at the start of the
     // range so the chart draws a flat line instead of showing nothing.
     if (mapped.length === 1) {
@@ -296,6 +296,13 @@ export function NetWorthChart({ data, range, height = 300, color }: NetWorthChar
           </>
         )}
 
+        {/* ── Annotation markers — subtle dots for large swings ── */}
+        {dotVisible && points.map((p, i) => p.annotation ? (
+          <circle key={`ann-${i}`} cx={pxX[i]} cy={pxY[i]} r={3} fill="var(--foreground-muted)" opacity={0.35} style={{ cursor: "default" }}>
+            <title>{p.annotation}</title>
+          </circle>
+        ) : null)}
+
         {/* ── Hover crosshair ── */}
         {hover && (
           <>
@@ -328,6 +335,11 @@ export function NetWorthChart({ data, range, height = 300, color }: NetWorthChar
           <div className="font-semibold tabular-nums text-sm" style={{ color: "var(--foreground)" }}>
             {formatTooltipValue(points[hover.idx].v)}
           </div>
+          {points[hover.idx].annotation && (
+            <div style={{ color: "var(--foreground-muted)", fontSize: 10, marginTop: 2 }}>
+              {points[hover.idx].annotation}
+            </div>
+          )}
         </div>
       )}
     </div>
