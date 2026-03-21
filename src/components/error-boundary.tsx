@@ -138,7 +138,7 @@ function PageErrorFallback({
               Retry
             </button>
             <a
-              href="/home"
+              href="/"
               className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm"
             >
               <span className="material-symbols-rounded text-base">home</span>
@@ -197,7 +197,7 @@ function ErrorFallback({ error, reset }: ErrorFallbackProps) {
               Try Again
             </button>
             <button
-              onClick={() => window.location.href = "/home"}
+              onClick={() => window.location.href = "/"}
               className="btn-primary px-6 py-2 text-sm"
             >
               Go Home

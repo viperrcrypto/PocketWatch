@@ -1366,6 +1366,57 @@ html {
   background: transparent;
 }
 
+/* ========================================
+   LLM CONTENT — Markdown prose for PocketLLM
+   ======================================== */
+
+.llm-content { color: var(--foreground); line-height: 1.7; }
+.llm-content p { margin: 0 0 0.75em; }
+.llm-content p:last-child { margin-bottom: 0; }
+.llm-content h1, .llm-content h2, .llm-content h3 {
+  color: var(--foreground); font-weight: 600; margin: 1em 0 0.4em;
+}
+.llm-content h1 { font-size: 1.15em; }
+.llm-content h2 { font-size: 1.05em; }
+.llm-content h3 { font-size: 0.95em; }
+.llm-content ul, .llm-content ol { padding-left: 1.4em; margin: 0.5em 0 0.75em; }
+.llm-content li { margin-bottom: 0.25em; }
+.llm-content code {
+  background: var(--background-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.875em;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+.llm-content pre {
+  background: var(--background-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+.llm-content pre code { background: none; border: none; padding: 0; color: var(--foreground); }
+.llm-content blockquote {
+  border-left: 2px solid var(--primary);
+  margin: 0.75em 0;
+  padding: 0.25em 0 0.25em 1em;
+  color: var(--foreground-muted);
+  font-style: italic;
+}
+.llm-content a { color: var(--primary); text-decoration: underline; }
+.llm-content strong { color: var(--foreground); font-weight: 600; }
+.llm-content hr { border: none; border-top: 1px solid var(--card-border); margin: 1em 0; }
+.llm-content table { width: 100%; border-collapse: collapse; margin: 0.75em 0; font-size: 0.875em; }
+.llm-content th, .llm-content td {
+  border: 1px solid var(--card-border);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.llm-content th { background: var(--background-secondary); font-weight: 600; }
+
 /* Hide scrollbar utility */
 .scrollbar-hide {
   -ms-overflow-style: none;
