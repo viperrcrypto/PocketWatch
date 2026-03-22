@@ -9,6 +9,7 @@
  * in-flight requests so multiple routes share one fetch.
  */
 
+import { createHash } from "node:crypto"
 import {
   fetchMultiWalletPositions,
   type MultiWalletResult,
@@ -52,7 +53,9 @@ export async function getCachedWalletPositions(
   }
 
   // Start a new fetch and register it as in-flight
-  const fingerprint = addresses.map((address) => address.toLowerCase()).sort((a, b) => a.localeCompare(b)).join("|")
+  const fingerprint = createHash("sha256")
+    .update(addresses.map((a) => a.toLowerCase()).sort().join("|"))
+    .digest("hex").slice(0, 16)
   const governedPromise = withProviderPermit(
     userId,
     "zerion",

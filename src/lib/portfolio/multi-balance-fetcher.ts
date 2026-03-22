@@ -9,6 +9,7 @@
  * BTC:    skipped (no dedicated provider wired yet)
  */
 
+import { createHash } from "node:crypto"
 import { getServiceKey } from "./service-keys"
 import { withProviderPermit, isProviderThrottleError } from "./provider-governor"
 import { fetchMultiWalletPositions, type MultiWalletResult, type ZerionWalletData } from "./zerion-client"
@@ -36,6 +37,12 @@ interface WalletInput {
   chains: string[]
 }
 
+/** Short hash of wallet addresses for operation key (must fit in btree index). */
+function walletFingerprint(addresses: string[]): string {
+  const sorted = addresses.map((a) => a.toLowerCase()).sort().join("|")
+  return createHash("sha256").update(sorted).digest("hex").slice(0, 16)
+}
+
 /** Check if an error is a 429 rate-limit (from any provider). */
 function is429(err: unknown): boolean {
   if (isProviderThrottleError(err)) return true
@@ -60,9 +67,8 @@ async function fetchEvmBalances(
   const zerionKey = await getServiceKey(userId, "zerion")
   if (zerionKey) {
     try {
-      const fingerprint = addresses.map((a) => a.toLowerCase()).sort().join("|")
       return await withProviderPermit(
-        userId, "zerion", `multi:${fingerprint}`, undefined,
+        userId, "zerion", `evm-positions:${walletFingerprint(addresses)}`, undefined,
         () => fetchMultiWalletPositions(zerionKey, addresses),
       )
     } catch (err) {
