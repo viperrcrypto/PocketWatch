@@ -96,4 +96,5 @@ export const portfolioKeys = {
   syncProgress: (params = "") => [...portfolioKeys.all, "history", "sync-progress", params] as const,
   repairSummary: () => [...portfolioKeys.all, "history", "repair-summary"] as const,
   lpPositions: () => [...portfolioKeys.all, "balances", "lp"] as const,
+  hiddenTokens: () => [...portfolioKeys.all, "hiddenTokens"] as const,
 }

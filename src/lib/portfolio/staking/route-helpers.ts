@@ -6,14 +6,14 @@
 
 import { db } from "@/lib/db"
 import { type ZerionPosition } from "@/lib/portfolio/zerion-client"
-import { getCachedWalletPositions } from "@/lib/portfolio/zerion-cache"
-import { getServiceKey } from "@/lib/portfolio/service-keys"
+import { getCachedMultiProviderPositions } from "@/lib/portfolio/multi-balance-cache"
 import { DEFI_PROTOCOLS, getUnderlyingSymbol } from "@/lib/portfolio/defi-yields"
 import { saveStakingSnapshot, getPastPositions } from "@/lib/portfolio/staking-snapshots"
 import { getEtherFiVaultBalances } from "@/lib/portfolio/yields/etherfi-vaults"
 import { buildPositionKey, getFrozenPositionKeys } from "@/lib/portfolio/staking-lifecycle"
 import type { YieldSource } from "@/lib/portfolio/yields"
 import { resolvePendleValuations } from "@/lib/portfolio/yields"
+import { getHiddenTokenSymbols } from "@/lib/portfolio/hidden-tokens"
 import {
   mergeVaultPositions,
   enrichWithYields,
@@ -104,33 +104,37 @@ function emptyResponse(rebuildInProgress: boolean, error?: { code: string; messa
 export async function buildStakingResponse(userId: string): Promise<object> {
   const startTime = Date.now()
 
-  const [apiKey, wallets, stakingSyncState] = await Promise.all([
-    getServiceKey(userId, "zerion"),
-    db.trackedWallet.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+  const [wallets, stakingSyncState] = await Promise.all([
+    db.trackedWallet.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+      select: { address: true, chains: true },
+    }),
     db.stakingSyncState.findUnique({ where: { userId }, select: { status: true } }).catch(() => null),
   ])
   const rebuildInProgress = stakingSyncState?.status === "rebuild_running"
 
-  if (!apiKey) {
-    return emptyResponse(rebuildInProgress, {
-      code: "no_api_key",
-      message: "No Zerion API key configured. Add it in Portfolio Settings.",
-    })
-  }
   if (wallets.length === 0) return emptyResponse(rebuildInProgress)
 
   const walletAddresses = wallets.map((w) => w.address)
 
   const [{ wallets: walletData }, vaultPositions, pendleValuations] = await Promise.all([
-    getCachedWalletPositions(userId, apiKey, walletAddresses),
+    getCachedMultiProviderPositions(
+      userId,
+      wallets.map((w) => ({ address: w.address, chains: w.chains })),
+    ),
     getEtherFiVaultBalances(walletAddresses),
     resolvePendleValuations(walletAddresses),
   ])
+
+  // Filter hidden tokens before processing
+  const hiddenSymbols = await getHiddenTokenSymbols(userId)
 
   // Collect all positions, reclassifying DeFi wallet-type tokens
   const allPositions: EnrichedPosition[] = []
   for (const w of walletData) {
     for (const p of w.positions) {
+      if (hiddenSymbols.has(p.symbol)) continue
       const defi = detectDefiToken(p.symbol)
       if (p.positionType === "wallet" && !defi) continue
 

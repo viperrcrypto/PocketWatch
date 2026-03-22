@@ -7,6 +7,7 @@ import { getAllExchangeCredentials } from "@/lib/portfolio/service-keys"
 import { fetchAllExchangeBalances } from "@/lib/portfolio/exchange-client"
 import { getRefreshMeta, queuePortfolioRefresh, runPortfolioRefreshJob } from "@/lib/portfolio/refresh-orchestrator"
 import { normalizeWalletAddress } from "@/lib/portfolio/utils"
+import { getHiddenTokenSymbols } from "@/lib/portfolio/hidden-tokens"
 
 export const maxDuration = 60
 
@@ -116,6 +117,15 @@ async function buildBalancesResponse(userId: string): Promise<object> {
     }
   }
 
+  // Filter out hidden tokens before aggregation
+  const hiddenSymbols = await getHiddenTokenSymbols(userId)
+  if (hiddenSymbols.size > 0 && walletData) {
+    for (const w of walletData) {
+      w.positions = w.positions.filter((p: any) => !hiddenSymbols.has(p.symbol))
+      w.totalValue = w.positions.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
+    }
+  }
+
   // Aggregate on-chain positions
   const allPositions: Record<string, unknown>[] = []
   let onChainTotal = 0
@@ -133,10 +143,11 @@ async function buildBalancesResponse(userId: string): Promise<object> {
     onChainTotal = walletData.reduce((sum, w) => sum + w.totalValue, 0)
   }
 
-  // Merge exchange positions
+  // Merge exchange positions (also filter hidden tokens)
   let exchangeTotal = 0
   if (exchangeData && exchangeData.balances.length > 0) {
     for (const b of exchangeData.balances) {
+      if (hiddenSymbols.has(b.asset)) continue
       allPositions.push({
         symbol: b.asset,
         name: b.asset,
@@ -149,8 +160,8 @@ async function buildBalancesResponse(userId: string): Promise<object> {
         exchange: b.exchange,
         exchangeLabel: b.exchangeLabel,
       })
+      exchangeTotal += b.usd_value
     }
-    exchangeTotal = exchangeData.totalValue
   }
 
   const totalValue = onChainTotal + exchangeTotal

@@ -50,6 +50,7 @@ export function BalanceTable({
   sortDir,
   onSort,
   hasActiveFilters,
+  onHideToken,
 }: {
   groupedData: AssetGroup[]
   expandedGroups: Set<string>
@@ -59,6 +60,7 @@ export function BalanceTable({
   sortDir: "asc" | "desc"
   onSort: (key: string) => void
   hasActiveFilters: boolean
+  onHideToken?: (symbol: string) => void
 }) {
   if (groupedData.length === 0) {
     return (
@@ -85,6 +87,7 @@ export function BalanceTable({
               <SortHeader label="Amount" colKey="amount" align="right" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
               <SortHeader label="Value (USD)" colKey="usd_value" align="right" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
               <SortHeader label="% of Total" colKey="pctOfTotal" align="right" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
+              {onHideToken && <th className="w-10" />}
             </tr>
           </thead>
           <tbody>
@@ -99,11 +102,12 @@ export function BalanceTable({
                   isExpanded={isExpanded}
                   onToggle={() => onToggleGroup(group.displayName)}
                   iconUrl={iconForRow(group.rows[0])}
+                  onHideToken={onHideToken}
                 />
               ) : (
                 <tr
                   key={`${group.rows[0].asset}-${group.rows[0].wallet}-${group.rows[0].chain}`}
-                  className="border-b border-card-border last:border-b-0 hover:bg-primary-subtle transition-colors"
+                  className="border-b border-card-border last:border-b-0 hover:bg-primary-subtle transition-colors group/row"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -127,6 +131,17 @@ export function BalanceTable({
                   <td className="px-4 py-3 text-right">
                     <span className="text-foreground-muted font-data text-sm" style={{ fontVariantNumeric: "tabular-nums" }}>{group.pctOfTotal.toFixed(1)}%</span>
                   </td>
+                  {onHideToken && (
+                    <td className="px-1 py-3 text-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onHideToken(group.displayName) }}
+                        className="opacity-0 group-hover/row:opacity-100 p-1 rounded hover:bg-card-border/40 text-foreground-muted hover:text-foreground transition-all"
+                        title={`Hide ${group.displayName}`}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize: 16 }}>visibility_off</span>
+                      </button>
+                    </td>
+                  )}
                 </tr>
               )
             })}

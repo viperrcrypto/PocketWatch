@@ -8,17 +8,19 @@ export function BalanceGroupRows({
   isExpanded,
   onToggle,
   iconUrl,
+  onHideToken,
 }: {
   group: AssetGroup
   isExpanded: boolean
   onToggle: () => void
   iconUrl: string | undefined
+  onHideToken?: (symbol: string) => void
 }) {
   return (
     <>
       {/* Parent row */}
       <tr
-        className="border-b border-card-border hover:bg-primary-subtle transition-colors cursor-pointer"
+        className="border-b border-card-border hover:bg-primary-subtle transition-colors cursor-pointer group/row"
         onClick={onToggle}
       >
         <td className="px-4 py-3">
@@ -50,6 +52,17 @@ export function BalanceGroupRows({
             {group.pctOfTotal.toFixed(1)}%
           </span>
         </td>
+        {onHideToken && (
+          <td className="px-1 py-3 text-center">
+            <button
+              onClick={(e) => { e.stopPropagation(); onHideToken(group.displayName) }}
+              className="opacity-0 group-hover/row:opacity-100 p-1 rounded hover:bg-card-border/40 text-foreground-muted hover:text-foreground transition-all"
+              title={`Hide ${group.displayName}`}
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>visibility_off</span>
+            </button>
+          </td>
+        )}
       </tr>
 
       {/* Child rows */}
@@ -78,6 +91,7 @@ export function BalanceGroupRows({
             </span>
           </td>
           <td className="px-4 py-2.5" />
+          {onHideToken && <td />}
         </tr>
       ))}
     </>

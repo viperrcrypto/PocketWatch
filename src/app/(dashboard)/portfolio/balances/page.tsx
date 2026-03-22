@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useBlockchainBalances, useAssetMappings, useTrackedAccounts } from "@/hooks/use-portfolio-tracker"
+import { useHiddenTokens, useHideToken, useUnhideToken } from "@/hooks/portfolio/use-balances"
 import { shortenAddress } from "@/lib/portfolio/utils"
 import { PortfolioPageHeader } from "@/components/portfolio/portfolio-page-header"
 import { PortfolioSubNav } from "@/components/portfolio/portfolio-sub-nav"
@@ -17,6 +18,10 @@ import { SetupRequiredState } from "@/components/portfolio/setup-required-state"
 export default function BlockchainBalancesPage() {
   const { data, isLoading, isError, error } = useBlockchainBalances()
   const { data: accountsData } = useTrackedAccounts()
+  const { data: hiddenData } = useHiddenTokens()
+  const hideToken = useHideToken()
+  const unhideToken = useUnhideToken()
+  const hiddenSet = useMemo(() => new Set(hiddenData?.hiddenTokens ?? []), [hiddenData])
   const [sortKey, setSortKey] = useState("usd_value")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [hideSmallBalances, setHideSmallBalances] = useState(true)
@@ -118,9 +123,16 @@ export default function BlockchainBalancesPage() {
     })
   }, [rows, assetMappings])
 
+  // Filter out manually hidden tokens and recompute total
+  const { visibleRows, visibleTotalValue } = useMemo(() => {
+    if (hiddenSet.size === 0) return { visibleRows: resolvedRows, visibleTotalValue: totalValue }
+    const visible = resolvedRows.filter((r) => !hiddenSet.has(r.displayName))
+    return { visibleRows: visible, visibleTotalValue: visible.reduce((s, r) => s + r.usd_value, 0) }
+  }, [resolvedRows, hiddenSet, totalValue])
+
   // Apply search and filters
   const filteredRows = useMemo(() => {
-    let result = resolvedRows
+    let result = visibleRows
     if (filterWallet) result = result.filter((r) => r.wallet === filterWallet)
     if (filterChain) result = result.filter((r) => r.chain.toLowerCase() === filterChain.toLowerCase())
     if (search.trim()) {
@@ -131,7 +143,7 @@ export default function BlockchainBalancesPage() {
       )
     }
     return result
-  }, [resolvedRows, filterWallet, filterChain, search])
+  }, [visibleRows, filterWallet, filterChain, search])
 
   // Sort
   const sortedRows = useMemo(() => {
@@ -239,7 +251,7 @@ export default function BlockchainBalancesPage() {
       {!isLoading && !isResolvingNames && rows.length > 0 && (
         <BalanceSummaryBar
           hasActiveFilters={hasActiveFilters} filteredTotal={filteredTotal}
-          totalValue={totalValue} displayCount={displayRows.length} totalCount={rows.length}
+          totalValue={visibleTotalValue} displayCount={displayRows.length} totalCount={visibleRows.length}
         />
       )}
 
@@ -260,14 +272,33 @@ export default function BlockchainBalancesPage() {
           onToggleGroup={toggleGroup} iconForRow={iconForRow}
           sortKey={sortKey} sortDir={sortDir} onSort={handleSort}
           hasActiveFilters={hasActiveFilters}
+          onHideToken={(symbol) => hideToken.mutate(symbol)}
         />
       )}
 
-      {hideSmallBalances && hiddenCount > 0 && (
-        <div className="mt-2 px-1">
-          <button onClick={() => setHideSmallBalances(false)} className="text-foreground-muted hover:text-foreground-secondary transition-colors text-[10px] tracking-wide">
-            {hiddenCount} asset{hiddenCount !== 1 ? "s" : ""} hidden (&lt; $5)
-          </button>
+      {(hideSmallBalances && hiddenCount > 0 || hiddenSet.size > 0) && (
+        <div className="mt-2 px-1 flex items-center gap-3">
+          {hideSmallBalances && hiddenCount > 0 && (
+            <button onClick={() => setHideSmallBalances(false)} className="text-foreground-muted hover:text-foreground-secondary transition-colors text-[10px] tracking-wide">
+              {hiddenCount} asset{hiddenCount !== 1 ? "s" : ""} hidden (&lt; $5)
+            </button>
+          )}
+          {hiddenSet.size > 0 && (
+            <span className="text-foreground-muted text-[10px] tracking-wide">
+              {hiddenSet.size} manually hidden
+              {Array.from(hiddenSet).map((sym) => (
+                <button
+                  key={sym}
+                  onClick={() => unhideToken.mutate(sym)}
+                  className="ml-1.5 inline-flex items-center gap-0.5 text-foreground-muted hover:text-foreground-secondary transition-colors"
+                  title={`Unhide ${sym}`}
+                >
+                  <span className="underline">{sym}</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: 12 }}>close</span>
+                </button>
+              ))}
+            </span>
+          )}
         </div>
       )}
     </div>
