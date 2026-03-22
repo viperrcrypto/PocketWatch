@@ -2,12 +2,11 @@ import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { apiError } from "@/lib/api-error"
-import { getCachedWalletPositions } from "@/lib/portfolio/zerion-cache"
-import { getServiceKey, getAllExchangeCredentials } from "@/lib/portfolio/service-keys"
+import { getCachedMultiProviderPositions } from "@/lib/portfolio/multi-balance-cache"
+import { getAllExchangeCredentials } from "@/lib/portfolio/service-keys"
 import { fetchAllExchangeBalances } from "@/lib/portfolio/exchange-client"
 import { getRefreshMeta, queuePortfolioRefresh, runPortfolioRefreshJob } from "@/lib/portfolio/refresh-orchestrator"
 import { normalizeWalletAddress } from "@/lib/portfolio/utils"
-import { isProviderThrottleError } from "@/lib/portfolio/provider-governor"
 
 export const maxDuration = 60
 
@@ -38,47 +37,34 @@ function cacheSet(userId: string, data: object): void {
 }
 
 async function buildBalancesResponse(userId: string): Promise<object> {
-  const [apiKey, wallets, exchangeCreds] = await Promise.all([
-    getServiceKey(userId, "zerion"),
-    db.trackedWallet.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+  const [wallets, exchangeCreds] = await Promise.all([
+    db.trackedWallet.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+      select: { address: true, chains: true, label: true },
+    }),
     getAllExchangeCredentials(userId),
   ])
 
   // Fetch on-chain + exchange balances in parallel
   const [walletData, exchangeData] = await Promise.all([
-    // On-chain via Zerion
+    // On-chain via multi-provider (Zerion/Alchemy/Moralis for EVM, Helius/Alchemy for Solana)
     (async () => {
-      if (!apiKey) {
-        console.warn("[balances] No Zerion API key for user", userId)
-        return null
-      }
       if (wallets.length === 0) {
         console.warn("[balances] No wallets for user", userId)
         return []
       }
       try {
         console.log(`[balances] Fetching ${wallets.length} wallet(s) for user ${userId}`)
-        const { wallets: walletList, failedCount } = await getCachedWalletPositions(userId, apiKey, wallets.map((w) => w.address))
+        const { wallets: walletList, failedCount } = await getCachedMultiProviderPositions(
+          userId,
+          wallets.map((w) => ({ address: w.address, chains: w.chains })),
+        )
         console.log(`[balances] Got ${walletList.length} wallet(s) with ${walletList.reduce((s, w) => s + w.positions.length, 0)} total positions — wallets: ${walletList.length}/${wallets.length}${failedCount > 0 ? ` (${failedCount} failed)` : ""}, value: $${walletList.reduce((s, w) => s + w.totalValue, 0).toFixed(2)}`)
         return walletList
       } catch (err) {
-        if (isProviderThrottleError(err)) {
-          // Wait for the short throttle window and retry once
-          const waitMs = Math.min((err as any).nextAllowedAt ? (new Date((err as any).nextAllowedAt).getTime() - Date.now() + 200) : 3000, 5000)
-          if (waitMs > 0 && waitMs <= 5000) {
-            console.info(`[balances] Zerion throttled, retrying in ${waitMs}ms`)
-            await new Promise((r) => setTimeout(r, waitMs))
-            try {
-              const { wallets: retryList } = await getCachedWalletPositions(userId, apiKey, wallets.map((w) => w.address))
-              console.log(`[balances] Retry succeeded: ${retryList.length} wallet(s)`)
-              return retryList
-            } catch (retryErr) {
-              console.warn("[balances] Retry also throttled, falling back")
-            }
-          }
-          return null
-        }
-        throw err
+        console.error("[balances] Multi-provider fetch failed:", err)
+        return null
       }
     })(),
     // Exchange via CCXT
@@ -93,14 +79,13 @@ async function buildBalancesResponse(userId: string): Promise<object> {
     })(),
   ])
 
-  // If no API key and no wallets and no exchanges, return early
-  if (!apiKey && wallets.length === 0 && exchangeCreds.length === 0) {
-    return { error: "no_api_key", message: "No Zerion API key configured. Add it in Portfolio Settings or ask your admin.", positions: [], totalValue: 0 }
+  // If no wallets and no exchanges, return early
+  if (wallets.length === 0 && exchangeCreds.length === 0) {
+    return { error: "no_wallets", message: "No wallets or exchanges configured. Add them in Portfolio Settings.", positions: [], totalValue: 0 }
   }
 
-  // If Zerion was throttled, try to serve the last cached response from the in-memory cache
-  // so the user still sees their positions while the rate limit cools down
-  if (walletData === null && wallets.length > 0 && apiKey) {
+  // If all providers were throttled, try to serve the last cached response
+  if (walletData === null && wallets.length > 0) {
     const stale = cache.get(userId)
     if (stale) {
       console.info("[balances] Serving stale cache during Zerion throttle")
@@ -337,10 +322,10 @@ export async function GET() {
     return NextResponse.json({ ...data, meta: { fromCache: false, ...refreshMeta } })
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error"
-    if (msg.includes("Invalid Zerion API key")) {
-      return apiError("E9041", "Invalid Zerion API key — update it in Portfolio Settings.", 401, error)
+    if (msg.includes("Invalid") && msg.includes("API key")) {
+      return apiError("E9041", "Invalid API key — update it in Portfolio Settings.", 401, error)
     }
-    if (msg.includes("rate limit")) {
+    if (msg.includes("rate limit") || msg.includes("429")) {
       return apiError("E9042", msg, 429, error)
     }
     return apiError("E9043", "Failed to fetch portfolio balances", 500, error)
@@ -393,8 +378,8 @@ export async function POST() {
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error"
-    if (msg.includes("Invalid Zerion API key")) {
-      return apiError("E9045", "Invalid Zerion API key — update it in Portfolio Settings.", 401, error)
+    if (msg.includes("Invalid") && msg.includes("API key")) {
+      return apiError("E9045", "Invalid API key — update it in Portfolio Settings.", 401, error)
     }
     return apiError("E9046", "Failed to refresh portfolio balances", 500, error)
   }

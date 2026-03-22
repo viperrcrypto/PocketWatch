@@ -2,7 +2,7 @@
  * Provider governor types, configuration, and utility functions.
  */
 
-export type ProviderName = "zerion" | "alchemy" | "ccxt" | "defillama" | "helius" | "etherscan"
+export type ProviderName = "zerion" | "alchemy" | "ccxt" | "defillama" | "helius" | "etherscan" | "moralis"
 export type PermitDenyReason = "leased" | "throttled"
 
 export interface AcquirePermitOptions {
@@ -37,6 +37,7 @@ export const DEFAULT_MIN_INTERVAL_MS: Record<ProviderName, number> = {
   defillama: 1_000,
   helius: 200,
   etherscan: 250,
+  moralis: 40,
 }
 
 // Global per-key interval: minimum ms between ANY calls on the same API key.
@@ -47,6 +48,7 @@ export const DEFAULT_KEY_GLOBAL_INTERVAL_MS: Record<ProviderName, number> = {
   defillama: 2_000,
   helius: 500,
   etherscan: 500,
+  moralis: 100,
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -68,6 +70,8 @@ export function getProviderMinIntervalMs(provider: ProviderName): number {
       return parsePositiveInt(process.env.HELIUS_MIN_INTERVAL_MS, DEFAULT_MIN_INTERVAL_MS.helius)
     case "etherscan":
       return parsePositiveInt(process.env.ETHERSCAN_MIN_INTERVAL_MS, DEFAULT_MIN_INTERVAL_MS.etherscan)
+    case "moralis":
+      return parsePositiveInt(process.env.MORALIS_MIN_INTERVAL_MS, DEFAULT_MIN_INTERVAL_MS.moralis)
     default:
       return 1_000
   }

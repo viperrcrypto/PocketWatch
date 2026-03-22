@@ -15,10 +15,11 @@ const ENV_FALLBACKS: Record<string, string | undefined> = {
   alchemy: process.env.ALCHEMY_API_KEY,
   coingecko: process.env.COINGECKO_API_KEY,
   helius: process.env.HELIUS_API_KEY,
+  moralis: process.env.MORALIS_API_KEY,
 }
 
 /** Services that support multiple API keys for round-robin rotation */
-export const MULTI_KEY_SERVICES = new Set(["zerion", "alchemy", "helius"])
+export const MULTI_KEY_SERVICES = new Set(["zerion", "alchemy", "helius", "moralis"])
 
 export interface ServiceKeyEntry {
   id: string

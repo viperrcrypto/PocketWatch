@@ -7,6 +7,8 @@ import {
   useLiabilities, useAISettings, useCardPerks, useToggleCardPerk,
 } from "@/hooks/use-finance"
 import { useAutoEnrichCards } from "@/hooks/finance/use-card-enrichment"
+import { useFinanceTransactions, useUpdateTransactionCategory } from "@/hooks/finance/use-transactions"
+import { AccountTransactions } from "@/components/finance/accounts/account-transactions"
 import { formatCurrency } from "@/lib/utils"
 import { detectIssuer } from "@/components/finance/credit-card-visual"
 import { CardEditModal } from "@/components/finance/card-edit-modal"
@@ -41,9 +43,16 @@ export default function CardDetailPage({
   const [aiError, setAiError] = useState<string | null>(null)
   const [noProvider, setNoProvider] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [txPage, setTxPage] = useState(1)
 
   const hasAIProvider = (aiSettings?.providers ?? []).some((p) => p.verified)
   const card = cards?.find((c) => c.id === id)
+  const updateCategory = useUpdateTransactionCategory()
+  const { data: txData, isLoading: txLoading } = useFinanceTransactions({
+    accountId: card?.accountId ?? undefined,
+    page: txPage,
+    limit: 20,
+  })
 
   const account = useMemo(() => {
     if (!card || !institutions) return null
@@ -132,6 +141,10 @@ export default function CardDetailPage({
         else setAiError(msg)
       },
     })
+  }
+
+  const handleCategoryChange = (txId: string, category: string, createRule?: boolean) => {
+    updateCategory.mutate({ transactionId: txId, category, createRule })
   }
 
   const autoEnrichTriggered = useRef(false)
@@ -254,6 +267,18 @@ export default function CardDetailPage({
 
       <CardRewardMultipliers multipliers={multipliers} />
       <CardTransferPartners partners={transferPartners} />
+
+      {card.accountId && (
+        <AccountTransactions
+          selectedAccount={card.accountId}
+          txData={txData}
+          txLoading={txLoading}
+          txPage={txPage}
+          onPageChange={setTxPage}
+          onCategoryChange={handleCategoryChange}
+        />
+      )}
+
       <CardChat cardId={id} cardName={card.cardName} aiData={aiData} />
       {benefits && benefits.length > 0 && <CardBenefitsAI benefits={benefits} />}
       {statementCredits && <CardStatementCredits credits={statementCredits} />}
