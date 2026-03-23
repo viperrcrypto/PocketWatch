@@ -27,7 +27,7 @@
   <a href="#how-it-works">How It Works</a> &nbsp;&bull;&nbsp;
   <a href="#getting-started">Getting Started</a> &nbsp;&bull;&nbsp;
   <a href="#environment-variables">Environment Variables</a> &nbsp;&bull;&nbsp;
-  <a href="#project-structure">Project Structure</a> &nbsp;&bull;&nbsp;
+  <a href="#data-providers">Data Providers</a> &nbsp;&bull;&nbsp;
   <a href="#security">Security</a> &nbsp;&bull;&nbsp;
   <a href="#contributing">Contributing</a>
 </p>
@@ -53,8 +53,9 @@ Your financial life is scattered across bank apps, brokerage accounts, credit ca
   │                     ⚙  PocketWatch                           │
   │                                                              │
   │   Balances     Transactions     Budgets      Net Worth       │
-  │   Staking      AI Insights      PnL          Bill Tracker     │
+  │   Staking      AI Chat          PnL          Bill Tracker    │
   │   Cards        Subscriptions    Investments   History        │
+  │   Award Flights  ·  Hotel Search  ·  Sweet Spot Finder      │
   │                                                              │
   │          Encrypted  ·  Self-hosted  ·  Single-user           │
   └──────────────────────────────────────────────────────────────┘
@@ -98,16 +99,33 @@ No cloud. No subscriptions. No one else sees your data.
 | **Staking** | Monitor staking positions, rewards, and APY tracking |
 | **PnL & tax prep** | Lot-based cost tracking with realized gains |
 
+### Travel & Award Flights
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-source flight search** | Searches Roame (19+ award programs), Google Flights (cash prices via SerpAPI), and Award Travel Finder (22 airlines) in parallel |
+| **Smart value scoring** | Every flight scored by CPP (cents per point), affordability, and sweet spot matches against your actual points balances |
+| **Transfer partner routing** | Knows which credit card points transfer to which airline programs (Chase UR → United, Amex MR → ANA, etc.) with ratios and transfer times |
+| **Sweet spot detection** | Flags routes where your points get outsized value (e.g., Alaska 70K for Cathay Pacific J, ANA 88K for first class) |
+| **Multi-airport search** | Comma-separated IATA codes (e.g., `MIA,FLL`) with nearby airport suggestions for major metro areas |
+| **Flexible dates** | +/- 1 day toggle expands search across 3 dates to find the cheapest option |
+| **Top 3 recommendations** | Best value award, best premium product, and cheapest cash option with strategic advice on points vs. cash |
+| **Real-time SSE streaming** | Search progress streams to the UI as each source completes |
+| **Credential auto-refresh** | Roame sessions auto-renew via Firebase refresh token — set once, never re-paste |
+
 ### Platform
 
 | Feature | Description |
 |---------|-------------|
 | **Encrypted vault** | Single-user, password-derived AES-256-GCM encryption for all stored credentials |
+| **PocketLLM AI chat** | Conversational AI sidebar with real-time financial queries using 8 read-only tools (Claude, OpenAI, Gemini) |
 | **Dark / light mode** | System-aware with manual toggle |
 | **PWA installable** | Add to home screen on mobile, use like a native app |
 | **Customizable sidebar** | Drag, reorder, and hide navigation items to match your workflow |
 | **Mobile responsive** | Full mobile support with bottom tab navigation |
-| **AI intelligence** | Multi-provider AI analysis (Claude CLI, Claude API, OpenAI, Gemini) with card-specific chat |
+| **Hidden tokens** | Filter spam tokens from portfolio views and totals |
+| **Bulk wallet import** | Paste multiple wallet addresses with auto chain detection |
+| **Multi-provider balances** | Automatic failover across Zerion, Alchemy, Helius, and Moralis for reliable balance fetching |
 | **Auto-lock** | Configurable inactivity timeout (1m, 5m, 15m, 30m, 1h) |
 | **Background sync** | Automated balance refresh, staking snapshots, and transaction sync |
 
@@ -129,23 +147,26 @@ No cloud. No subscriptions. No one else sees your data.
 │                                                                     │
 │  /api/finance/*  ──── Bank sync, budgets, cards, transactions       │
 │  /api/portfolio/* ─── Wallets, balances, history, staking           │
+│  /api/travel/*  ───── Flight search, hotel search, credentials     │
 │  /api/auth/*  ─────── Vault setup, unlock, lock, reset              │
 │  /api/internal/* ──── Background workers (cron-triggered)           │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 │
-              ┌─────────────────┼─────────────────┐
-              ▼                 ▼                  ▼
-   ┌────────────────┐  ┌──────────────┐  ┌──────────────────┐
-   │   Banking       │  │  Market Data │  │  Blockchain       │
-   │                 │  │              │  │                   │
-   │  Plaid          │  │  CoinGecko   │  │  Zerion           │
-   │  SimpleFIN      │  │  DefiLlama   │  │  Helius           │
-   │                 │  │              │  │  Etherscan         │
-   │                 │  │              │  │  CCXT (10+ CEXs)  │
-   └────────┬────────┘  └──────┬───────┘  └────────┬──────────┘
-            │                  │                    │
-            └──────────────────┼────────────────────┘
-                               ▼
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       ▼                        ▼
+ ┌──────────────┐  ┌──────────────────┐  ┌──────────────────────┐
+ │   Banking     │  │  Blockchain       │  │  Travel               │
+ │               │  │                   │  │                       │
+ │  Plaid        │  │  Zerion           │  │  Roame (19+ programs) │
+ │  SimpleFIN    │  │  Alchemy          │  │  SerpAPI / Google Flt │
+ │               │  │  Helius           │  │  ATF (22 airlines)    │
+ │               │  │  Moralis          │  │                       │
+ │               │  │  Etherscan        │  │                       │
+ │               │  │  CCXT (10+ CEXs)  │  │                       │
+ └──────┬───────┘  └────────┬──────────┘  └──────────┬────────────┘
+        │                   │                         │
+        └───────────────────┼─────────────────────────┘
+                            ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │  PostgreSQL · Prisma ORM · 55+ models                               │
 │                                                                     │
@@ -336,28 +357,35 @@ PocketWatch/
 │   │   │   │   ├── settings/        #   Plaid, SimpleFIN, AI provider config
 │   │   │   │   └── transactions/    #   Transaction list & search
 │   │   │   ├── net-worth/           # Net worth dashboard
-│   │   │   └── portfolio/           # Digital assets
-│   │   │       ├── page.tsx         #   Portfolio overview
-│   │   │       ├── accounts/        #   Wallet & exchange management
-│   │   │       ├── balances/        #   On-chain, exchange, manual
-│   │   │       ├── history/         #   Transactions, PnL, snapshots
-│   │   │       └── staking/         #   Staking positions & APY
+│   │   │   ├── portfolio/           # Digital assets
+│   │   │   │   ├── page.tsx         #   Portfolio overview
+│   │   │   │   ├── accounts/        #   Wallet & exchange management
+│   │   │   │   ├── balances/        #   On-chain, exchange, manual
+│   │   │   │   ├── history/         #   Transactions, PnL, snapshots
+│   │   │   │   └── staking/         #   Staking positions & APY
+│   │   │   └── travel/              # Award flight search
+│   │   │       ├── page.tsx         #   Search + results dashboard
+│   │   │       └── settings/        #   Credential management (Roame, ATF, SerpAPI)
 │   │   └── api/
 │   │       ├── auth/                #   Vault auth (setup/unlock/lock/reset)
 │   │       ├── finance/             #   Banking data endpoints
 │   │       ├── portfolio/           #   Digital asset endpoints
+│   │       ├── travel/              #   Flight search SSE, hotels, credentials
 │   │       └── internal/            #   Background sync workers
 │   ├── components/
 │   │   ├── finance/                 # Banking UI (budgets, cards, insights)
 │   │   ├── portfolio/               # Digital asset UI (balances, history)
+│   │   ├── travel/                  # Flight search form, results, cards, settings
 │   │   ├── layout/                  # Sidebar, header, mobile nav
 │   │   └── ui/                      # Shared primitives
 │   ├── hooks/
 │   │   ├── finance/                 # Banking hooks (one per domain)
-│   │   └── portfolio/               # Portfolio hooks (one per domain)
+│   │   ├── portfolio/               # Portfolio hooks (one per domain)
+│   │   └── travel/                  # Flight search SSE hook, credential hooks
 │   ├── lib/
 │   │   ├── finance/                 # Plaid sync, categorization, analytics
 │   │   ├── portfolio/               # Wallet sync, staking, cost-basis, tx
+│   │   ├── travel/                  # Roame client, ATF client, value engine, sweet spots
 │   │   └── defillama/               # Protocol data
 │   └── types/                       # Shared TypeScript interfaces
 ├── .env.example
@@ -390,10 +418,22 @@ PocketWatch connects to multiple data sources. All credentials are encrypted at 
 | Provider | What it does | Key needed? |
 |----------|-------------|-------------|
 | **Zerion** | Multi-chain wallet balance aggregation | Yes (free tier) |
+| **Alchemy** | EVM + Solana RPC, token balances (failover provider) | Yes (free tier) |
 | **Helius** | Solana RPC, transaction history, token metadata | Yes (free tier) |
+| **Moralis** | EVM token balances across 8 chains (failover provider) | Yes (free tier) |
 | **Etherscan** | EVM transaction scanning (+ Arbiscan, Basescan, etc.) | Optional |
 | **CCXT** | Centralized exchange balances & history (Binance, Coinbase, Kraken, OKX, Bybit, and more) | Exchange API keys |
 | **WalletConnect / Reown** | Browser wallet connection | Optional |
+
+### Travel & Award Flights
+
+Travel credentials are configured through the in-app **Travel Settings** page with step-by-step setup instructions.
+
+| Provider | What it does | Free tier | Setup |
+|----------|-------------|-----------|-------|
+| **[Roame](https://roame.travel)** | Award flight search across 19+ mileage programs in one API call | Free account | Sign up → login → copy session cookie from DevTools |
+| **[SerpAPI](https://serpapi.com/manage-api-key)** | Google Flights cash prices + hotel search | 100 searches/month | Sign up → copy API key |
+| **[ATF](https://awardtravelfinder.com/api)** | Award availability across 22 airlines with deep booking links | 150 calls/month | Sign up → API settings → copy key |
 
 ---
 
