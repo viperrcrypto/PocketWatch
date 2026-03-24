@@ -78,7 +78,7 @@ function normalizePosition(token: MoralisToken, chain: string): ZerionPosition {
 function toMoralisChains(chains: string[]): string[] {
   const result: string[] = []
   for (const chain of chains) {
-    const moralisChain = MORALIS_CHAINS[chain.toLowerCase()]
+    const moralisChain = MORALIS_CHAINS[chain]
     if (moralisChain) result.push(moralisChain)
   }
   return result

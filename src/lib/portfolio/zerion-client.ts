@@ -375,6 +375,10 @@ export async function fetchMultiWalletPositions(
       } else {
         failed.push(batch[j])
         console.warn(`[zerion] Wallet ${batch[j].slice(0, 10)}… failed: ${result.reason?.message}`)
+        // Bail immediately on 429 — let multi-balance-fetcher try next provider
+        if (result.reason?.status === 429 || result.reason instanceof ZerionRateLimitError) {
+          throw result.reason
+        }
       }
     }
 

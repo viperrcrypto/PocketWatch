@@ -44,47 +44,59 @@ for (const [chain, network] of Object.entries(ALCHEMY_NETWORKS)) {
   ALCHEMY_TO_CHAIN[network] = chain
 }
 
-interface AlchemyTokenBalance {
-  token: {
-    symbol: string
-    name: string
-    decimals: number
+/** Alchemy tokens/by-address response: { data: { tokens: [...] } } */
+interface AlchemyToken {
+  address: string        // wallet address
+  network: string        // e.g. "solana-mainnet", "eth-mainnet"
+  tokenAddress: string | null  // contract (null for native)
+  tokenBalance: string   // hex-encoded raw balance
+  tokenMetadata: {
+    symbol: string | null
+    name: string | null
+    decimals: number | null
     logo: string | null
-    address: string | null
-    network: string
   }
-  value: string
-  valueUsd: number
-}
-
-interface AlchemyAddressResult {
-  address: string
-  tokenBalances: AlchemyTokenBalance[]
+  tokenPrices: Array<{
+    currency: string
+    value: string
+    lastUpdatedAt: string
+  }>
 }
 
 interface AlchemyResponse {
-  data: AlchemyAddressResult[]
+  data: { tokens: AlchemyToken[] }
 }
 
-function normalizeAlchemyPosition(tb: AlchemyTokenBalance): ZerionPosition {
-  const decimals = tb.token.decimals ?? 18
-  const rawValue = Number(tb.value || "0")
-  const quantity = rawValue / Math.pow(10, decimals)
-  const value = tb.valueUsd ?? 0
-  const price = quantity > 0 ? value / quantity : 0
-  const chain = ALCHEMY_TO_CHAIN[tb.token.network] ?? tb.token.network
+function normalizeAlchemyToken(t: AlchemyToken): ZerionPosition | null {
+  // Skip tokens with no symbol — almost always spam/unknown
+  if (!t.tokenMetadata.symbol) return null
 
+  // Find USD price — skip tokens with no price data (can't value them)
+  const usdPrice = t.tokenPrices.find((p) => p.currency === "usd")
+  const price = usdPrice ? Number(usdPrice.value) : 0
+  if (price <= 0) return null
+
+  // Default decimals: 9 for Solana native, 18 for EVM — most common defaults
+  const isSolana = t.network === "solana-mainnet"
+  const decimals = t.tokenMetadata.decimals ?? (isSolana ? 9 : 18)
+  const rawBalance = BigInt(t.tokenBalance || "0x0")
+  const quantity = Number(rawBalance) / Math.pow(10, decimals)
+  const value = quantity * price
+
+  if (value <= 0 && quantity <= 0) return null
+
+  const chain = ALCHEMY_TO_CHAIN[t.network] ?? t.network
   return {
-    id: `alchemy-${chain}-${tb.token.address ?? "native"}`,
-    symbol: tb.token.symbol || "???",
-    name: tb.token.name || "Unknown Token",
+    id: `alchemy-${chain}-${t.tokenAddress ?? "native"}`,
+    symbol: t.tokenMetadata.symbol,
+    name: t.tokenMetadata.name || "Unknown Token",
     chain,
     quantity,
     price,
     value,
-    iconUrl: tb.token.logo ?? null,
+    iconUrl: t.tokenMetadata.logo ?? null,
     positionType: "wallet",
-    contractAddress: tb.token.address ?? null,
+    contractAddress: t.tokenAddress ?? null,
     protocol: null,
     protocolIcon: null,
     protocolUrl: null,
@@ -96,7 +108,7 @@ function normalizeAlchemyPosition(tb: AlchemyTokenBalance): ZerionPosition {
 function toAlchemyNetworks(chains: string[]): string[] {
   const networks: string[] = []
   for (const chain of chains) {
-    const network = ALCHEMY_NETWORKS[chain.toLowerCase()]
+    const network = ALCHEMY_NETWORKS[chain]
     if (network) networks.push(network)
   }
   return networks
@@ -134,11 +146,11 @@ export async function fetchAlchemyBalances(
     }
 
     const json: AlchemyResponse = await res.json()
-    for (const addrResult of json.data ?? []) {
-      for (const tb of addrResult.tokenBalances ?? []) {
-        if (tb.valueUsd <= 0) continue
-        positions.push(normalizeAlchemyPosition(tb))
-      }
+    const tokens = Array.isArray(json.data?.tokens) ? json.data.tokens : []
+    for (const t of tokens) {
+      if (t.address.toLowerCase() !== address.toLowerCase()) continue
+      const pos = normalizeAlchemyToken(t)
+      if (pos) positions.push(pos)
     }
   }
 
@@ -152,6 +164,8 @@ export async function fetchMultiAlchemyBalances(
 ): Promise<MultiWalletResult> {
   const results: ZerionWalletData[] = []
   let failedCount = 0
+
+  console.log(`[alchemy] Starting fetch for ${wallets.length} wallets`)
 
   for (let i = 0; i < wallets.length; i += BATCH_SIZE) {
     const batch = wallets.slice(i, i + BATCH_SIZE)
@@ -178,7 +192,15 @@ export async function fetchMultiAlchemyBalances(
     }
 
     if (i + BATCH_SIZE < wallets.length) await sleep(50)
+
+    // Progress logging every 20 wallets
+    if ((i + BATCH_SIZE) % 20 === 0 || i + BATCH_SIZE >= wallets.length) {
+      console.log(`[alchemy] Progress: ${Math.min(i + BATCH_SIZE, wallets.length)}/${wallets.length} wallets, ${results.length} succeeded`)
+    }
   }
+
+  const totalPositions = results.reduce((s, w) => s + w.positions.length, 0)
+  console.log(`[alchemy] Complete: ${results.length}/${wallets.length} wallets, ${totalPositions} positions, ${failedCount} failed`)
 
   if (results.length === 0 && wallets.length > 0) {
     throw new Error(`All ${wallets.length} Alchemy wallet fetches failed`)

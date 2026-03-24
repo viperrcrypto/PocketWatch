@@ -8,6 +8,7 @@
  * Core formula: projected_value[day] = sum(quantity[token] × price[token][day])
  */
 
+import { createHash } from "node:crypto"
 import { db } from "@/lib/db"
 import { fetchMultiCoinChart, type ChartPricePoint } from "@/lib/defillama/chart"
 import { NATIVE_COINGECKO_IDS } from "@/lib/tracker/chains"
@@ -289,10 +290,11 @@ export async function fetchProjectedChart(params: FetchProjectedChartParams): Pr
 
   // Compute projection: fetch current positions, project backward
   try {
+    const opHash = createHash("sha256").update(walletFingerprint).digest("hex").slice(0, 16)
     const { wallets } = await withProviderPermit(
       userId,
       "zerion",
-      `positions:projected:${walletFingerprint}`,
+      `positions:projected:${opHash}`,
       undefined,
       () => fetchMultiWalletPositions(zerionKey, addresses),
     )

@@ -6,6 +6,7 @@
  * Assembly functions (merging, blending, status, etc.) live in snapshot-data-assembly.ts.
  */
 
+import { createHash } from "node:crypto"
 import { db } from "@/lib/db"
 import { reconstructPortfolioHistory } from "@/lib/portfolio/value-reconstructor"
 import { fetchMultiWalletChart, type ZerionChartPeriod } from "@/lib/portfolio/zerion-client"
@@ -70,10 +71,11 @@ export async function refreshZerionCache(params: RefreshZerionParams): Promise<C
   if (!shouldRefresh) return zerionPoints
 
   try {
+    const fpHash = createHash("sha256").update(walletFingerprint).digest("hex").slice(0, 16)
     const freshChart = await withProviderPermit(
       userId,
       "zerion",
-      `chart:max:${walletFingerprint}`,
+      `chart:max:${fpHash}`,
       undefined,
       () => fetchMultiWalletChart(zerionKey, addresses, "max")
     )
@@ -155,10 +157,11 @@ export async function fetchRangeSpecificZerion(params: FetchRangeParams): Promis
   if (!rangeZerionPeriod || !zerionKey || addresses.length === 0) return []
 
   try {
+    const fpHash = createHash("sha256").update(walletFingerprint).digest("hex").slice(0, 16)
     const rangeChart = await withProviderPermit(
       userId,
       "zerion",
-      `chart:${rangeZerionPeriod}:${walletFingerprint}`,
+      `chart:${rangeZerionPeriod}:${fpHash}`,
       undefined,
       () => fetchMultiWalletChart(zerionKey, addresses, rangeZerionPeriod)
     )

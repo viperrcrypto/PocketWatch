@@ -72,8 +72,8 @@ async function fetchEvmBalances(
         () => fetchMultiWalletPositions(zerionKey, addresses),
       )
     } catch (err) {
-      if (!is429(err)) throw err
-      console.warn("[multi-fetch] Zerion 429 for EVM — trying Alchemy fallback")
+      const reason = err instanceof Error ? err.message : String(err)
+      console.warn(`[multi-fetch] Zerion failed for EVM (${reason}) — trying Alchemy fallback`)
     }
   }
 
@@ -86,8 +86,8 @@ async function fetchEvmBalances(
         () => fetchMultiAlchemyBalances(alchemyKey, wallets),
       )
     } catch (err) {
-      if (!is429(err)) throw err
-      console.warn("[multi-fetch] Alchemy 429 for EVM — trying Moralis fallback")
+      const reason = err instanceof Error ? err.message : String(err)
+      console.warn(`[multi-fetch] Alchemy failed for EVM (${reason}) — trying Moralis fallback`)
     }
   }
 
@@ -100,8 +100,8 @@ async function fetchEvmBalances(
         () => fetchMultiMoralisBalances(moralisKey, wallets),
       )
     } catch (err) {
-      if (!is429(err)) throw err
-      console.warn("[multi-fetch] Moralis 429 for EVM — all EVM providers exhausted")
+      const reason = err instanceof Error ? err.message : String(err)
+      console.warn(`[multi-fetch] Moralis failed for EVM (${reason}) — all EVM providers exhausted`)
     }
   }
 
@@ -130,8 +130,8 @@ async function fetchSolanaBalances(
         () => fetchMultiHeliusBalances(heliusKey, addresses),
       )
     } catch (err) {
-      if (!is429(err)) throw err
-      console.warn("[multi-fetch] Helius 429 for Solana — trying Alchemy fallback")
+      const reason = err instanceof Error ? err.message : String(err)
+      console.warn(`[multi-fetch] Helius failed for Solana (${reason}) — trying Alchemy fallback`)
     }
   }
 
@@ -139,14 +139,14 @@ async function fetchSolanaBalances(
   const alchemyKey = await getServiceKey(userId, "alchemy")
   if (alchemyKey) {
     try {
-      const solWallets = wallets.map((w) => ({ address: w.address, chains: ["solana"] }))
+      const solWallets = wallets.map((w) => ({ address: w.address, chains: ["SOL"] }))
       return await withProviderPermit(
         userId, "alchemy", `sol-balances`, undefined,
         () => fetchMultiAlchemyBalances(alchemyKey, solWallets),
       )
     } catch (err) {
-      if (!is429(err)) throw err
-      console.warn("[multi-fetch] Alchemy 429 for Solana — all Solana providers exhausted")
+      const reason = err instanceof Error ? err.message : String(err)
+      console.warn(`[multi-fetch] Alchemy failed for Solana (${reason}) — all Solana providers exhausted`)
     }
   }
 
@@ -182,15 +182,34 @@ export async function fetchAllWalletBalances(
     ` (${wallets.length - evmWallets.length - solanaWallets.length} skipped)`,
   )
 
-  // Fetch EVM and Solana in parallel
-  const [evmResult, solanaResult] = await Promise.all([
+  // Fetch EVM and Solana in parallel — use allSettled so one chain type failing doesn't kill the other
+  const [evmSettled, solanaSettled] = await Promise.allSettled([
     fetchEvmBalances(userId, evmWallets),
     fetchSolanaBalances(userId, solanaWallets),
   ])
 
+  const evmResult = evmSettled.status === "fulfilled"
+    ? evmSettled.value
+    : { wallets: [] as ZerionWalletData[], failedCount: evmWallets.length }
+  const solanaResult = solanaSettled.status === "fulfilled"
+    ? solanaSettled.value
+    : { wallets: [] as ZerionWalletData[], failedCount: solanaWallets.length }
+
+  if (evmSettled.status === "rejected") {
+    console.warn(`[multi-fetch] EVM fetch failed: ${evmSettled.reason?.message ?? "unknown"}`)
+  }
+  if (solanaSettled.status === "rejected") {
+    console.warn(`[multi-fetch] Solana fetch failed: ${solanaSettled.reason?.message ?? "unknown"}`)
+  }
+
   // Merge results
   const mergedWallets: ZerionWalletData[] = [...evmResult.wallets, ...solanaResult.wallets]
   const totalFailed = evmResult.failedCount + solanaResult.failedCount
+
+  const totalPositions = mergedWallets.reduce((s, w) => s + w.positions.length, 0)
+  console.log(
+    `[multi-fetch] Complete: ${mergedWallets.length} wallets, ${totalPositions} positions, ${totalFailed} failed`,
+  )
 
   if (mergedWallets.length === 0 && wallets.length > 0) {
     throw new Error(`All ${wallets.length} wallet fetches failed across all providers`)

@@ -1,9 +1,10 @@
+import { createHash } from "node:crypto"
 import { db } from "@/lib/db"
-import { getAllHealthyServiceKeys, markKeyThrottled, markKeySuccess, getAllExchangeCredentials } from "@/lib/portfolio/service-keys"
+import { getAllExchangeCredentials } from "@/lib/portfolio/service-keys"
 import { fetchAllExchangeBalances } from "@/lib/portfolio/exchange-client"
-import { getCachedWalletPositions } from "@/lib/portfolio/zerion-cache"
+import { getCachedMultiProviderPositions } from "@/lib/portfolio/multi-balance-cache"
 import { buildStakingResponse } from "@/app/api/portfolio/staking/route"
-import { withProviderPermit, withProviderPermitRotating, isProviderThrottleError } from "@/lib/portfolio/provider-governor"
+import { withProviderPermit, isProviderThrottleError } from "@/lib/portfolio/provider-governor"
 
 type RefreshJobStatus = "queued" | "running" | "completed" | "failed"
 
@@ -16,7 +17,8 @@ function parseRefreshTtlMs(): number {
 }
 
 function walletFingerprint(addresses: string[]): string {
-  return addresses.map((address) => address.toLowerCase()).sort((a, b) => a.localeCompare(b)).join("|")
+  const sorted = addresses.map((a) => a.toLowerCase()).sort().join("|")
+  return createHash("sha256").update(sorted).digest("hex").slice(0, 16)
 }
 
 function normalizeDate(value: Date | null | undefined): Date | null {
@@ -187,38 +189,31 @@ export async function runPortfolioRefreshJob(jobId: string): Promise<RunRefreshR
   const warnings: string[] = []
 
   try {
-    const [zerionKeys, wallets, exchangeCreds] = await Promise.all([
-      getAllHealthyServiceKeys(job.userId, "zerion"),
-      db.trackedWallet.findMany({ where: { userId: job.userId }, orderBy: { createdAt: "asc" } }),
+    const [wallets, exchangeCreds] = await Promise.all([
+      db.trackedWallet.findMany({
+        where: { userId: job.userId },
+        orderBy: { createdAt: "asc" },
+        select: { address: true, chains: true },
+      }),
       getAllExchangeCredentials(job.userId),
     ])
 
     const addresses = wallets.map((wallet) => wallet.address)
     const fp = walletFingerprint(addresses)
 
-    let walletData: Awaited<ReturnType<typeof getCachedWalletPositions>>["wallets"] | null = null
-    if (zerionKeys.length > 0 && addresses.length > 0) {
+    let walletData: Awaited<ReturnType<typeof getCachedMultiProviderPositions>>["wallets"] | null = null
+    if (addresses.length > 0) {
       try {
-        walletData = await withProviderPermitRotating(
+        const result = await getCachedMultiProviderPositions(
           job.userId,
-          "zerion",
-          `positions:${fp}`,
-          undefined,
-          zerionKeys,
-          async (keyEntry) => {
-            const result = await getCachedWalletPositions(job.userId, keyEntry.key, addresses, keyEntry.id)
-            if (result.failedCount > 0) warnings.push(`zerion_partial:${result.failedCount}`)
-            return result.wallets
-          },
-          (keyId) => markKeyThrottled(keyId).catch(() => {}),
-          (keyId) => markKeySuccess(keyId).catch(() => {}),
+          wallets.map((w) => ({ address: w.address, chains: w.chains })),
         )
+        if (result.failedCount > 0) warnings.push(`balance_partial:${result.failedCount}`)
+        walletData = result.wallets
       } catch (err) {
-        warnings.push(isProviderThrottleError(err) ? "zerion_rate_limited_all_keys" : "zerion_fetch_error")
+        warnings.push(isProviderThrottleError(err) ? "balance_rate_limited" : "balance_fetch_error")
         throw err
       }
-    } else if (zerionKeys.length === 0) {
-      warnings.push("zerion_missing_key")
     }
 
     let exchangeData: Awaited<ReturnType<typeof fetchAllExchangeBalances>> | null = null
