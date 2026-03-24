@@ -1,6 +1,7 @@
 /**
  * Flight search hook — manages SSE connection for long-running searches.
  * Uses fetch + ReadableStream instead of EventSource for proper error handling.
+ * Includes 6-hour localStorage result cache to avoid wasting API calls.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react"
@@ -60,6 +61,62 @@ function saveRecentSearch(config: SearchConfig) {
   }
 }
 
+// ─── Result Cache ───────────────────────────────────────────────
+
+const RESULT_CACHE_KEY = "pw-travel-result-cache"
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
+
+interface CachedResult {
+  key: string
+  data: DashboardResults
+  cachedAt: number
+}
+
+function buildCacheKey(config: SearchConfig): string {
+  const origins = config.origins?.join(",") || config.origin
+  const dests = config.destinations?.join(",") || config.destination
+  const rt = config.tripType === "round_trip" ? `:rt:${config.returnDate}` : ""
+  const flex = config.flexDates ? ":flex" : ""
+  return `${origins}:${dests}:${config.departureDate}:${config.searchClass}${rt}${flex}`
+}
+
+function loadCachedResult(config: SearchConfig): { data: DashboardResults; cachedAt: number } | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(RESULT_CACHE_KEY)
+    if (!raw) return null
+    const entries = JSON.parse(raw) as CachedResult[]
+    const key = buildCacheKey(config)
+    const match = entries.find((e) => e.key === key)
+    if (!match) return null
+    if (Date.now() - match.cachedAt > CACHE_TTL_MS) return null
+    return { data: match.data, cachedAt: match.cachedAt }
+  } catch {
+    return null
+  }
+}
+
+function saveCachedResult(config: SearchConfig, data: DashboardResults) {
+  try {
+    const raw = localStorage.getItem(RESULT_CACHE_KEY)
+    const entries: CachedResult[] = raw ? (JSON.parse(raw) as CachedResult[]) : []
+    const key = buildCacheKey(config)
+    // Remove old entry for same key + any expired entries
+    const now = Date.now()
+    const filtered = entries.filter((e) => e.key !== key && now - e.cachedAt < CACHE_TTL_MS)
+    // Keep max 5 cached searches to limit storage
+    const updated = [{ key, data, cachedAt: now }, ...filtered].slice(0, 5)
+    localStorage.setItem(RESULT_CACHE_KEY, JSON.stringify(updated))
+  } catch {
+    // quota exceeded — clear old cache and retry once
+    try {
+      localStorage.removeItem(RESULT_CACHE_KEY)
+    } catch { /* ignore */ }
+  }
+}
+
+// ─── SSE Parser ─────────────────────────────────────────────────
+
 type SearchStatus = "idle" | "searching" | "complete" | "error"
 
 interface FlightSearchState {
@@ -67,6 +124,7 @@ interface FlightSearchState {
   progress: SearchProgressEvent[]
   results: DashboardResults | null
   error: string | null
+  cachedAt: number | null
 }
 
 function parseSSEChunk(chunk: string): { event: string; data: string }[] {
@@ -84,12 +142,15 @@ function parseSSEChunk(chunk: string): { event: string; data: string }[] {
   return events
 }
 
+// ─── Hook ───────────────────────────────────────────────────────
+
 export function useFlightSearch() {
   const [state, setState] = useState<FlightSearchState>({
     status: "idle",
     progress: [],
     results: null,
     error: null,
+    cachedAt: null,
   })
   const abortRef = useRef<AbortController | null>(null)
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([])
@@ -98,9 +159,27 @@ export function useFlightSearch() {
     setRecentSearches(loadRecentSearches())
   }, [])
 
-  const search = useCallback((config: SearchConfig) => {
+  const search = useCallback((config: SearchConfig, forceRefresh?: boolean) => {
     // Cancel any in-flight search
     abortRef.current?.abort()
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = loadCachedResult(config)
+      if (cached) {
+        setState({
+          status: "complete",
+          progress: [],
+          results: cached.data,
+          error: null,
+          cachedAt: cached.cachedAt,
+        })
+        saveRecentSearch(config)
+        setRecentSearches(loadRecentSearches())
+        return
+      }
+    }
+
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -108,7 +187,7 @@ export function useFlightSearch() {
     saveRecentSearch(config)
     setRecentSearches(loadRecentSearches())
 
-    setState({ status: "searching", progress: [], results: null, error: null })
+    setState({ status: "searching", progress: [], results: null, error: null, cachedAt: null })
 
     // Build origin/destination as comma-separated if multi-airport
     const originParam = config.origins?.length ? config.origins.join(",") : config.origin
@@ -168,7 +247,8 @@ export function useFlightSearch() {
               setState(prev => ({ ...prev, progress: [...prev.progress, data] }))
             } else if (evt.event === "result") {
               const data = JSON.parse(evt.data) as DashboardResults
-              setState(prev => ({ ...prev, status: "complete", results: data }))
+              saveCachedResult(config, data)
+              setState(prev => ({ ...prev, status: "complete", results: data, cachedAt: null }))
             } else if (evt.event === "error") {
               const data = JSON.parse(evt.data) as { error: string }
               setState(prev => ({ ...prev, status: "error", error: data.error }))
@@ -182,7 +262,8 @@ export function useFlightSearch() {
           for (const evt of events) {
             if (evt.event === "result") {
               const data = JSON.parse(evt.data) as DashboardResults
-              setState(prev => ({ ...prev, status: "complete", results: data }))
+              saveCachedResult(config, data)
+              setState(prev => ({ ...prev, status: "complete", results: data, cachedAt: null }))
             } else if (evt.event === "error") {
               const data = JSON.parse(evt.data) as { error: string }
               setState(prev => ({ ...prev, status: "error", error: data.error }))

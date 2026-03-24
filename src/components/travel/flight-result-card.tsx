@@ -27,8 +27,8 @@ function formatDuration(mins: number): string {
 /** Extract HH:MM AM/PM from a datetime string. Returns null if no time info. */
 function formatTime(dt: string | undefined): string | null {
   if (!dt) return null
-  // Match ISO datetime or "YYYY-MM-DDTHH:MM" patterns
-  const match = dt.match(/T(\d{2}):(\d{2})/)
+  // Match "T" or space before time: "2026-05-08T13:02" or "2026-05-08 13:02"
+  const match = dt.match(/[\sT](\d{2}):(\d{2})/)
   if (!match) return null
   const h = parseInt(match[1]!)
   const m = match[2]!
@@ -47,9 +47,9 @@ function formatDate(dateStr: string | undefined): string | null {
 /** Check if arrival is next day relative to departure */
 function isNextDay(dep: string | undefined, arr: string | undefined): boolean {
   if (!dep || !arr) return false
-  const depDate = dep.match(/^(\d{4}-\d{2}-\d{2})/)?.[1]
-  const arrDate = arr.match(/^(\d{4}-\d{2}-\d{2})/)?.[1]
-  if (!depDate || !arrDate) return false
+  const depDate = dep.slice(0, 10)
+  const arrDate = arr.slice(0, 10)
+  if (depDate.length !== 10 || arrDate.length !== 10) return false
   return arrDate > depDate
 }
 
