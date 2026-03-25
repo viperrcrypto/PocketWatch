@@ -16,6 +16,7 @@ export default function TravelPage() {
   const { data: balancesData } = useTravelBalances()
   const { isOpen: chatOpen, setPageContext } = useChat()
   const [lastConfig, setLastConfig] = useState<SearchConfig | null>(null)
+  const [filteredFlights, setFilteredFlights] = useState<import("@/types/travel").ValueScoredFlight[]>([])
   // Tell PocketLLM about flight results so the AI can answer questions
   useEffect(() => {
     if (results) {
@@ -88,7 +89,7 @@ export default function TravelPage() {
 
             {/* PocketWatch Picks */}
             <PocketWatchPicks
-              flights={results.flights}
+              flights={filteredFlights.length > 0 ? filteredFlights : results.flights}
               isMultiSearch={!!(results.meta.origins || results.meta.destinations || results.meta.flexDates)}
               onPickClick={handlePickClick}
             />
@@ -98,6 +99,7 @@ export default function TravelPage() {
               flights={results.flights}
               onSearchCabin={handleSearchCabin}
               isMultiSearch={!!(results.meta.origins || results.meta.destinations || results.meta.flexDates)}
+              onFilteredChange={setFilteredFlights}
             />
           </div>
 

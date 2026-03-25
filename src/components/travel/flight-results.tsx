@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import type { ValueScoredFlight } from "@/types/travel"
 import { FlightResultCard } from "./flight-result-card"
 import { cn } from "@/lib/utils"
@@ -9,6 +9,7 @@ interface FlightResultsProps {
   flights: ValueScoredFlight[]
   onSearchCabin?: (cabin: string) => void
   isMultiSearch?: boolean
+  onFilteredChange?: (filtered: ValueScoredFlight[]) => void
 }
 
 type CabinFilter = "all" | "economy" | "business" | "first"
@@ -85,7 +86,7 @@ function FlightList({ flights }: { flights: ValueScoredFlight[] }) {
   )
 }
 
-export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightResultsProps) {
+export function FlightResults({ flights, onSearchCabin, isMultiSearch, onFilteredChange }: FlightResultsProps) {
   const [cabinFilter, setCabinFilter] = useState<CabinFilter>("all")
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [stopsFilter, setStopsFilter] = useState<StopsFilter>("any")
@@ -153,6 +154,11 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
 
   const isFiltered = cabinFilter !== "all" || typeFilter !== "all" || stopsFilter !== "any"
     || sourceFilter !== "all" || airportFilter !== "all" || dateFilter !== "all"
+
+  // Report filtered flights to parent so picks can respect filters
+  useEffect(() => {
+    onFilteredChange?.(isFiltered ? filtered : [])
+  }, [filtered.length, isFiltered, onFilteredChange])
 
   const clearAllFilters = () => {
     setCabinFilter("all")
