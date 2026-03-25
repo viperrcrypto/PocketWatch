@@ -95,9 +95,10 @@ interface PointMeSearchData {
 // ─── Program Key Mapping ────────────────────────────────────────
 
 const POINTME_TO_PW_PROGRAM: Record<string, string> = {
+  // Airline programs
   FLYINGBLUE: "FLYING_BLUE",
   DELTA_SKYMILES: "DELTA",
-  "TURKISH_MILES_AND_SMILES": "TURKISH",
+  TURKISH_MILES_AND_SMILES: "TURKISH",
   AMERICAN_AADVANTAGE: "AMERICAN",
   UNITED_MILEAGEPLUS: "UNITED",
   ANA_MILEAGE_CLUB: "ANA",
@@ -113,6 +114,23 @@ const POINTME_TO_PW_PROGRAM: Record<string, string> = {
   ALASKA_MILEAGE_PLAN: "ALASKA",
   AVIANCA_LIFEMILES: "AVIANCA",
   JAL_MILEAGE_BANK: "JAL",
+  HAWAIIAN_MILES: "HAWAIIAN",
+  JETBLUE_TRUEBLUE: "JETBLUE",
+  TAP_MILESGO: "TAP",
+  IBERIA_PLUS: "IBERIA",
+  LATAM_PASS: "LATAM",
+  ICELANDAIR_SAGA: "ICELANDAIR",
+  AER_LINGUS_AERCLUB: "AER_LINGUS",
+  VIRGIN_AUSTRALIA_VELOCITY: "VIRGIN_AUSTRALIA",
+  // Bank/card transfer programs → map to the underlying airline program
+  // These are transfer partners, not airline programs — the booking happens
+  // on the airline side, so we link to the airline's booking page
+  CITI_THANKYOU: "CITI_THANKYOU",
+  AMEX_MEMBERSHIP_REWARDS: "AMEX_MR",
+  CHASE_ULTIMATE_REWARDS: "CHASE_UR",
+  CAPITAL_ONE: "CAPITAL_ONE",
+  BILT_REWARDS: "BILT",
+  ATMOS_REWARDS: "ATMOS",
 }
 
 const DEAL_TYPE_TO_TAGS: Record<string, string> = {

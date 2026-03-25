@@ -32,6 +32,13 @@ export const PROGRAM_BOOKING_URLS: Record<string, string> = {
   EL_AL: "https://www.elal.com/",
   CONDOR: "https://www.condor.com/",
   CAPE_AIR: "https://www.capeair.com/",
+  // Bank/card transfer programs — link to their transfer portals
+  CITI_THANKYOU: "https://www.thankyou.com/",
+  AMEX_MR: "https://global.americanexpress.com/rewards",
+  CHASE_UR: "https://ultimaterewardspoints.chase.com/",
+  CAPITAL_ONE: "https://www.capitalone.com/credit-cards/benefits/travel/",
+  BILT: "https://www.biltrewards.com/travel",
+  ATMOS: "https://www.joinatmos.com/",
 }
 
 export const PROGRAM_DISPLAY_NAMES: Record<string, string> = {
@@ -110,6 +117,26 @@ export function buildProgramBookingUrl(
       return `https://www.lifemiles.com/flights/search?origin=${origin}&destination=${destination}&departDate=${date}&tripType=OW&adult=1&cabin=${cabinCode}`
     case "QANTAS":
       return `https://www.qantas.com/au/en/book-a-trip/flights.html?from=${origin}&to=${destination}&departure=${date}&adults=1&children=0&infants=0&isUsingRewardPoints=true`
+    case "TURKISH":
+      return `https://www.turkishairlines.com/en-us/miles-and-smiles/spend-miles/award-ticket/?origin=${origin}&destination=${destination}&departureDate=${date}&adult=1&awardType=oneWay`
+    case "HAWAIIAN":
+      return `https://www.hawaiianairlines.com/book/results?SearchType=Award&From=${origin}&To=${destination}&DepartureDate=${date}&Adults=1`
+    case "JETBLUE":
+      return `https://www.jetblue.com/booking/flights?from=${origin}&to=${destination}&depart=${date}&isMultiCity=false&noOfRoute=1&lang=en&adults=1&children=0&infants=0&shared498=true&fare=points`
+    case "TAP":
+      return `https://www.flytap.com/en-us/book?type=MilesGo&from=${origin}&to=${destination}&date=${date}&pax=1`
+    case "IBERIA":
+      return `https://www.iberia.com/us/booking/select-flights/?market=US&language=en&adults=1&children=0&infants=0&trip=OW&origin=${origin}&destination=${destination}&departureDate=${date}&cabinType=${cabinCode}&AVIOS=true`
+    case "LATAM":
+      return `https://www.latamairlines.com/us/en/booking/redemption?origin=${origin}&destination=${destination}&outbound=${date}&adt=1&inf=0&cnn=0`
+    case "ANA":
+      return `https://www.ana.co.jp/en/us/amc/award-booking/?origin=${origin}&destination=${destination}&departDate=${date}&adult=1&cabin=${cabinCode}`
+    case "JAL":
+      return `https://www.jal.co.jp/en/jmb/award/?origin=${origin}&destination=${destination}&departDate=${date}&adult=1`
+    case "CATHAY":
+      return `https://www.cathaypacific.com/cx/en_US/book-a-trip/redeem-flights/redeem-flight-awards.html?origin=${origin}&destination=${destination}&departDate=${date}&adult=1`
+    case "ETIHAD":
+      return `https://www.etihad.com/en-us/fly-etihad/book-a-flight?origin=${origin}&destination=${destination}&departureDate=${date}&adults=1&awardBooking=true`
     default:
       return PROGRAM_BOOKING_URLS[program] || `https://www.google.com/travel/flights?q=flights+from+${origin}+to+${destination}+on+${date}`
   }
