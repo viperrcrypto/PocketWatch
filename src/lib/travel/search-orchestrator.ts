@@ -15,6 +15,7 @@ import type {
 import { searchRoame, roameFaresToUnified } from "./roame-client"
 import { searchGoogleFlights } from "./google-flights-client"
 import { searchATF } from "./atf-client"
+import { searchPointMe } from "./pointme-client"
 import { scoreFlights } from "./value-engine"
 import { getSweetSpotsForRoute } from "./sweet-spots"
 import { expandFlexDates, tagResults, generateWarnings } from "./search-helpers"
@@ -32,6 +33,7 @@ interface SearchCredentials {
   roameSession?: RoameCredentials
   serpApiKey?: string
   atfApiKey?: string
+  pointmeToken?: string
 }
 
 // ─── Response Cache ─────────────────────────────────────────────
@@ -236,6 +238,25 @@ async function searchOneLeg(
     )
   }
 
+  // point.me search
+  if (credentials.pointmeToken) {
+    promises.push(
+      (async () => {
+        onProgress?.({ source: `${prefix}pointme`, status: "searching" })
+        const flights = await searchPointMe(
+          credentials.pointmeToken!, origin, destination, date, searchClass,
+        )
+        if (leg) flights.forEach(f => f.leg = leg)
+        allFlights.push(...flights)
+        completionPct[`${prefix}pointme`] = flights.length > 0 ? 100 : 0
+        onProgress?.({ source: `${prefix}pointme`, status: "complete", flights: flights.length })
+      })().catch(err => {
+        completionPct[`${prefix}pointme`] = 0
+        onProgress?.({ source: `${prefix}pointme`, status: "failed", error: (err as Error).message })
+      })
+    )
+  }
+
   await Promise.allSettled(promises)
   return allFlights
 }
@@ -281,9 +302,11 @@ export async function runSearch(
         outboundPromises.push(
           (async () => {
             // For non-primary combos, strip ATF to protect budget (21 calls/combo)
+            // point.me is one API call so it's fine on all combos
             const comboCreds = isPrimary ? credentials : {
               roameSession: credentials.roameSession,
               serpApiKey: credentials.serpApiKey,
+              pointmeToken: credentials.pointmeToken,
               // ATF only on primary combo
             }
 
@@ -301,8 +324,8 @@ export async function runSearch(
               label ? (p) => onProgress?.({ ...p, source: `${label}:${p.source}` }) : onProgress,
             )
 
-            tagResults(flights, orig, dest, date, isRoundTrip ? "outbound" : undefined)
-            allFlights.push(...flights)
+            const tagged = tagResults(flights, orig, dest, date, isRoundTrip ? "outbound" : undefined)
+            allFlights.push(...tagged)
           })()
         )
       }
@@ -329,6 +352,7 @@ export async function runSearch(
               const comboCreds = isPrimary ? credentials : {
                 roameSession: credentials.roameSession,
                 serpApiKey: credentials.serpApiKey,
+                pointmeToken: credentials.pointmeToken,
               }
 
               const flights = await searchOneLeg(
@@ -344,8 +368,8 @@ export async function runSearch(
                 label ? (p) => onProgress?.({ ...p, source: `${label}:${p.source}` }) : onProgress,
               )
 
-              tagResults(flights, dest, orig, rDate, "return")
-              allFlights.push(...flights)
+              const tagged = tagResults(flights, dest, orig, rDate, "return")
+              allFlights.push(...tagged)
             })()
           )
         }

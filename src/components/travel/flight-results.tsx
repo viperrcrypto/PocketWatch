@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, forwardRef, useImperativeHandle } from "react"
 import type { ValueScoredFlight } from "@/types/travel"
 import { FlightResultCard } from "./flight-result-card"
 import { cn } from "@/lib/utils"
@@ -16,13 +16,48 @@ type TypeFilter = "all" | "award" | "cash"
 type StopsFilter = "any" | "0" | "1" | "2"
 type SortBy = "valueScore" | "price" | "cpp" | "duration"
 
-export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightResultsProps) {
+export interface FlightResultsHandle {
+  clearFilters: () => void
+}
+
+export const FlightResults = forwardRef<FlightResultsHandle, FlightResultsProps>(function FlightResults({ flights, onSearchCabin, isMultiSearch }, ref) {
   const [cabinFilter, setCabinFilter] = useState<CabinFilter>("all")
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [stopsFilter, setStopsFilter] = useState<StopsFilter>("any")
+  const [sourceFilter, setSourceFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<SortBy>("valueScore")
   const [airportFilter, setAirportFilter] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState<string>("all")
+
+  useImperativeHandle(ref, () => ({
+    clearFilters() {
+      setCabinFilter("all")
+      setTypeFilter("all")
+      setStopsFilter("any")
+      setSourceFilter("all")
+      setAirportFilter("all")
+      setDateFilter("all")
+    },
+  }))
+
+  // Unique sources for filter pills
+  const sources = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const f of flights) {
+      counts.set(f.source, (counts.get(f.source) || 0) + 1)
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([source]) => source)
+  }, [flights])
+
+  const SOURCE_LABELS: Record<string, string> = {
+    roame: "Roame",
+    pointme: "point.me",
+    google: "Google",
+    atf: "ATF",
+    "hidden-city": "Hidden City",
+  }
 
   // Unique airport pairs and dates for filter pills
   const airportPairs = useMemo(() => {
@@ -45,7 +80,7 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
     return Array.from(dates).sort()
   }, [flights, isMultiSearch])
 
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     let result = [...flights]
 
     if (cabinFilter !== "all") {
@@ -57,6 +92,9 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
     if (stopsFilter !== "any") {
       const maxStops = parseInt(stopsFilter)
       result = result.filter(f => f.stops <= maxStops)
+    }
+    if (sourceFilter !== "all") {
+      result = result.filter(f => f.source === sourceFilter)
     }
     if (airportFilter !== "all") {
       const [orig, dest] = airportFilter.split("-")
@@ -79,7 +117,7 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
     })
 
     return result
-  }, [flights, cabinFilter, typeFilter, stopsFilter, sortBy, airportFilter, dateFilter])
+  })()
 
   const hasLegs = filtered.some(f => f.leg)
   const outboundFiltered = hasLegs ? filtered.filter(f => f.leg === "outbound") : []
@@ -160,6 +198,32 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
           ))}
         </div>
 
+        {sources.length > 1 && (
+          <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-card-border">
+            <button
+              onClick={() => setSourceFilter("all")}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+                sourceFilter === "all" ? "bg-primary/10 text-primary" : "text-foreground-muted hover:text-foreground"
+              )}
+            >
+              All Sources
+            </button>
+            {sources.map(s => (
+              <button
+                key={s}
+                onClick={() => setSourceFilter(s)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+                  sourceFilter === s ? "bg-primary/10 text-primary" : "text-foreground-muted hover:text-foreground"
+                )}
+              >
+                {SOURCE_LABELS[s] || s}
+              </button>
+            ))}
+          </div>
+        )}
+
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -231,7 +295,7 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
       {/* Results count */}
       <p className="text-xs text-foreground-muted">
         {filtered.length} flight{filtered.length !== 1 ? "s" : ""}
-        {cabinFilter !== "all" || typeFilter !== "all" || stopsFilter !== "any" ? " (filtered)" : ""}
+        {cabinFilter !== "all" || typeFilter !== "all" || stopsFilter !== "any" || sourceFilter !== "all" || airportFilter !== "all" || dateFilter !== "all" ? " (filtered)" : ""}
       </p>
 
       {/* Result cards — grouped by leg when round-trip */}
@@ -244,7 +308,7 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
                 Outbound ({outboundFiltered.length})
               </h3>
               {outboundFiltered.map((flight) => (
-                <FlightResultCard key={flight.id} flight={flight} />
+                <FlightResultCard key={`${flight.id}-ob`} flight={flight} />
               ))}
             </div>
           )}
@@ -255,7 +319,7 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
                 Return ({returnFiltered.length})
               </h3>
               {returnFiltered.map((flight) => (
-                <FlightResultCard key={flight.id} flight={flight} />
+                <FlightResultCard key={`${flight.id}-rt`} flight={flight} />
               ))}
             </div>
           )}
@@ -289,4 +353,4 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightR
       )}
     </div>
   )
-}
+})

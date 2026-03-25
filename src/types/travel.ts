@@ -6,7 +6,7 @@
 
 export interface UnifiedFlightResult {
   id: string
-  source: "roame" | "google" | "hidden-city" | "atf"
+  source: "roame" | "google" | "hidden-city" | "atf" | "pointme"
   type: "award" | "cash"
   tags?: string[]
   // Route
@@ -259,6 +259,15 @@ export interface HotelDashboardResults {
     sources: string[]
   }
   hotels: UnifiedHotelResult[]
+}
+
+// ─── PocketWatch Picks ─────────────────────────────────────────
+
+export type PickCategory = "pocketwatch-pick" | "best-value" | "quickest" | "nonstop" | "sweet-spot"
+
+export interface PickCandidate {
+  category: PickCategory
+  flight: ValueScoredFlight
 }
 
 // ─── Search Progress (SSE) ──────────────────────────────────────

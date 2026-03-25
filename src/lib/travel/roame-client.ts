@@ -156,7 +156,7 @@ export function roameFaresToUnified(fares: RoameFare[], searchClass: string): Un
     const travelDate = fare.departureDateStr || fare.departureDate || ""
 
     return {
-      id: `roame-${fare.mileageProgram}-${idx}`,
+      id: `roame-${fare.mileageProgram}-${fare.originIata}-${fare.destinationIata}-${travelDate}-${searchClass}-${cabin}-${idx}`,
       source: "roame" as const,
       type: "award" as const,
       origin: fare.originIata,

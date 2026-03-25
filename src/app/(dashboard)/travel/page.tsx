@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useFlightSearch, useTravelBalances } from "@/hooks/travel"
 import { FlightSearchForm } from "@/components/travel/flight-search-form"
-import { FlightResults } from "@/components/travel/flight-results"
+import { FlightResults, type FlightResultsHandle } from "@/components/travel/flight-results"
+import { PocketWatchPicks } from "@/components/travel/pocketwatch-picks"
 import { RecommendationsPanel } from "@/components/travel/recommendations-panel"
 import { BalancesPanel } from "@/components/travel/balances-panel"
 import type { SearchConfig } from "@/types/travel"
@@ -12,6 +13,19 @@ export default function TravelPage() {
   const { status, progress, results, error, search, isSearching, recentSearches } = useFlightSearch()
   const { data: balancesData } = useTravelBalances()
   const [lastConfig, setLastConfig] = useState<SearchConfig | null>(null)
+  const flightResultsRef = useRef<FlightResultsHandle>(null)
+
+  const handlePickClick = useCallback((flightId: string) => {
+    flightResultsRef.current?.clearFilters()
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`flight-${flightId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        el.style.boxShadow = "0 0 0 2px #818cf8"
+        setTimeout(() => { el.style.boxShadow = "" }, 2000)
+      }
+    })
+  }, [])
 
   const handleSearch = useCallback((config: SearchConfig) => {
     setLastConfig(config)
@@ -76,8 +90,16 @@ export default function TravelPage() {
               </div>
             )}
 
+            {/* PocketWatch Picks */}
+            <PocketWatchPicks
+              flights={results.flights}
+              isMultiSearch={!!(results.meta.origins || results.meta.destinations || results.meta.flexDates)}
+              onPickClick={handlePickClick}
+            />
+
             {/* Flight results */}
             <FlightResults
+              ref={flightResultsRef}
               flights={results.flights}
               onSearchCabin={handleSearchCabin}
               isMultiSearch={!!(results.meta.origins || results.meta.destinations || results.meta.flexDates)}

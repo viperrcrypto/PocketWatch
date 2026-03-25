@@ -15,18 +15,19 @@ export function expandFlexDates(date: string): string[] {
 
 /** Tag flight results with the specific origin/dest/date combo they came from. */
 export function tagResults(
-  flights: UnifiedFlightResult[],
+  flights: ReadonlyArray<UnifiedFlightResult>,
   origin: string,
   destination: string,
   date: string,
   leg?: "outbound" | "return",
-) {
-  for (const f of flights) {
-    f.searchOrigin = origin
-    f.searchDestination = destination
-    f.searchDate = date
-    if (leg) f.leg = leg
-  }
+): UnifiedFlightResult[] {
+  return flights.map((f) => ({
+    ...f,
+    searchOrigin: origin,
+    searchDestination: destination,
+    searchDate: date,
+    ...(leg ? { leg } : {}),
+  }))
 }
 
 /** Generate user-facing warnings based on points balances. */

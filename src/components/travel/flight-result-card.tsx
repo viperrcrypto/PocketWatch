@@ -4,9 +4,26 @@ import type { ValueScoredFlight } from "@/types/travel"
 import { cn } from "@/lib/utils"
 import { SweetSpotBadge } from "./sweet-spot-badge"
 import { PROGRAM_DISPLAY_NAMES } from "@/lib/travel/constants"
+import { formatDuration } from "@/lib/travel/pick-selector"
 
 interface FlightResultCardProps {
   flight: ValueScoredFlight
+}
+
+const SOURCE_COLORS: Record<string, string> = {
+  roame: "bg-purple-500/10 text-purple-400",
+  pointme: "bg-indigo-500/10 text-indigo-400",
+  google: "bg-emerald-500/10 text-emerald-400",
+  atf: "bg-orange-500/10 text-orange-400",
+  "hidden-city": "bg-pink-500/10 text-pink-400",
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  roame: "Roame",
+  pointme: "point.me",
+  google: "Google",
+  atf: "ATF",
+  "hidden-city": "Hidden City",
 }
 
 const cppRatingColors: Record<string, string> = {
@@ -17,12 +34,6 @@ const cppRatingColors: Record<string, string> = {
   poor: "text-foreground-muted",
 }
 
-function formatDuration(mins: number): string {
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return `${h}h${m > 0 ? `${m}m` : ""}`
-}
-
 export function FlightResultCard({ flight }: FlightResultCardProps) {
   const isAward = flight.type === "award"
   const programName = flight.pointsProgram
@@ -31,6 +42,7 @@ export function FlightResultCard({ flight }: FlightResultCardProps) {
 
   return (
     <a
+      id={`flight-${flight.id}`}
       href={flight.bookingUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -48,6 +60,12 @@ export function FlightResultCard({ flight }: FlightResultCardProps) {
               "bg-card-border/50 text-foreground-muted"
             )}>
               {flight.cabinClass}
+            </span>
+            <span className={cn(
+              "text-[10px] font-medium px-1.5 py-0.5 rounded",
+              SOURCE_COLORS[flight.source] || "bg-card-border/50 text-foreground-muted"
+            )}>
+              {SOURCE_LABELS[flight.source] || flight.source}
             </span>
             {flight.sweetSpotMatch && <SweetSpotBadge match={flight.sweetSpotMatch} />}
             {flight.searchOrigin && flight.searchDestination && (

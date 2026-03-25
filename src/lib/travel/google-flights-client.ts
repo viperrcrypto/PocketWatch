@@ -80,7 +80,7 @@ export async function searchGoogleFlights(
           : config.departureDate
 
         allFlights.push({
-          id: `google-${allFlights.length}`,
+          id: `google-${firstLeg.departure_airport?.id || config.origin}-${lastLeg.arrival_airport?.id || config.destination}-${extractedDate}-${travelClass}-${allFlights.length}`,
           source: "google",
           type: "cash",
           origin: firstLeg.departure_airport?.id || config.origin,

@@ -183,7 +183,7 @@ export function atfToUnified(atfResults: ATFResult[]): UnifiedFlightResult[] {
       }
 
       unified.push({
-        id: `atf-${airline}-${cabinKey}-${unified.length}`,
+        id: `atf-${airline}-${cabinKey}-${origin}-${destination}-${date}`,
         source: "atf",
         type: "award",
         origin,
