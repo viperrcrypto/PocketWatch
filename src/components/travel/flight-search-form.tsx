@@ -257,9 +257,9 @@ export function FlightSearchForm({ onSearch, isSearching, progress, recentSearch
               key={i}
               className={cn(
                 "text-[11px] px-2 py-0.5 rounded-full font-medium",
-                p.status === "complete" ? "bg-emerald-500/10 text-emerald-400" :
+                p.status === "complete" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" :
                 p.status === "failed" ? "bg-foreground-muted/10 text-foreground-muted" :
-                "bg-primary/10 text-primary"
+                "bg-blue-100 text-blue-700 dark:bg-primary/10 dark:text-primary"
               )}
             >
               {p.source}: {p.status === "complete" ? `${p.flights} flights` : p.status === "failed" ? "unavailable" : p.status}
