@@ -104,9 +104,7 @@ export async function searchGoogleFlights(
           cppValue: null,
           roameScore: null,
           availableSeats: null,
-          bookingUrl: itinerary.booking_token
-            ? `https://www.google.com/travel/flights/booking?token=${encodeURIComponent(itinerary.booking_token)}`
-            : buildCashBookingUrl(legs[0]?.airline || "", firstLeg.departure_airport?.id || config.origin, lastLeg.arrival_airport?.id || config.destination, extractedDate),
+          bookingUrl: buildCashBookingUrl(legs[0]?.airline || "", firstLeg.departure_airport?.id || config.origin, lastLeg.arrival_airport?.id || config.destination, extractedDate),
           fareClass: itinerary.type || "",
           travelDate: extractedDate,
         })

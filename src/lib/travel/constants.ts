@@ -97,29 +97,26 @@ export function buildProgramBookingUrl(
   const [year, month, day] = date.split("-")
   const cabinCode = cabin === "first" ? "F" : cabin === "business" ? "J" : "Y"
 
+  // Use simplest, most stable URL patterns — airlines break deep links frequently
   switch (program) {
     case "ALASKA":
-      return `https://www.alaskaair.com/booking/choose-flights?prior=award&orig=${origin}&dest=${destination}&date=${year}${month}${day}&ADT=1`
+      return `https://www.alaskaair.com/shopping/flights?prior=award&fromCity=${origin}&toCity=${destination}&departDate=${month}%2F${day}%2F${year}&adults=1`
     case "UNITED":
-      return `https://www.united.com/ual/en/us/flight-search/book-a-flight/results/awd?f=${origin}&t=${destination}&d=${date}&tt=1&at=1&sc=7&px=1&taxng=1&newHP=True&clm=7&st=bestmatches&tqp=A`
+      return `https://www.united.com/en/us/fsr/choose-flights?f=${origin}&t=${destination}&d=${date}&tt=1&at=1&sc=7&px=1&taxng=1&clm=7&tqp=A`
     case "AMERICAN":
       return `https://www.aa.com/booking/search?locale=en_US&pax=1&adult=1&type=OneWay&searchType=Award&origin=${origin}&destination=${destination}&departureDate=${date}`
     case "DELTA":
-      return `https://www.delta.com/flight-search/search?cacheKeySuffix=a&action=findFlights&tripType=ONE_WAY&priceSchedule=MILES&origin=${origin}&destination=${destination}&departureDate=${date}&paxCount=1`
+      return `https://www.delta.com/flight-search/search?tripType=ONE_WAY&priceSchedule=MILES&origin=${origin}&destination=${destination}&departureDate=${date}&paxCount=1`
     case "AEROPLAN":
-      return `https://www.aircanada.com/aeroplan/redeem/availability/outbound?org0=${origin}&dest0=${destination}&departureDate0=${date}&ADT=1&YTH=0&CHD=0&INF=0&INS=0&lang=en-CA&tripType=O`
+      return `https://www.aircanada.com/aeroplan/redeem/availability/outbound?org0=${origin}&dest0=${destination}&departureDate0=${date}&ADT=1&tripType=O&lang=en-CA`
     case "FLYING_BLUE":
       return `https://wwws.airfrance.us/search/offers?pax=1:0:0:0:0:0:0:0&cabinClass=ECONOMY&activeConnection=0&connections=${origin}-A>${destination}-A:${date}`
-    case "BRITISH_AIRWAYS": {
-      const baCabin = cabinCode === "F" ? "F" : cabinCode === "J" ? "C" : "M"
-      return `https://www.britishairways.com/travel/redeem/execclub/_gf/en_us?eId=111095&from=${origin}&to=${destination}&depDate=${date}&cabin=${baCabin}&ad=1&ch=0&inf=0&yf=0`
-    }
+    case "BRITISH_AIRWAYS":
+      return `https://www.britishairways.com/travel/redeem/execclub/_gf/en_us?eId=111095&from=${origin}&to=${destination}&depDate=${date}&cabin=${cabinCode === "F" ? "F" : cabinCode === "J" ? "C" : "M"}&ad=1&ch=0&inf=0&yf=0`
     case "EMIRATES":
-      return `https://www.emirates.com/us/english/book/?origin=${origin}&destination=${destination}&departDate=${date}&pax=1&class=${cabin}&award=true`
-    case "QATAR": {
-      const qrClass = cabinCode === "F" ? "F" : cabinCode === "J" ? "C" : "E"
-      return `https://booking.qatarairways.com/nsp/views/showBooking.action?widget=QR&searchType=F&bookingClass=${qrClass}&tripType=O&from=${origin}&to=${destination}&departing=${date}&adult=1&child=0&infant=0&bookAward=true`
-    }
+      return `https://www.emirates.com/us/english/book/?origin=${origin}&destination=${destination}&departDate=${date}&pax=1&class=${cabin}`
+    case "QATAR":
+      return `https://booking.qatarairways.com/nsp/views/showBooking.action?tripType=O&from=${origin}&to=${destination}&departing=${date}&adult=1&bookAward=true`
     case "SINGAPORE":
       return `https://www.singaporeair.com/en_UK/ppsclub-krisflyer/redeem/redemption-booking/?originStation=${origin}&destinationStation=${destination}&departDate=${day}${month}${year}&cabinClass=${cabinCode}&adult=1`
     case "VIRGIN_ATLANTIC":
@@ -127,27 +124,27 @@ export function buildProgramBookingUrl(
     case "AVIANCA":
       return `https://www.lifemiles.com/flights/search?origin=${origin}&destination=${destination}&departDate=${date}&tripType=OW&adult=1&cabin=${cabinCode}`
     case "QANTAS":
-      return `https://www.qantas.com/au/en/book-a-trip/flights.html?from=${origin}&to=${destination}&departure=${date}&adults=1&children=0&infants=0&isUsingRewardPoints=true`
+      return `https://www.qantas.com/au/en/book-a-trip/flights.html?from=${origin}&to=${destination}&departure=${date}&adults=1&isUsingRewardPoints=true`
     case "TURKISH":
-      return `https://www.turkishairlines.com/en-us/miles-and-smiles/spend-miles/award-ticket/?origin=${origin}&destination=${destination}&departureDate=${date}&adult=1&awardType=oneWay`
+      return `https://www.turkishairlines.com/en-us/miles-and-smiles/spend-miles/award-ticket/`
     case "HAWAIIAN":
       return `https://www.hawaiianairlines.com/book/results?SearchType=Award&From=${origin}&To=${destination}&DepartureDate=${date}&Adults=1`
     case "JETBLUE":
-      return `https://www.jetblue.com/booking/flights?from=${origin}&to=${destination}&depart=${date}&isMultiCity=false&noOfRoute=1&lang=en&adults=1&children=0&infants=0&shared498=true&fare=points`
+      return `https://www.jetblue.com/booking/flights?from=${origin}&to=${destination}&depart=${date}&adults=1&fare=points`
     case "TAP":
       return `https://www.flytap.com/en-us/book?type=MilesGo&from=${origin}&to=${destination}&date=${date}&pax=1`
     case "IBERIA":
-      return `https://www.iberia.com/us/booking/select-flights/?market=US&language=en&adults=1&children=0&infants=0&trip=OW&origin=${origin}&destination=${destination}&departureDate=${date}&cabinType=${cabinCode}&AVIOS=true`
+      return `https://www.iberia.com/us/booking/select-flights/?market=US&adults=1&trip=OW&origin=${origin}&destination=${destination}&departureDate=${date}&AVIOS=true`
     case "LATAM":
-      return `https://www.latamairlines.com/us/en/booking/redemption?origin=${origin}&destination=${destination}&outbound=${date}&adt=1&inf=0&cnn=0`
+      return `https://www.latamairlines.com/us/en/booking/redemption?origin=${origin}&destination=${destination}&outbound=${date}&adt=1`
     case "ANA":
-      return `https://www.ana.co.jp/en/us/amc/award-booking/?origin=${origin}&destination=${destination}&departDate=${date}&adult=1&cabin=${cabinCode}`
+      return `https://www.ana.co.jp/en/us/book-plan/reservation/international/awd/`
     case "JAL":
-      return `https://www.jal.co.jp/en/jmb/award/?origin=${origin}&destination=${destination}&departDate=${date}&adult=1`
+      return `https://www.jal.co.jp/en/jalmile/use/award/inter/`
     case "CATHAY":
-      return `https://www.cathaypacific.com/cx/en_US/book-a-trip/redeem-flights/redeem-flight-awards.html?origin=${origin}&destination=${destination}&departDate=${date}&adult=1`
+      return `https://www.cathaypacific.com/cx/en_US/book-a-trip/redeem-flights/redeem-flight-awards.html`
     case "ETIHAD":
-      return `https://www.etihad.com/en-us/fly-etihad/book-a-flight?origin=${origin}&destination=${destination}&departureDate=${date}&adults=1&awardBooking=true`
+      return `https://www.etihad.com/en-us/fly-etihad/book-a-flight`
     default:
       return PROGRAM_BOOKING_URLS[program] || `https://www.google.com/travel/flights?q=flights+from+${origin}+to+${destination}+on+${date}`
   }
