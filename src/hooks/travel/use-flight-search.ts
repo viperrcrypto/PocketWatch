@@ -115,6 +115,23 @@ function saveCachedResult(config: SearchConfig, data: DashboardResults) {
   }
 }
 
+/** Load the most recent non-expired cached result (for mount hydration). */
+function loadMostRecentResult(): { data: DashboardResults; cachedAt: number } | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(RESULT_CACHE_KEY)
+    if (!raw) return null
+    const entries = JSON.parse(raw) as CachedResult[]
+    const now = Date.now()
+    const valid = entries.filter((e) => now - e.cachedAt < CACHE_TTL_MS)
+    if (valid.length === 0) return null
+    const newest = valid.reduce((a, b) => (a.cachedAt > b.cachedAt ? a : b))
+    return { data: newest.data, cachedAt: newest.cachedAt }
+  } catch {
+    return null
+  }
+}
+
 // ─── SSE Parser ─────────────────────────────────────────────────
 
 type SearchStatus = "idle" | "searching" | "complete" | "error"
@@ -157,6 +174,17 @@ export function useFlightSearch() {
 
   useEffect(() => {
     setRecentSearches(loadRecentSearches())
+    // Hydrate last search results from cache so they survive navigation
+    const cached = loadMostRecentResult()
+    if (cached) {
+      setState({
+        status: "complete",
+        progress: [],
+        results: cached.data,
+        error: null,
+        cachedAt: cached.cachedAt,
+      })
+    }
   }, [])
 
   const search = useCallback((config: SearchConfig, forceRefresh?: boolean) => {
