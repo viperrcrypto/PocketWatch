@@ -89,13 +89,13 @@ export default function FinanceTransactionsPage() {
 
       {/* Uncategorized Alert */}
       {uncategorizedCount > 0 && (
-        <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
               <span className="material-symbols-rounded text-warning" style={{ fontSize: 20 }}>label_off</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-bold text-foreground">
                 {uncategorizedCount} uncategorized transaction{uncategorizedCount > 1 ? "s" : ""}
               </p>
               <p className="text-xs text-foreground-muted">Categorize for better insights</p>
@@ -123,26 +123,26 @@ export default function FinanceTransactionsPage() {
               className="px-3 py-1.5 text-xs border border-warning/30 rounded-lg hover:bg-warning/10 transition-colors disabled:opacity-50"
             >
               <span className="font-medium text-warning">
-                {autoCategorize.isPending ? "Working..." : "Auto-categorize"}
+                {autoCategorize.isPending ? "Working..." : "Quick Fix"}
               </span>
-              <span className="block text-[10px] text-warning/60">Rules &amp; matching</span>
+              <span className="block text-[10px] text-warning/60">Local rules — instant</span>
             </button>
             <Link
               href="/finance/categorize"
               className="px-3 py-1.5 text-xs border border-card-border rounded-lg hover:bg-background-secondary transition-colors text-center"
             >
-              <span className="font-medium text-foreground">Manual Review</span>
-              <span className="block text-[10px] text-foreground-muted">Review one-by-one</span>
+              <span className="font-medium text-foreground">Review Manually</span>
+              <span className="block text-[10px] text-foreground-muted">One at a time</span>
             </Link>
             <Link
               href="/finance/categorize?mode=ai"
-              className="px-3 py-1.5 text-xs border border-card-border rounded-lg hover:bg-background-secondary transition-colors text-center flex flex-col items-center"
+              className="px-3 py-1.5 text-xs border border-primary/30 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors text-center flex flex-col items-center"
             >
-              <span className="font-medium text-foreground flex items-center gap-1">
+              <span className="font-medium text-primary flex items-center gap-1">
                 <span className="material-symbols-rounded" style={{ fontSize: 12 }}>auto_awesome</span>
-                AI Categorize
+                AI Categorize All
               </span>
-              <span className="block text-[10px] text-foreground-muted">AI-powered bulk</span>
+              <span className="block text-[10px] text-primary/60">Uses AI — reviews all at once</span>
             </Link>
           </div>
         </div>
