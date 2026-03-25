@@ -3,6 +3,7 @@
  */
 
 import type { UnifiedFlightResult, SearchConfig } from "@/types/travel"
+import { buildCashBookingUrl } from "./constants"
 
 interface SerpApiLeg {
   airline?: string
@@ -105,7 +106,7 @@ export async function searchGoogleFlights(
           availableSeats: null,
           bookingUrl: itinerary.booking_token
             ? `https://www.google.com/travel/flights/booking?token=${encodeURIComponent(itinerary.booking_token)}`
-            : `https://www.google.com/travel/flights?q=flights+from+${config.origin}+to+${config.destination}+on+${config.departureDate}`,
+            : buildCashBookingUrl(legs[0]?.airline || "", firstLeg.departure_airport?.id || config.origin, lastLeg.arrival_airport?.id || config.destination, extractedDate),
           fareClass: itinerary.type || "",
           travelDate: extractedDate,
         })
