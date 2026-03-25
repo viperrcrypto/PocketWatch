@@ -29,7 +29,11 @@ export default function CategorizePage() {
           <h1 className="text-xl font-semibold text-foreground">Categorize</h1>
           <p className="text-sm text-foreground-muted mt-0.5">
             {mode === "review"
-              ? reviewCount > 0 ? `${reviewCount} need review` : "All caught up"
+              ? reviewCount > 0
+                ? `${reviewCount} need review`
+                : uncategorizedCount > 0
+                  ? `${uncategorizedCount} uncategorized — try AI Rebuild`
+                  : "All caught up"
               : `${uncategorizedCount} uncategorized`}
           </p>
         </div>
@@ -45,6 +49,7 @@ export default function CategorizePage() {
             active={mode === "rebuild"}
             icon="auto_awesome"
             label="AI Rebuild"
+            badge={uncategorizedCount}
             onClick={() => router.push("/finance/categorize?mode=rebuild")}
           />
           <Link
