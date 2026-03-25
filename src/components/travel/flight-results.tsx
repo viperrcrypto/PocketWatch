@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, forwardRef, useImperativeHandle } from "react"
+import { useState, useMemo } from "react"
 import type { ValueScoredFlight } from "@/types/travel"
 import { FlightResultCard } from "./flight-result-card"
 import { cn } from "@/lib/utils"
@@ -85,11 +85,7 @@ function FlightList({ flights }: { flights: ValueScoredFlight[] }) {
   )
 }
 
-export interface FlightResultsHandle {
-  clearFilters: () => void
-}
-
-export const FlightResults = forwardRef<FlightResultsHandle, FlightResultsProps>(function FlightResults({ flights, onSearchCabin, isMultiSearch }, ref) {
+export function FlightResults({ flights, onSearchCabin, isMultiSearch }: FlightResultsProps) {
   const [cabinFilter, setCabinFilter] = useState<CabinFilter>("all")
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
   const [stopsFilter, setStopsFilter] = useState<StopsFilter>("any")
@@ -164,8 +160,6 @@ export const FlightResults = forwardRef<FlightResultsHandle, FlightResultsProps>
     setAirportFilter("all")
     setDateFilter("all")
   }
-
-  useImperativeHandle(ref, () => ({ clearFilters: clearAllFilters }))
 
   return (
     <div className="space-y-3">
@@ -256,4 +250,4 @@ export const FlightResults = forwardRef<FlightResultsHandle, FlightResultsProps>
       )}
     </div>
   )
-})
+}
