@@ -53,7 +53,7 @@ async function detectRefundsAndDeposits(userId: string): Promise<NewAlert[]> {
       createdAt: { gte: cutoff },
       amount: { lt: 0 },
     },
-    select: { id: true, name: true, merchantName: true, amount: true, date: true, category: true },
+    select: { id: true, name: true, merchantName: true, amount: true, date: true, category: true, accountId: true, paymentChannel: true },
   })
 
   if (credits.length === 0) return []
@@ -89,6 +89,7 @@ async function detectRefundsAndDeposits(userId: string): Promise<NewAlert[]> {
         amount: absAmount,
         merchantName: creditMerchant || credit.merchantName || credit.name,
         transactionId: credit.id,
+        metadata: { category: credit.category, accountId: credit.accountId, date: credit.date.toISOString(), paymentChannel: credit.paymentChannel },
       })
       continue
     }
@@ -141,6 +142,7 @@ async function detectRefundsAndDeposits(userId: string): Promise<NewAlert[]> {
         amount: absAmount,
         merchantName: creditMerchant || credit.merchantName || credit.name,
         transactionId: credit.id,
+        metadata: { category: credit.category, accountId: credit.accountId, date: credit.date.toISOString(), paymentChannel: credit.paymentChannel },
       })
     }
   }
@@ -258,7 +260,7 @@ async function detectBudgetWarnings(userId: string): Promise<NewAlert[]> {
         message: `${budget.category}: ${fmtUSD(spent)} / ${fmtUSD(budget.monthlyLimit)} (${Math.round(ratio * 100)}%)`,
         amount: spent,
         merchantName: budget.category,
-        metadata: { dedupKey, ratio },
+        metadata: { dedupKey, ratio, monthlyLimit: budget.monthlyLimit, spent, category: budget.category },
       })
     } else if (ratio >= BUDGET_WARNING_THRESHOLD) {
       alerts.push({
@@ -267,7 +269,7 @@ async function detectBudgetWarnings(userId: string): Promise<NewAlert[]> {
         message: `${budget.category}: ${fmtUSD(spent)} / ${fmtUSD(budget.monthlyLimit)} (${Math.round(ratio * 100)}%)`,
         amount: spent,
         merchantName: budget.category,
-        metadata: { dedupKey, ratio },
+        metadata: { dedupKey, ratio, monthlyLimit: budget.monthlyLimit, spent, category: budget.category },
       })
     }
   }
@@ -284,7 +286,7 @@ async function detectBillReminders(userId: string): Promise<NewAlert[]> {
 
   const bills = await db.financeSubscription.findMany({
     where: { userId, status: "active", nextChargeDate: { gte: now, lte: reminderCutoff } },
-    select: { id: true, merchantName: true, amount: true, nextChargeDate: true, nickname: true },
+    select: { id: true, merchantName: true, amount: true, nextChargeDate: true, nickname: true, frequency: true, accountId: true },
   })
 
   const existingAlerts = await db.financeAlert.findMany({
@@ -307,7 +309,13 @@ async function detectBillReminders(userId: string): Promise<NewAlert[]> {
         message: `${name}: ${fmtUSD(bill.amount)} on ${dueDate}`,
         amount: bill.amount,
         merchantName: bill.merchantName,
-        metadata: { dedupKey: `${bill.merchantName}:${today}` },
+        metadata: {
+          dedupKey: `${bill.merchantName}:${today}`,
+          subscriptionId: bill.id,
+          frequency: bill.frequency,
+          accountId: bill.accountId,
+          dueDate: bill.nextChargeDate!.toISOString(),
+        },
       }
     })
 }
@@ -319,7 +327,7 @@ async function detectLargeTransactions(userId: string): Promise<NewAlert[]> {
 
   const large = await db.financeTransaction.findMany({
     where: { userId, isExcluded: false, isDuplicate: false, createdAt: { gte: cutoff }, amount: { gt: LARGE_TRANSACTION_THRESHOLD } },
-    select: { id: true, name: true, merchantName: true, amount: true, category: true },
+    select: { id: true, name: true, merchantName: true, amount: true, category: true, accountId: true, date: true, paymentChannel: true },
     take: 10,
   })
 
@@ -340,6 +348,7 @@ async function detectLargeTransactions(userId: string): Promise<NewAlert[]> {
         amount: txn.amount,
         merchantName: merchant,
         transactionId: txn.id,
+        metadata: { category: txn.category, accountId: txn.accountId, date: txn.date.toISOString(), paymentChannel: txn.paymentChannel },
       }
     })
 }
