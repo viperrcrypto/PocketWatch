@@ -22,6 +22,7 @@ export interface FinanceTransaction {
   subcategory: string | null
   isPending: boolean
   isExcluded: boolean
+  needsReview: boolean
   notes: string | null
   tags: string[]
   logoUrl: string | null

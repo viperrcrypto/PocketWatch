@@ -306,6 +306,7 @@ export default function FinanceTransactionsPage() {
               website={tx.website}
               location={tx.location}
               counterparties={tx.counterparties}
+              needsReview={tx.needsReview}
               onCategoryChange={(newCategory, createRule) =>
                 updateCategory.mutate({
                   transactionId: tx.id,

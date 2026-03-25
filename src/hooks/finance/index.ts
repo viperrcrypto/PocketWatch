@@ -133,3 +133,15 @@ export {
   useAccountCoverage,
   useUploadStatement,
 } from "./use-statements"
+
+export type { ReviewTransaction } from "./use-review"
+export {
+  useReviewCount,
+  useReviewQueue,
+  useConfirmReview,
+} from "./use-review"
+
+export type { ProcessedMerchant, RebuildSummary } from "./use-ai-rebuild"
+export {
+  useAIRebuild,
+} from "./use-ai-rebuild"

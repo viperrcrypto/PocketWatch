@@ -10,9 +10,10 @@ interface SidebarNavSectionProps {
   pathname: string
   baseHref: string
   onClose?: () => void
+  badges?: Record<string, number>
 }
 
-export function SidebarNavSection({ label, items, pathname, baseHref, onClose }: SidebarNavSectionProps) {
+export function SidebarNavSection({ label, items, pathname, baseHref, onClose, badges }: SidebarNavSectionProps) {
   return (
     <>
       {label && (
@@ -50,6 +51,11 @@ export function SidebarNavSection({ label, items, pathname, baseHref, onClose }:
               {item.icon}
             </span>
             <span>{item.label}</span>
+            {badges?.[item.id] != null && badges[item.id] > 0 && (
+              <span className="ml-auto w-5 h-5 rounded-full bg-error/90 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                {badges[item.id] > 9 ? "9+" : badges[item.id]}
+              </span>
+            )}
           </Link>
         )
       })}

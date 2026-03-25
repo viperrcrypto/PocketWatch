@@ -11,6 +11,7 @@ import {
   getOrderedItems,
   NAV_CATEGORIES,
 } from "@/hooks/use-sidebar-prefs"
+import { useReviewCount } from "@/hooks/use-finance"
 
 interface SidebarProps {
   isOpen?: boolean
@@ -19,6 +20,8 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname()
+  const { data: reviewCountData } = useReviewCount()
+  const financeBadges = reviewCountData?.count ? { "fin-transactions": reviewCountData.count } : undefined
   const {
     prefs,
     isEditing,
@@ -117,6 +120,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
                     pathname={pathname}
                     baseHref={baseHref}
                     onClose={onClose}
+                    badges={catKey === "finance" ? financeBadges : undefined}
                   />
                 </div>
               )

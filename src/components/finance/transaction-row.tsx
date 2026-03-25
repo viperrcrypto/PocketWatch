@@ -26,6 +26,7 @@ interface TransactionRowProps {
   website?: string | null
   location?: { city?: string | null; region?: string | null; postalCode?: string | null; country?: string | null } | null
   counterparties?: Array<{ name: string; type: string; logoUrl?: string | null }> | null
+  needsReview?: boolean
   onCategoryChange?: (category: string, createRule: boolean) => void
 }
 
@@ -33,6 +34,7 @@ export function TransactionRow({
   id, date, merchantName, name, amount, category, subcategory,
   notes, isPending, accountName, accountMask, className,
   paymentChannel, authorizedDate, logoUrl, website, location, counterparties,
+  needsReview,
   onCategoryChange,
 }: TransactionRowProps) {
   const [expanded, setExpanded] = useState(false)
@@ -101,6 +103,16 @@ export function TransactionRow({
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             <CategoryBadge category={category} />
+            {needsReview && (
+              <a
+                href="/finance/categorize"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 10 }}>rate_review</span>
+                Review
+              </a>
+            )}
             <span className="text-xs text-foreground-muted">{accountName}{accountMask ? ` ••${accountMask}` : ""}</span>
           </div>
         </div>

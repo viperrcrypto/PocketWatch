@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
-import { cleanMerchantName, suggestCategories, uncategorizedWhere, type CategoryRule, type CategorySuggestion } from "@/lib/finance/categorize"
+import { cleanMerchantName, suggestCategories, uncategorizedWhere, type ConfidenceRule, type CategorySuggestion } from "@/lib/finance/categorize"
 import { NextRequest, NextResponse } from "next/server"
 
 /**
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     ])
 
     // Fetch user rules once
-    const userRules: CategoryRule[] = await db.financeCategoryRule.findMany({
+    const userRules: ConfidenceRule[] = await db.financeCategoryRule.findMany({
       where: { userId: user.id },
       orderBy: { priority: "desc" },
     })

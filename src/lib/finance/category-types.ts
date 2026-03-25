@@ -45,4 +45,16 @@ export interface CategoryRule {
   category: string
   subcategory: string | null
   priority: number
+  confidence: number
+  timesConfirmed: number
+  timesOverridden: number
+}
+
+export type CategorySource = "hard_rule" | "rule" | "plaid" | "merchant_map" | "keyword" | "history" | "top_used" | "ai_rebuild"
+
+export interface EnrichedCategoryResult extends CategoryResult {
+  source: CategorySource
+  confidence: number
+  needsReview: boolean
+  ruleId?: string
 }

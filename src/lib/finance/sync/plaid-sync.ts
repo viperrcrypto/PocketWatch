@@ -78,11 +78,18 @@ export async function syncPlaid(
         if (!account) continue
 
         const cleaned = cleanMerchantName(txn.merchantName || txn.name)
+        const matchedAcct = institution!.accounts.find(
+          (a) => a.externalId === txn.accountId
+        )
         const cat = categorizeTransaction(
           {
             merchantName: cleaned,
             rawName: txn.name,
             plaidCategory: txn.personalFinanceCategory?.detailed ?? null,
+            plaidCategoryPrimary: txn.personalFinanceCategory?.primary ?? null,
+            amount: txn.amount,
+            accountType: (matchedAcct as { type?: string })?.type ?? "depository",
+            accountSubtype: (matchedAcct as { subtype?: string | null })?.subtype ?? null,
           },
           userRules
         )
@@ -104,8 +111,10 @@ export async function syncPlaid(
             merchantName: cleaned,
             amount: txn.amount,
             currency: txn.isoCurrencyCode ?? "USD",
-            category: cat.category,
+            category: cat.category === "Uncategorized" ? null : cat.category,
             subcategory: cat.subcategory,
+            isAutoApplied: cat.source === "rule" || cat.source === "keyword",
+            needsReview: cat.needsReview,
             plaidCategory: txn.personalFinanceCategory?.detailed ?? null,
             plaidCategoryPrimary: txn.personalFinanceCategory?.primary ?? null,
             isPending: txn.pending,

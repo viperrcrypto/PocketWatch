@@ -1,17 +1,22 @@
 /**
  * Transaction categorization engine.
- * Cascade: user rules -> Plaid mapping -> merchant map -> keywords -> fallback.
+ * New cascade: hard rules → confidence rules → Plaid → merchant map → keywords → fallback.
  *
  * Re-exports all types and data from split modules for backward compatibility.
  */
 
 // Re-export types and data for backward compatibility
-export { CATEGORIES, type Category, type CategoryResult, type CategorySuggestion, type CategoryRule } from "./category-types"
+export { CATEGORIES, type Category, type CategoryResult, type CategorySuggestion, type CategoryRule, type EnrichedCategoryResult, type CategorySource } from "./category-types"
 export { MERCHANT_MAP, matchMerchantMap } from "./merchant-map"
 export { matchKeywords } from "./keyword-map"
 export { PLAID_CATEGORY_MAP } from "./plaid-category-map"
+export { applyHardRules, type TransactionContext, type HardRuleResult } from "./hard-rules"
+export { applyConfidenceRules, buildConfidenceRuleSet, computeNewConfidence, CONFIDENCE, type ConfidenceRule, type ConfidenceRuleMatch } from "./confidence-rules"
 
-import type { CategoryResult, CategoryRule, CategorySuggestion } from "./category-types"
+import type { CategoryResult, CategorySuggestion, EnrichedCategoryResult } from "./category-types"
+import type { ConfidenceRule } from "./confidence-rules"
+import { applyConfidenceRules, CONFIDENCE } from "./confidence-rules"
+import { applyHardRules, type TransactionContext } from "./hard-rules"
 import { matchMerchantMap, MERCHANT_MAP } from "./merchant-map"
 import { matchKeywords } from "./keyword-map"
 import { PLAID_CATEGORY_MAP } from "./plaid-category-map"
@@ -22,7 +27,6 @@ import { PLAID_CATEGORY_MAP } from "./plaid-category-map"
 export function cleanMerchantName(rawName: string): string {
   let name = rawName.trim()
 
-  // Strip common prefixes (payment processors + banking prefixes)
   const prefixes = [
     "ACH CREDIT ", "ACH DEBIT ", "ACH PMT ", "DEBIT CRD ", "POS DEBIT ",
     "POS ", "WIRE ",
@@ -37,116 +41,120 @@ export function cleanMerchantName(rawName: string): string {
     }
   }
 
-  // Strip trailing banking suffixes (e.g., "CRD ACH TRAN ON 03/09", "DEBIT ON 03/09")
   name = name.replace(/\s+(CRD\s+)?ACH\s+TRAN(SACTION)?\s+ON\s+\d{2}\/\d{2}$/i, "")
   name = name.replace(/\s+DEBIT\s+ON\s+\d{2}\/\d{2}$/i, "")
   name = name.replace(/\s+CREDIT\s+ON\s+\d{2}\/\d{2}$/i, "")
-
-  // Strip trailing card number refs (e.g., "xxxx1234")
   name = name.replace(/\s+x{2,}\d{4}$/i, "")
-
-  // Strip trailing location info (e.g., "City, ST" or "City ST 12345")
   name = name.replace(/\s+[A-Z]{2}\s+\d{5}(-\d{4})?$/, "")
   name = name.replace(/\s+#\d+$/, "")
-
-  // Strip trailing numbers that look like store IDs
   name = name.replace(/\s+\d{3,}$/, "")
 
   return name.trim()
 }
 
 /**
- * Apply user-defined category rules (highest priority in cascade).
+ * Main categorization function with enriched result.
+ * New cascade:
+ * 1. Hard rules (CC payments, transfers — non-overridable)
+ * 2. User confidence rules (≥0.5 confidence, sorted by confidence desc)
+ * 3. Plaid category mapping
+ * 4. Built-in merchant map
+ * 5. Statement credit detection
+ * 6. Keyword matching
+ * 7. Fallback: Uncategorized
  */
-export function applyCategoryRules(
-  merchantName: string,
-  rules: CategoryRule[]
-): CategoryResult | null {
-  const sorted = [...rules].sort((a, b) => b.priority - a.priority)
-  const upper = merchantName.toUpperCase()
+export function categorizeTransaction(
+  tx: {
+    merchantName: string
+    rawName: string
+    plaidCategory?: string | null
+    plaidCategoryPrimary?: string | null
+    amount?: number
+    accountType?: string
+    accountSubtype?: string | null
+  },
+  userRules: ConfidenceRule[] = []
+): EnrichedCategoryResult {
+  const cleaned = cleanMerchantName(tx.merchantName || tx.rawName)
 
-  for (const rule of sorted) {
-    const value = rule.matchValue.toUpperCase()
-    let matched = false
-
-    switch (rule.matchType) {
-      case "exact":
-        matched = upper === value
-        break
-      case "starts_with":
-        matched = upper.startsWith(value)
-        break
-      case "contains":
-        matched = upper.includes(value)
-        break
+  // 1. Hard rules (CC payments, transfers)
+  if (tx.accountType) {
+    const hardCtx: TransactionContext = {
+      rawName: tx.rawName,
+      merchantName: tx.merchantName,
+      amount: tx.amount ?? 0,
+      accountType: tx.accountType,
+      accountSubtype: tx.accountSubtype ?? null,
+      plaidCategoryPrimary: tx.plaidCategoryPrimary,
+      plaidCategory: tx.plaidCategory,
     }
-
-    if (matched) {
-      return { category: rule.category, subcategory: rule.subcategory }
+    const hardResult = applyHardRules(hardCtx)
+    if (hardResult) {
+      return { ...hardResult, confidence: 1.0, needsReview: false }
     }
   }
 
-  return null
-}
+  // 2. User confidence rules
+  const ruleMatch = applyConfidenceRules(cleaned, userRules)
+  if (ruleMatch) {
+    return {
+      ...ruleMatch.result,
+      source: "rule",
+      confidence: ruleMatch.rule.confidence,
+      needsReview: ruleMatch.needsReview,
+      ruleId: ruleMatch.rule.id,
+    }
+  }
 
-/**
- * Main categorization function. Cascade:
- * 1. User rules
- * 2. Plaid category mapping (authoritative when present)
- * 3. Built-in merchant map (identifies known merchants before generic checks)
- * 4. Statement credit detection (only fires if no merchant/Plaid match)
- * 5. Keyword matching
- * 6. Fallback: Uncategorized
- */
-export function categorizeTransaction(
-  tx: { merchantName: string; rawName: string; plaidCategory?: string | null; amount?: number },
-  userRules: CategoryRule[] = []
-): CategoryResult {
-  const cleaned = cleanMerchantName(tx.merchantName || tx.rawName)
-
-  // 1. User rules (highest priority)
-  const ruleResult = applyCategoryRules(cleaned, userRules)
-  if (ruleResult) return ruleResult
-
-  // 2. Plaid category mapping (authoritative when present)
+  // 3. Plaid category mapping
   if (tx.plaidCategory) {
     const parts = tx.plaidCategory.split("|").map((s) => s.trim())
     for (const part of parts.reverse()) {
       if (part && PLAID_CATEGORY_MAP[part]) {
-        return PLAID_CATEGORY_MAP[part]
+        return { ...PLAID_CATEGORY_MAP[part], source: "plaid", confidence: 0.85, needsReview: false }
       }
     }
   }
 
-  // 3. Built-in merchant map (identifies known merchants before generic checks)
+  // 4. Built-in merchant map
   const merchantResult = matchMerchantMap(cleaned)
-  if (merchantResult) return merchantResult
+  if (merchantResult) {
+    const isExact = !!MERCHANT_MAP[cleaned.toUpperCase()]
+    return { ...merchantResult, source: "merchant_map", confidence: isExact ? 0.9 : 0.75, needsReview: false }
+  }
 
-  // 4. Statement credit detection — negative amount + specific credit keywords
-  //    Only fires if no merchant/Plaid match. Uses specific keywords to avoid
-  //    false positives on ACH transactions containing "CREDIT".
+  // 5. Statement credit detection
   if (tx.amount != null && tx.amount < 0) {
-    const creditKeywords = [
-      "STATEMENT CREDIT", "REWARD", "CASHBACK", "REBATE",
-      "COURTESY", "PROMO", "ADJUSTMENT",
-    ]
+    const creditKeywords = ["STATEMENT CREDIT", "REWARD", "CASHBACK", "REBATE", "COURTESY", "PROMO", "ADJUSTMENT"]
     if (creditKeywords.some((k) => cleaned.toUpperCase().includes(k))) {
-      return { category: "Fees & Charges", subcategory: "Statement Credit" }
+      return { category: "Fees & Charges", subcategory: "Statement Credit", source: "keyword", confidence: 0.8, needsReview: false }
     }
   }
 
-  // 5. Keyword matching
+  // 6. Keyword matching
   const keywordResult = matchKeywords(cleaned)
-  if (keywordResult) return keywordResult
+  if (keywordResult) {
+    return { ...keywordResult, source: "keyword", confidence: 0.6, needsReview: true }
+  }
 
-  // 6. Fallback
-  return { category: "Uncategorized", subcategory: null }
+  // 7. Fallback
+  return { category: "Uncategorized", subcategory: null, source: "keyword", confidence: 0, needsReview: false }
+}
+
+/**
+ * Legacy categorization wrapper for backward compatibility.
+ * Returns plain CategoryResult without enrichment.
+ */
+export function categorizeTransactionLegacy(
+  tx: { merchantName: string; rawName: string; plaidCategory?: string | null; amount?: number },
+  userRules: ConfidenceRule[] = []
+): CategoryResult {
+  const result = categorizeTransaction(tx, userRules)
+  return { category: result.category, subcategory: result.subcategory }
 }
 
 /**
  * Shared WHERE clause for uncategorized transaction queries.
- * Must be used in all routes that count or fetch uncategorized transactions
- * to prevent count mismatches between dashboard and categorize pages.
  */
 export function uncategorizedWhere(userId: string) {
   return {
@@ -158,26 +166,66 @@ export function uncategorizedWhere(userId: string) {
 }
 
 /**
+ * WHERE clause for transactions needing review (auto-applied with low confidence).
+ */
+export function needsReviewWhere(userId: string) {
+  return {
+    userId,
+    isDuplicate: false,
+    isExcluded: false,
+    needsReview: true,
+    category: { not: null },
+    OR: [
+      { reviewSkippedAt: null },
+      { reviewSkippedAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+    ],
+  }
+}
+
+/**
  * Generate ranked category suggestions from ALL cascade sources (no short-circuit).
  * Returns 3-5 deduplicated suggestions ordered by confidence.
- * If fewer than 3 from cascade, pads with user's top-used categories.
  */
 export function suggestCategories(
-  tx: { merchantName: string; rawName: string; plaidCategory?: string | null; amount?: number },
-  userRules: CategoryRule[],
+  tx: {
+    merchantName: string
+    rawName: string
+    plaidCategory?: string | null
+    amount?: number
+    accountType?: string
+    accountSubtype?: string | null
+  },
+  userRules: ConfidenceRule[],
   correctionHistory?: Map<string, string>,
   topUsedCategories?: string[]
 ): CategorySuggestion[] {
   const cleaned = cleanMerchantName(tx.merchantName || tx.rawName)
   const suggestions: CategorySuggestion[] = []
 
-  // 1. User rules
-  const ruleResult = applyCategoryRules(cleaned, userRules)
-  if (ruleResult) {
-    suggestions.push({ ...ruleResult, source: "rule", confidence: "high" })
+  // 1. Hard rules
+  if (tx.accountType) {
+    const hardCtx: TransactionContext = {
+      rawName: tx.rawName,
+      merchantName: tx.merchantName ?? null,
+      amount: tx.amount ?? 0,
+      accountType: tx.accountType,
+      accountSubtype: tx.accountSubtype ?? null,
+    }
+    const hardResult = applyHardRules(hardCtx)
+    if (hardResult) {
+      suggestions.push({ ...hardResult, source: "rule", confidence: "high" })
+    }
   }
 
-  // 2. Plaid category (pipe-separated: "PRIMARY|DETAILED")
+  // 2. User confidence rules
+  const ruleMatch = applyConfidenceRules(cleaned, userRules)
+  if (ruleMatch) {
+    const conf = ruleMatch.rule.confidence >= CONFIDENCE.AUTO_APPLY ? "high"
+      : ruleMatch.rule.confidence >= CONFIDENCE.DISABLED ? "medium" : "low"
+    suggestions.push({ ...ruleMatch.result, source: "rule", confidence: conf })
+  }
+
+  // 3. Plaid category
   if (tx.plaidCategory) {
     const parts = tx.plaidCategory.split("|").map((s) => s.trim())
     for (const part of [...parts].reverse()) {
@@ -188,21 +236,20 @@ export function suggestCategories(
     }
   }
 
-  // 3. Merchant map (exact then partial)
+  // 4. Merchant map
   const merchantResult = matchMerchantMap(cleaned)
   if (merchantResult) {
-    const upper = cleaned.toUpperCase()
-    const isExact = !!MERCHANT_MAP[upper]
+    const isExact = !!MERCHANT_MAP[cleaned.toUpperCase()]
     suggestions.push({ ...merchantResult, source: "merchant_map", confidence: isExact ? "high" : "medium" })
   }
 
-  // 4. Keyword match
+  // 5. Keyword match
   const keywordResult = matchKeywords(cleaned)
   if (keywordResult) {
     suggestions.push({ ...keywordResult, source: "keyword", confidence: "low" })
   }
 
-  // 5. Correction history
+  // 6. Correction history
   if (correctionHistory) {
     const historyCategory = correctionHistory.get(cleaned.toUpperCase())
     if (historyCategory) {
@@ -223,7 +270,6 @@ export function suggestCategories(
   const deduped = [...seen.values()]
     .sort((a, b) => confidenceRank[b.confidence] - confidenceRank[a.confidence])
 
-  // Pad with top-used categories if fewer than 3 suggestions
   if (deduped.length < 3 && topUsedCategories) {
     for (const cat of topUsedCategories) {
       if (deduped.length >= 5) break

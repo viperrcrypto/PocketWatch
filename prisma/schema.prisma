@@ -730,6 +730,9 @@ model FinanceTransaction {
   isPending        Boolean        @default(false)
   isExcluded       Boolean        @default(false)
   isDuplicate      Boolean        @default(false)
+  isAutoApplied    Boolean        @default(false)
+  needsReview      Boolean        @default(false)
+  reviewSkippedAt  DateTime?
   nickname         String?
   notes            String?
   tags             String[]       @default([])
@@ -756,6 +759,7 @@ model FinanceTransaction {
   @@index([userId, isDuplicate, date])
   @@index([userId, isDuplicate, isExcluded, date])
   @@index([userId, name])
+  @@index([userId, needsReview])
 }
 
 model FinanceBudget {
@@ -798,18 +802,24 @@ model FinanceSubscription {
 }
 
 model FinanceCategoryRule {
-  id          String   @id @default(cuid())
-  userId      String
-  matchType   String
-  matchValue  String
-  category    String
-  subcategory String?
-  nickname    String?
-  priority    Int      @default(0)
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  userId          String
+  matchType       String
+  matchValue      String
+  category        String
+  subcategory     String?
+  nickname        String?
+  priority        Int       @default(0)
+  confidence      Float     @default(0.7)
+  timesConfirmed  Int       @default(0)
+  timesOverridden Int       @default(0)
+  source          String    @default("user")
+  lastUsedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, confidence])
 }
 
 model FinanceCustomCategory {

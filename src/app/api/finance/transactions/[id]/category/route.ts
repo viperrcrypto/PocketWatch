@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
-import { cleanMerchantName } from "@/lib/finance/categorize"
+import { cleanMerchantName, computeNewConfidence, CONFIDENCE } from "@/lib/finance/categorize"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod/v4"
 
@@ -34,38 +34,61 @@ export async function PATCH(
     })
     if (!tx) return apiError("F4032", "Transaction not found", 404)
 
-    // Update transaction category + optional nickname
+    // If overriding an auto-applied category, penalize the old rule
+    const isOverride = tx.isAutoApplied && tx.category && tx.category !== category
+    if (isOverride) {
+      const cleaned = cleanMerchantName(tx.merchantName ?? tx.name)
+      const oldRule = await db.financeCategoryRule.findFirst({
+        where: { userId: user.id, matchType: "contains", matchValue: cleaned, category: tx.category! },
+      })
+      if (oldRule) {
+        await db.financeCategoryRule.update({
+          where: { id: oldRule.id },
+          data: {
+            confidence: computeNewConfidence(oldRule.confidence, "overridden"),
+            timesOverridden: { increment: 1 },
+            lastUsedAt: new Date(),
+          },
+        })
+      }
+    }
+
+    // Update transaction
     const updated = await db.financeTransaction.update({
       where: { id },
       data: {
         category,
         subcategory: subcategory ?? null,
+        isAutoApplied: false,
+        needsReview: false,
         ...(nickname !== undefined ? { nickname: nickname || null } : {}),
       },
     })
 
-    // Optionally create a category rule for this merchant
+    // Create/update rule for this merchant
     if (createRule && tx.merchantName) {
       const cleaned = cleanMerchantName(tx.merchantName)
       if (cleaned.length > 1) {
         const existing = await db.financeCategoryRule.findFirst({
-          where: {
-            userId: user.id,
-            matchType: "contains",
-            matchValue: cleaned,
-          },
+          where: { userId: user.id, matchType: "contains", matchValue: cleaned },
         })
 
-        const ruleData = {
-          category,
-          subcategory: subcategory ?? null,
-          ...(nickname !== undefined ? { nickname: nickname || null } : {}),
-        }
-
         if (existing) {
+          // If same category, confirm; if different, update with fresh confidence
+          const newConf = existing.category === category
+            ? computeNewConfidence(existing.confidence, "confirmed")
+            : CONFIDENCE.INITIAL_USER
           await db.financeCategoryRule.update({
             where: { id: existing.id },
-            data: ruleData,
+            data: {
+              category,
+              subcategory: subcategory ?? null,
+              confidence: newConf,
+              timesConfirmed: existing.category === category ? { increment: 1 } : existing.timesConfirmed,
+              lastUsedAt: new Date(),
+              source: "user",
+              ...(nickname !== undefined ? { nickname: nickname || null } : {}),
+            },
           })
         } else {
           await db.financeCategoryRule.create({
@@ -73,13 +96,17 @@ export async function PATCH(
               userId: user.id,
               matchType: "contains",
               matchValue: cleaned,
-              ...ruleData,
+              category,
+              subcategory: subcategory ?? null,
               priority: 10,
+              confidence: CONFIDENCE.INITIAL_USER,
+              source: "user",
+              ...(nickname !== undefined ? { nickname: nickname || null } : {}),
             },
           })
         }
 
-        // Batch-apply to other uncategorized transactions with the same merchant
+        // Batch-apply to other uncategorized transactions
         await db.financeTransaction.updateMany({
           where: {
             userId: user.id,
@@ -90,6 +117,8 @@ export async function PATCH(
           data: {
             category,
             subcategory: subcategory ?? null,
+            isAutoApplied: true,
+            needsReview: true,
             ...(nickname !== undefined ? { nickname: nickname || null } : {}),
           },
         })

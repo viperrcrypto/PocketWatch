@@ -100,4 +100,7 @@ export const financeKeys = {
   coverage: () => [...financeKeys.all, "coverage"] as const,
   bonusTrackers: () => [...financeKeys.all, "bonus-trackers"] as const,
   bonusSearch: (q: string) => [...financeKeys.all, "bonus-search", q] as const,
+  reviewQueue: (offset?: number) => [...financeKeys.all, "review-queue", offset] as const,
+  reviewCount: () => [...financeKeys.all, "review-count"] as const,
+  aiRebuild: () => [...financeKeys.all, "ai-rebuild"] as const,
 }
