@@ -168,7 +168,7 @@ export function roameFaresToUnified(fares: RoameFare[], searchClass: string): Un
       durationMinutes: fare.durationMinutes,
       departureTime: fare.flightsDepartureDatetimes[0] || fare.departureDateStr,
       arrivalTime: fare.arrivalDatetime,
-      airports: fare.allAirports,
+      airports: fare.allAirports.filter((a: string, i: number) => i === 0 || a !== fare.allAirports[i - 1]),
       cabinClass: cabin,
       equipment: fare.equipmentTypes,
       points: fare.awardPoints,
