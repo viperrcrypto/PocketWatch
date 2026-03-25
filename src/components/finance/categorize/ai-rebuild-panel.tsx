@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { getCategoryMeta } from "@/lib/finance/categories"
 import { useAIRebuild, type ProcessedMerchant } from "@/hooks/finance/use-ai-rebuild"
+import { useReviewCount } from "@/hooks/use-finance"
 
 interface AIRebuildPanelProps {
   uncategorizedCount: number
@@ -11,6 +13,8 @@ interface AIRebuildPanelProps {
 
 export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
   const { state, start, cancel, reset, isRunning, isCounting, isComplete } = useAIRebuild()
+  const { data: reviewData } = useReviewCount()
+  const reviewCount = reviewData?.count ?? 0
   const [previewedMode, setPreviewedMode] = useState<"uncategorized" | "full">("uncategorized")
 
   // Idle — mode selection
@@ -86,7 +90,10 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
         <div className="bg-card border border-card-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">{p?.message ?? "Starting..."}</p>
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                {p?.message ?? "Starting..."}
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              </p>
               <p className="text-xs text-foreground-muted mt-0.5">
                 {p ? `${p.merchantsProcessed} / ${p.totalMerchants} merchants` : "Preparing..."}
               </p>
@@ -98,11 +105,17 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
               Cancel
             </button>
           </div>
-          <div className="h-2 bg-background-secondary rounded-full overflow-hidden">
+          <div className="h-2.5 bg-background-secondary rounded-full overflow-hidden relative">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-700"
+              className="h-full rounded-full bg-primary transition-all duration-700 relative overflow-hidden"
               style={{ width: `${Math.max(pct, 2)}%` }}
-            />
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-[shimmer_1.5s_infinite]" style={{ backgroundSize: "200% 100%" }} />
+            </div>
+          </div>
+          <div className="flex justify-between text-[11px] text-foreground-muted">
+            <span>{pct}% complete</span>
+            {p && <span>Batch {p.batchIndex + 1} of {p.totalBatches}</span>}
           </div>
         </div>
         <MerchantResultsList merchants={state.processedMerchants} />
@@ -151,6 +164,19 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
           </div>
           {s.batchesFailed > 0 && (
             <p className="text-xs text-amber-500">{s.batchesFailed} batch{s.batchesFailed > 1 ? "es" : ""} failed — partial results applied.</p>
+          )}
+          {reviewCount > 0 && (
+            <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-rounded text-amber-400" style={{ fontSize: 16 }}>help_outline</span>
+                <span className="text-xs text-foreground">
+                  <strong>{reviewCount}</strong> item{reviewCount !== 1 ? "s" : ""} need your review — AI wasn&apos;t sure
+                </span>
+              </div>
+              <Link href="/finance/categorize" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                Review now &rarr;
+              </Link>
+            </div>
           )}
           <button onClick={reset} className="w-full py-2.5 text-sm font-semibold border border-card-border rounded-xl hover:bg-background-secondary transition-colors">
             Done
