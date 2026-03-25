@@ -25,6 +25,13 @@ export const PROGRAM_BOOKING_URLS: Record<string, string> = {
   JETBLUE: "https://trueblue.jetblue.com/",
   TAP: "https://www.flytap.com/",
   IBERIA: "https://www.iberia.com/",
+  TURKISH: "https://www.turkishairlines.com/en-us/miles-and-smiles/",
+  LATAM: "https://www.latamairlines.com/us/en/latam-pass",
+  ICELANDAIR: "https://www.icelandair.com/",
+  AER_LINGUS: "https://www.aerlingus.com/",
+  EL_AL: "https://www.elal.com/",
+  CONDOR: "https://www.condor.com/",
+  CAPE_AIR: "https://www.capeair.com/",
 }
 
 export const PROGRAM_DISPLAY_NAMES: Record<string, string> = {
@@ -50,6 +57,13 @@ export const PROGRAM_DISPLAY_NAMES: Record<string, string> = {
   JETBLUE: "TrueBlue",
   TAP: "TAP Miles&Go",
   IBERIA: "Iberia Plus",
+  TURKISH: "Miles & Smiles",
+  LATAM: "LATAM Pass",
+  ICELANDAIR: "Saga Club",
+  AER_LINGUS: "AerClub",
+  EL_AL: "Matmid Club",
+  CONDOR: "Miles & More",
+  CAPE_AIR: "Cape Air",
 }
 
 /**
