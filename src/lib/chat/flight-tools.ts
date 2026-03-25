@@ -24,9 +24,9 @@ export async function getFlightSearchSummary(userId: string): Promise<string> {
   let awardCount = 0
   let cashCount = 0
   let minPoints = Infinity
-  let maxPoints = 0
+  let maxPoints = -Infinity
   let minCash = Infinity
-  let maxCash = 0
+  let maxCash = -Infinity
 
   for (const f of flights) {
     cabinCounts[f.cabinClass] = (cabinCounts[f.cabinClass] ?? 0) + 1
@@ -56,8 +56,8 @@ export async function getFlightSearchSummary(userId: string): Promise<string> {
     cashFlights: cashCount,
     cabinBreakdown: cabinCounts,
     airlines: [...airlineSet].sort(),
-    pointsRange: awardCount > 0 ? { min: minPoints, max: maxPoints } : null,
-    cashRange: cashCount > 0 ? { min: minCash, max: maxCash } : null,
+    pointsRange: awardCount > 0 && isFinite(minPoints) ? { min: minPoints, max: maxPoints } : null,
+    cashRange: cashCount > 0 && isFinite(minCash) ? { min: minCash, max: maxCash } : null,
     recommendations: data.recommendations.map((r) => ({
       title: r.title,
       subtitle: r.subtitle,

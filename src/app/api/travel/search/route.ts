@@ -182,13 +182,13 @@ export async function GET(req: Request) {
 
       try {
         const results = await runSearch(config, { roameSession, serpApiKey, atfApiKey, pointmeToken }, balances, onProgress)
-        // Persist to DB so chat tools can access all flights
-        db.flightSearchResult.upsert({
-          where: { userId: user.id },
-          create: { userId: user.id, results: JSON.parse(JSON.stringify(results)), searchedAt: new Date() },
-          update: { results: JSON.parse(JSON.stringify(results)), searchedAt: new Date() },
-        }).catch((err) => console.warn("[travel] Failed to persist flight results:", err))
         send("result", results)
+        // Persist to DB so chat tools can access all flights (after sending to client)
+        await db.flightSearchResult.upsert({
+          where: { userId: user.id },
+          create: { userId: user.id, results: results as object, searchedAt: new Date() },
+          update: { results: results as object, searchedAt: new Date() },
+        }).catch((err) => console.warn("[travel] Failed to persist flight results:", err))
       } catch (err) {
         send("error", { error: (err as Error).message })
       } finally {
