@@ -64,7 +64,7 @@ export function AirportInput({ value, onChange, placeholder = "City or airport c
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
       setHighlightIndex(i => Math.max(i - 1, 0))
-    } else if (e.key === "Enter") {
+    } else if (e.key === "Enter" || (e.key === "Tab" && open && results.length > 0)) {
       e.preventDefault()
       if (open && results.length > 0) {
         addCode(results[highlightIndex]!.iata)
@@ -89,40 +89,34 @@ export function AirportInput({ value, onChange, placeholder = "City or airport c
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Main input area */}
+      {/* Main input area — fixed height, horizontal scroll */}
       <div
         onClick={handleContainerClick}
         className={cn(
-          "w-full min-h-[38px] bg-background border border-card-border rounded-lg px-2 py-1.5",
-          "flex items-center flex-wrap gap-1 cursor-text transition-colors",
-          "focus-within:border-primary",
+          "w-full h-[38px] bg-background border border-foreground/15 rounded-lg px-2 shadow-sm",
+          "flex items-center gap-1.5 cursor-text transition-colors overflow-x-auto overflow-y-hidden",
+          "focus-within:border-primary focus-within:shadow-none",
+          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
         )}
       >
-        {/* Selected airport chips */}
-        {selectedCodes.map(code => {
-          const airport = AIRPORT_BY_IATA.get(code)
-          return (
-            <span
-              key={code}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium"
+        {/* Selected airport chips — compact, code only */}
+        {selectedCodes.map(code => (
+          <span
+            key={code}
+            className="inline-flex items-center shrink-0 gap-0.5 pl-1.5 pr-0.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-mono font-bold"
+            title={AIRPORT_BY_IATA.get(code)?.city}
+          >
+            {code}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); removeCode(code) }}
+              className="text-primary/40 hover:text-primary transition-colors"
+              aria-label={`Remove ${code}`}
             >
-              <span className="font-mono font-bold">{code}</span>
-              {airport && (
-                <span className="text-primary/70 hidden sm:inline">
-                  {airport.city}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); removeCode(code) }}
-                className="ml-0.5 text-primary/50 hover:text-primary transition-colors"
-                aria-label={`Remove ${code}`}
-              >
-                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>close</span>
-              </button>
-            </span>
-          )
-        })}
+              <span className="material-symbols-rounded" style={{ fontSize: 13 }}>close</span>
+            </button>
+          </span>
+        ))}
 
         {/* Search input */}
         <input
@@ -132,8 +126,8 @@ export function AirportInput({ value, onChange, placeholder = "City or airport c
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => { if (query.length > 0) setOpen(true) }}
-          placeholder={selectedCodes.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[80px] bg-transparent text-sm text-foreground placeholder:text-foreground-muted/50 focus:outline-none"
+          placeholder={selectedCodes.length === 0 ? placeholder : "+"}
+          className="flex-1 min-w-[60px] bg-transparent text-sm text-foreground placeholder:text-foreground-muted/50 focus:outline-none"
         />
       </div>
 
@@ -194,6 +188,11 @@ function AirportRow({
         <span className="text-foreground-muted ml-1.5">— {airport.name}</span>
       </span>
       <span className="text-[11px] text-foreground-muted/60 shrink-0">{airport.country}</span>
+      {highlighted && (
+        <span className="ml-1 shrink-0 rounded border border-foreground/10 bg-background px-1 py-px text-[10px] font-medium text-foreground-muted/50">
+          Tab
+        </span>
+      )}
     </button>
   )
 }
