@@ -3,18 +3,28 @@
 import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useQueryClient } from "@tanstack/react-query"
 import { useReviewQueue, useConfirmReview } from "@/hooks/finance/use-review"
+import { financeKeys } from "@/hooks/finance/shared"
 import { PatternReviewCard } from "./pattern-review-card"
 import { toast } from "sonner"
 
 export function PatternReviewFlow() {
   const router = useRouter()
+  const qc = useQueryClient()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [reviewedCount, setReviewedCount] = useState(0)
   const [offset, setOffset] = useState(0)
 
   const { data, isLoading, refetch } = useReviewQueue(offset)
   const confirmReview = useConfirmReview()
+
+  // Sync the review count badge when queue is empty (fixes stale badge showing 9+ when queue is 0)
+  useEffect(() => {
+    if (!isLoading && data && data.transactions.length === 0 && data.total === 0) {
+      qc.invalidateQueries({ queryKey: financeKeys.reviewCount() })
+    }
+  }, [isLoading, data, qc])
 
   const transactions = data?.transactions ?? []
   const total = data?.total ?? 0
