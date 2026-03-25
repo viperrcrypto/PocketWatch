@@ -256,4 +256,4 @@ export const FlightResults = forwardRef<FlightResultsHandle, FlightResultsProps>
       )}
     </div>
   )
-}
+})
