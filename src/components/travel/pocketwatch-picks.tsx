@@ -86,7 +86,7 @@ function PickCard({ pick, isMultiSearch, onPickClick }: PickCardProps) {
     <button
       onClick={handleClick}
       className={cn(
-        "flex-shrink-0 w-[240px] snap-start card p-3 text-left",
+        "flex-shrink-0 w-[240px] snap-start card p-3 text-left overflow-hidden",
         "hover:translate-y-[-1px] hover:shadow-md transition-all duration-200 cursor-pointer",
       )}
       style={{ borderLeft: `2px solid ${accent}` }}

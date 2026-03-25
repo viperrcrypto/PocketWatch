@@ -7,7 +7,7 @@
  */
 
 import type { UnifiedFlightResult } from "@/types/travel"
-import { buildProgramBookingUrl } from "./constants"
+import { buildProgramBookingUrl, AIRLINE_NAMES, IATA_TO_PROGRAM, BANK_PROGRAMS } from "./constants"
 
 const API_BASE = "https://api.point.me/api"
 
@@ -291,7 +291,8 @@ function routesToUnified(routes: PointMeRoute[], date: string, searchOrigin: str
   for (const route of routes) {
     const origin = route.connections[0]?.departure.airport || ""
     const destination = route.connections[route.connections.length - 1]?.arrival.airport || ""
-    const airlines = [...new Set(route.connections.map(c => c.airline))]
+    const airlineCodes = [...new Set(route.connections.map(c => c.airline))]
+    const airlines = airlineCodes.map(c => AIRLINE_NAMES[c] || c)
     const flightNumbers = route.connections.flatMap(c => c.flight)
     const rawAirports = [
       route.connections[0]?.departure.airport,
@@ -320,6 +321,10 @@ function routesToUnified(routes: PointMeRoute[], date: string, searchOrigin: str
       if (fare.is_roundtrip_only_miles) continue
 
       const pwProgram = POINTME_TO_PW_PROGRAM[fare.program_key] || fare.program_key
+      // For bank/card programs (Citi, Amex, Chase), link to the airline's booking page
+      const bookingProgram = BANK_PROGRAMS.has(pwProgram)
+        ? (IATA_TO_PROGRAM[airlineCodes[0] ?? ""] || pwProgram)
+        : pwProgram
       const cppValue = fare.deal_indicator
         ? Math.round(fare.deal_indicator.points_value * 10000) / 100
         : null
@@ -358,7 +363,7 @@ function routesToUnified(routes: PointMeRoute[], date: string, searchOrigin: str
         cppValue,
         roameScore: null,
         availableSeats: null,
-        bookingUrl: buildProgramBookingUrl(pwProgram, origin, destination, actualDate, cabinClass),
+        bookingUrl: buildProgramBookingUrl(bookingProgram, origin, destination, actualDate, cabinClass),
         fareClass: cabinClass,
         travelDate: actualDate,
       })
@@ -395,7 +400,7 @@ function routesToUnified(routes: PointMeRoute[], date: string, searchOrigin: str
           cppValue: transferCpp,
           roameScore: null,
           availableSeats: null,
-          bookingUrl: buildProgramBookingUrl(pwProgram, origin, destination, actualDate, cabinClass),
+          bookingUrl: buildProgramBookingUrl(bookingProgram, origin, destination, actualDate, cabinClass),
           fareClass: cabinClass,
           travelDate: actualDate,
         })

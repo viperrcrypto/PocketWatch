@@ -142,6 +142,61 @@ export function buildProgramBookingUrl(
   }
 }
 
+// ─── Airline IATA Code Mappings ──────────────────────────────────
+
+/** Map IATA airline codes to full display names */
+export const AIRLINE_NAMES: Record<string, string> = {
+  AA: "American", UA: "United", DL: "Delta", AS: "Alaska",
+  B6: "JetBlue", HA: "Hawaiian", NK: "Spirit", F9: "Frontier",
+  WN: "Southwest", SY: "Sun Country",
+  AC: "Air Canada", WS: "WestJet",
+  BA: "British Airways", LH: "Lufthansa", AF: "Air France",
+  KL: "KLM", LX: "Swiss", OS: "Austrian", SN: "Brussels Airlines",
+  SK: "SAS", AY: "Finnair", TP: "TAP Portugal", IB: "Iberia",
+  AZ: "ITA Airways", EI: "Aer Lingus", LO: "LOT Polish",
+  TK: "Turkish Airlines", EK: "Emirates", QR: "Qatar Airways",
+  EY: "Etihad", SQ: "Singapore Airlines", CX: "Cathay Pacific",
+  QF: "Qantas", NZ: "Air New Zealand", JL: "JAL", NH: "ANA",
+  OZ: "Asiana", KE: "Korean Air", CI: "China Airlines",
+  BR: "EVA Air", MH: "Malaysia Airlines", TG: "Thai Airways",
+  GA: "Garuda Indonesia", AI: "Air India", ET: "Ethiopian",
+  SA: "South African Airways", LA: "LATAM", AV: "Avianca",
+  CM: "Copa Airlines", AM: "Aeromexico", VS: "Virgin Atlantic",
+  VA: "Virgin Australia", FI: "Icelandair", WY: "Oman Air",
+  BT: "airBaltic", AT: "Royal Air Maroc", LY: "El Al",
+  DE: "Condor", MS: "EgyptAir", SV: "Saudia", GF: "Gulf Air",
+  RJ: "Royal Jordanian", UL: "SriLankan Airlines",
+  "9W": "Cape Air", W6: "Wizz Air", FR: "Ryanair", U2: "easyJet",
+}
+
+/** Map IATA airline codes to the program key used for booking URLs */
+export const IATA_TO_PROGRAM: Record<string, string> = {
+  // Star Alliance → best booked via Aeroplan, United, or Turkish
+  LH: "AEROPLAN", OS: "AEROPLAN", SN: "AEROPLAN", LX: "AEROPLAN",
+  SK: "AEROPLAN", TP: "AEROPLAN", LO: "AEROPLAN", AC: "AEROPLAN",
+  NH: "ANA", TK: "TURKISH", UA: "UNITED", AV: "AVIANCA",
+  ET: "AEROPLAN", AI: "AEROPLAN", NZ: "AEROPLAN", OZ: "AEROPLAN",
+  EI: "BRITISH_AIRWAYS", SQ: "SINGAPORE", TG: "AEROPLAN",
+  SA: "AEROPLAN", MS: "AEROPLAN", BR: "AEROPLAN", CI: "AEROPLAN",
+  // oneworld → best booked via BA Avios, AA, or Alaska
+  BA: "BRITISH_AIRWAYS", AA: "AMERICAN", AS: "ALASKA",
+  QF: "QANTAS", CX: "CATHAY", JL: "JAL", IB: "IBERIA",
+  QR: "QATAR", RJ: "BRITISH_AIRWAYS", MH: "BRITISH_AIRWAYS",
+  // SkyTeam → best booked via Flying Blue or Delta
+  AF: "FLYING_BLUE", KL: "FLYING_BLUE", DL: "DELTA",
+  AZ: "FLYING_BLUE", KE: "FLYING_BLUE", AM: "FLYING_BLUE",
+  GA: "FLYING_BLUE", LA: "LATAM",
+  // Non-alliance
+  EK: "EMIRATES", EY: "ETIHAD", VS: "VIRGIN_ATLANTIC",
+  VA: "VIRGIN_AUSTRALIA", B6: "JETBLUE", HA: "HAWAIIAN",
+  FI: "ICELANDAIR", WY: "EMIRATES", AT: "FLYING_BLUE",
+}
+
+/** Bank/card transfer programs — booking should go to the airline, not the bank */
+export const BANK_PROGRAMS = new Set([
+  "CITI_THANKYOU", "AMEX_MR", "CHASE_UR", "CAPITAL_ONE", "BILT", "ATMOS",
+])
+
 /** Guess cabin class from Roame's cabinClasses array */
 export function guessCabinFromClasses(cabinClasses: string[]): string {
   const joined = cabinClasses.join(" ").toLowerCase()

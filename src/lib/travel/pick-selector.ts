@@ -49,7 +49,7 @@ export const PICK_CATEGORY_META: Record<PickCategory, PickMeta> = {
     icon: "target",
     accentLight: "#7c3aed",
     accentDark: "#c4b5fd",
-    metric: (f) => f.sweetSpotMatch?.label ?? "Matched",
+    metric: (f) => f.sweetSpotMatch?.actualCpp ? `${f.sweetSpotMatch.actualCpp}c/pt` : "Matched",
   },
 }
 
