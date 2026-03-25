@@ -138,7 +138,7 @@ export function buildProgramBookingUrl(
     case "LATAM":
       return `https://www.latamairlines.com/us/en/booking/redemption?origin=${origin}&destination=${destination}&outbound=${date}&adt=1`
     case "ANA":
-      return `https://www.ana.co.jp/en/us/book-plan/reservation/international/awd/`
+      return `https://www.ana.co.jp/other/int/meta/0771.html?CONNECTION_KIND=us&LANG=e`
     case "JAL":
       return `https://www.jal.co.jp/en/jalmile/use/award/inter/`
     case "CATHAY":
