@@ -59,6 +59,7 @@ model User {
   signUpBonusTrackers           SignUpBonusTracker[]
   plaidSyncJobs                 PlaidSyncJob[]
   flightSearchResult            FlightSearchResult?
+  financeAlerts                 FinanceAlert[]
 
 }
 
@@ -1230,6 +1231,25 @@ model PlaidSyncJob {
   @@index([userId, status])
   @@index([status, nextRetryAt])
   @@index([userId, institutionId, jobType])
+}
+
+model FinanceAlert {
+  id            String   @id @default(cuid())
+  userId        String
+  alertType     String   // refund | deposit | price_change | double_charge | bill_reminder | budget_warning | large_transaction | unusual_spend
+  title         String
+  message       String
+  amount        Float?
+  merchantName  String?
+  transactionId String?
+  metadata      Json?
+  sentAt        DateTime @default(now())
+  channels      String[] @default([])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
+  @@index([userId, alertType])
+  @@index([userId, transactionId])
 }
 
 model FlightSearchResult {

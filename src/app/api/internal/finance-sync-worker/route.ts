@@ -17,6 +17,8 @@ import {
   markJobCompleted,
   markJobFailed,
 } from "@/lib/finance/sync/plaid-sync-jobs"
+import { detectAndNotify, notifyPriceChanges } from "@/lib/finance/alert-orchestrator"
+import { detectAndSaveSubscriptions } from "@/lib/finance/sync/detect-subscriptions"
 
 export const maxDuration = 300
 
@@ -96,16 +98,35 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Run subscription detection + alerts after sync
+  const alertResults: Array<{ userId: string; alertsSent: number }> = []
+  for (const { userId } of users) {
+    try {
+      const subResult = await detectAndSaveSubscriptions(userId)
+      if (subResult.priceChanges.length > 0) {
+        await notifyPriceChanges(userId, subResult.priceChanges)
+      }
+      const alertResult = await detectAndNotify(userId)
+      alertResults.push({ userId, alertsSent: alertResult.alertsSent })
+    } catch (err) {
+      console.error("[finance-sync-worker] Alert check failed:", err instanceof Error ? err.message : err)
+    }
+  }
+
+  const totalAlerts = alertResults.reduce((sum, r) => sum + r.alertsSent, 0)
+
   console.info("[finance-sync-worker]", {
     processed: users.length,
     totalSynced: results.reduce((sum, r) => sum + (r.synced ?? 0), 0),
     retriedJobs: retryResults.length,
+    totalAlerts,
   })
 
   return NextResponse.json({
     processed: users.length,
     results,
     retryResults,
+    totalAlerts,
     ranAt: new Date().toISOString(),
   })
 }

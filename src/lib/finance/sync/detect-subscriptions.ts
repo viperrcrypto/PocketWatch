@@ -4,13 +4,20 @@
  */
 
 import { db } from "@/lib/db"
-import { detectSubscriptions, EXCLUDED_MERCHANTS } from "../subscriptions"
+import { detectSubscriptions, EXCLUDED_MERCHANTS, computeNextChargeDate, type Frequency } from "../subscriptions"
 import { stringSimilarity } from "../normalize"
+
+export interface SubscriptionPriceChange {
+  merchantName: string
+  oldAmount: number
+  newAmount: number
+}
 
 export async function detectAndSaveSubscriptions(userId: string): Promise<{
   detected: number
   newlyAdded: number
   updated: number
+  priceChanges: SubscriptionPriceChange[]
 }> {
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
@@ -26,7 +33,7 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
   })
 
   if (transactions.length === 0) {
-    return { detected: 0, newlyAdded: 0, updated: 0 }
+    return { detected: 0, newlyAdded: 0, updated: 0, priceChanges: [] }
   }
 
   const existing = await db.financeSubscription.findMany({
@@ -86,6 +93,7 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
 
   let newCount = 0
   let updatedCount = 0
+  const priceChanges: SubscriptionPriceChange[] = []
 
   for (const sub of detected) {
     const matchingExisting = existing.find(
@@ -101,6 +109,13 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
       const isUserCurated = matchingExisting.nickname || matchingExisting.notes
 
       if ((freqChanged || amountChanged) && !isUserCurated) {
+        if (amountChanged) {
+          priceChanges.push({
+            merchantName: matchingExisting.merchantName,
+            oldAmount: matchingExisting.amount,
+            newAmount: sub.amount,
+          })
+        }
         await db.financeSubscription.update({
           where: { id: matchingExisting.id },
           data: {
@@ -156,24 +171,28 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
     const amount = stream.lastAmount ?? stream.averageAmount ?? 0
     if (amount <= 0) continue
 
+    const freq: Frequency = stream.frequency === "WEEKLY" ? "weekly"
+      : stream.frequency === "BIWEEKLY" ? "biweekly"
+      : stream.frequency === "SEMI_MONTHLY" ? "biweekly"
+      : stream.frequency === "ANNUALLY" ? "yearly"
+      : "monthly"
+    const nextDate = stream.lastDate ? computeNextChargeDate(stream.lastDate, freq) : undefined
+
     await db.financeSubscription.create({
       data: {
         userId,
         merchantName: name,
         amount,
-        frequency: stream.frequency === "WEEKLY" ? "weekly"
-          : stream.frequency === "BIWEEKLY" ? "biweekly"
-          : stream.frequency === "SEMI_MONTHLY" ? "biweekly"
-          : stream.frequency === "ANNUALLY" ? "yearly"
-          : "monthly",
+        frequency: freq,
         category: stream.category,
         accountId: stream.accountId,
         lastChargeDate: stream.lastDate,
+        nextChargeDate: nextDate,
         status: "active",
       },
     })
     newCount++
   }
 
-  return { detected: detected.length, newlyAdded: newCount, updated: updatedCount }
+  return { detected: detected.length, newlyAdded: newCount, updated: updatedCount, priceChanges }
 }

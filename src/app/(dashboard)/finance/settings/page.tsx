@@ -30,6 +30,7 @@ import { SettingsPlaidKeys } from "@/components/finance/settings/settings-plaid-
 import { StatementCoverageContent } from "@/components/finance/settings/statement-coverage-card"
 import { AutoLockSetting } from "@/components/finance/settings/auto-lock-setting"
 import { StatementUploadInline } from "@/components/finance/settings/statement-upload-inline"
+import { NotificationSettings } from "@/components/finance/settings/notification-settings"
 
 function deriveVerificationState(payload?: Partial<FinanceCredentialVerificationResponse> | null): {
   verificationState: FinanceVerificationState
@@ -354,6 +355,16 @@ export default function FinanceSettingsPage() {
       >
         <div className="pt-4">
           <StatementCoverageContent />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Notifications"
+        icon="notifications"
+        className="rounded-xl"
+      >
+        <div className="pt-4">
+          <NotificationSettings />
         </div>
       </CollapsibleSection>
 

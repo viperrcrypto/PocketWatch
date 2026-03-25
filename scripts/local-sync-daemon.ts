@@ -12,10 +12,13 @@ import "dotenv/config"
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 const SYNC_ENDPOINT = `${BASE_URL}/api/internal/history/sync-worker`
 const SNAPSHOT_ENDPOINT = `${BASE_URL}/api/internal/snapshot-worker`
+const FINANCE_SYNC_ENDPOINT = `${BASE_URL}/api/internal/finance-sync-worker`
 const SYNC_SECRET = process.env.HISTORY_CRON_SECRET ?? process.env.CRON_SECRET ?? "dev-local-secret"
 const SNAPSHOT_SECRET = process.env.SNAPSHOT_WORKER_SECRET ?? process.env.CRON_SECRET ?? "dev-local-secret"
+const FINANCE_SYNC_SECRET = process.env.FINANCE_SYNC_SECRET ?? process.env.CRON_SECRET ?? "dev-local-secret"
 const INTERVAL_MS = 60_000
 const SNAPSHOT_INTERVAL_MS = 60 * 60_000 // every hour
+const FINANCE_SYNC_INTERVAL_MS = 15 * 60_000 // every 15 min
 
 async function snapshotTick() {
   const now = new Date().toISOString().slice(11, 19)
@@ -64,13 +67,36 @@ async function tick() {
   }
 }
 
+async function financeSyncTick() {
+  const now = new Date().toISOString().slice(11, 19)
+  try {
+    const res = await fetch(FINANCE_SYNC_ENDPOINT, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${FINANCE_SYNC_SECRET}` },
+    })
+    if (!res.ok) {
+      console.log(`[${now}] finance-sync returned ${res.status}`)
+      return
+    }
+    const data = await res.json()
+    const synced = data.results?.reduce((s: number, r: Record<string, unknown>) => s + ((r.synced as number) ?? 0), 0) ?? 0
+    const alerts = data.totalAlerts ?? 0
+    console.log(`[${now}] finance: ${data.processed ?? 0} user(s), ${synced} tx synced, ${alerts} alerts`)
+  } catch (err) {
+    console.log(`[${now}] finance-sync failed: ${err instanceof Error ? err.message : err}`)
+  }
+}
+
 console.log(`Local sync daemon started`)
 console.log(`  History sync: every ${INTERVAL_MS / 1000}s`)
+console.log(`  Finance sync: every ${FINANCE_SYNC_INTERVAL_MS / 60000}min (includes alerts)`)
 console.log(`  Snapshots: every ${SNAPSHOT_INTERVAL_MS / 60000}min`)
 console.log("Press Ctrl+C to stop\n")
 
 // Run immediately, then on interval
 tick()
 snapshotTick()
+financeSyncTick()
 setInterval(tick, INTERVAL_MS)
 setInterval(snapshotTick, SNAPSHOT_INTERVAL_MS)
+setInterval(financeSyncTick, FINANCE_SYNC_INTERVAL_MS)
