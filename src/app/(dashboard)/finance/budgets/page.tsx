@@ -5,14 +5,16 @@ import {
   useFinanceBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget,
   useFinanceDeepInsights, useFinanceTransactions,
   useUpdateTransactionCategory,
-  useBudgetSuggestions, useSpendingByMonth,
+  useBudgetSuggestions,
 } from "@/hooks/use-finance"
 import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
 import { BudgetCategoryBreakdown } from "@/components/finance/budgets/budget-category-breakdown"
 import { BudgetAddModal } from "@/components/finance/budgets/budget-add-modal"
 import { BudgetUntrackedSection } from "@/components/finance/budgets/budget-untracked-section"
+import { BudgetRingChart } from "@/components/finance/budgets/budget-ring-chart"
 import { ConfirmDialog } from "@/components/finance/confirm-dialog"
-import { getBudgetableCategories } from "@/lib/finance/categories"
+import { BudgetProgressBar } from "@/components/finance/budget-progress-bar"
+import { getCategoryMeta, getBudgetableCategories } from "@/lib/finance/categories"
 import { formatCurrency, cn } from "@/lib/utils"
 
 export default function FinanceBudgetsPage() {
@@ -20,7 +22,6 @@ export default function FinanceBudgetsPage() {
   const { data: deep } = useFinanceDeepInsights()
   const { data: txData } = useFinanceTransactions({ limit: 100 })
   const { data: suggestions } = useBudgetSuggestions()
-  const { data: monthlySpending } = useSpendingByMonth()
   const createBudget = useCreateBudget()
   const updateBudget = useUpdateBudget()
   const deleteBudget = useDeleteBudget()
@@ -38,6 +39,11 @@ export default function FinanceBudgetsPage() {
   const percentUsed = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0
   const budgetCount = budgets?.length ?? 0
   const overBudgetCount = budgets?.filter((b) => b.percentUsed > 100).length ?? 0
+
+  const sortedBudgets = useMemo(
+    () => [...(budgets ?? [])].sort((a, b) => b.percentUsed - a.percentUsed),
+    [budgets]
+  )
 
   const defaultCategories = suggestions?.suggestions ?? []
   const budgetedCategories = useMemo(() => new Set(budgets?.map((b) => b.category) ?? []), [budgets])
@@ -59,6 +65,11 @@ export default function FinanceBudgetsPage() {
   const currentMonth = deep?.currentMonth
     ? (() => { const [y, m] = deep.currentMonth.split("-").map(Number); return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) })()
     : new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })
+
+  const now = new Date()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const dayOfMonth = now.getDate()
+  const dailyAvg = dayOfMonth > 0 ? totalSpent / dayOfMonth : 0
 
   const deletingBudget = budgets?.find((b) => b.id === deletingId)
 
@@ -95,53 +106,106 @@ export default function FinanceBudgetsPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-card-border rounded-lg hover:bg-background-secondary transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
         >
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>add</span>
           Add Budget
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Hero Section: Ring Chart + Top Categories */}
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-4"><FinanceCardSkeleton /><FinanceCardSkeleton /><FinanceCardSkeleton /></div>
+        <FinanceCardSkeleton />
       ) : budgetCount > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <SummaryCard
-            label="TOTAL BUDGET"
-            value={formatCurrency(totalBudgeted, "USD", 0)}
-            subtitle={`${budgetCount} categories`}
-          />
-          <SummaryCard
-            label="SPENT"
-            value={formatCurrency(totalSpent, "USD", 0)}
-            badge={`${percentUsed}%`}
-            badgeColor={percentUsed > 100 ? "error" : percentUsed > 80 ? "warning" : "success"}
-            valueColor={percentUsed > 100 ? "text-error" : undefined}
-            progress={Math.min(percentUsed, 100)}
-            progressColor={percentUsed > 100 ? "bg-error" : percentUsed > 80 ? "bg-amber-500" : "bg-success"}
-          />
-          <SummaryCard
-            label="REMAINING"
-            value={formatCurrency(remaining, "USD", 0)}
-            subtitle={remaining < 0 ? "Over budget" : `${overBudgetCount > 0 ? `${overBudgetCount} over` : "On track"}`}
-            valueColor={remaining < 0 ? "text-error" : "text-success"}
-            subtitleColor={remaining < 0 ? "text-error" : overBudgetCount > 0 ? "text-amber-500" : "text-success"}
-          />
+        <div className="bg-card rounded-2xl p-6" style={{ boxShadow: "var(--shadow-sm)" }}>
+          <div className="flex flex-col sm:flex-row items-center gap-8">
+            {/* Ring Chart */}
+            <div className="flex-shrink-0">
+              <BudgetRingChart spent={totalSpent} limit={totalBudgeted} />
+            </div>
+
+            {/* Top Categories Mini Bars */}
+            <div className="flex-1 w-full space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted">
+                Highest Usage Categories
+              </p>
+              {sortedBudgets.slice(0, 5).map((b) => {
+                const meta = getCategoryMeta(b.category)
+                const isOver = b.percentUsed > 100
+                const isWarn = b.percentUsed >= 80 && !isOver
+                return (
+                  <div key={b.id} className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: meta.hex }} />
+                    <span className="text-xs font-medium text-foreground w-28 truncate">{b.category}</span>
+                    <div className="flex-1">
+                      <BudgetProgressBar spent={b.spent} limit={b.monthlyLimit} />
+                    </div>
+                    <span className="text-[10px] tabular-nums text-foreground-muted flex-shrink-0 w-24 text-right">
+                      <span className="font-semibold text-foreground">{formatCurrency(b.spent, "USD", 0)}</span>
+                      <span className="text-foreground-muted"> / {formatCurrency(b.monthlyLimit, "USD", 0)}</span>
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-bold tabular-nums w-10 text-right flex-shrink-0",
+                      isOver ? "text-error" : isWarn ? "text-amber-500" : "text-success"
+                    )}>
+                      {Math.round(b.percentUsed)}%
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       ) : null}
 
-      {/* Budget Categories */}
-      {isLoading ? (
-        <FinanceCardSkeleton />
-      ) : budgetCount === 0 ? (
-        <div className="bg-card border border-card-border rounded-xl p-12 text-center">
+      {/* Stat Cards */}
+      {budgetCount > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted mb-2">Monthly Spend</p>
+            <p className={cn("text-2xl font-bold tabular-nums tracking-tight", percentUsed > 100 ? "text-error" : "text-foreground")}>
+              {formatCurrency(totalSpent, "USD", 0)}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1">
+              {remaining >= 0 ? `${formatCurrency(remaining, "USD", 0)} remaining` : `${formatCurrency(Math.abs(remaining), "USD", 0)} over budget`}
+            </p>
+          </div>
+          <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted mb-2">Daily Average</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+              {formatCurrency(dailyAvg, "USD", 0)}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1">{dayOfMonth} days tracked</p>
+          </div>
+          <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted mb-2">Categories Over</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                {overBudgetCount} <span className="text-sm font-medium text-foreground-muted">of {budgetCount}</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              {sortedBudgets.map((b) => (
+                <div
+                  key={b.id}
+                  className={cn("h-2 flex-1 rounded-full", b.percentUsed > 100 ? "bg-error" : b.percentUsed > 80 ? "bg-amber-500" : "bg-success")}
+                  title={`${b.category}: ${Math.round(b.percentUsed)}%`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && budgetCount === 0 && (
+        <div className="bg-card rounded-2xl p-12 text-center" style={{ boxShadow: "var(--shadow-sm)" }}>
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-rounded text-primary" style={{ fontSize: 24 }}>savings</span>
           </div>
           <h3 className="text-base font-semibold text-foreground mb-1.5">No budgets yet</h3>
           <p className="text-sm text-foreground-muted mb-4 max-w-sm mx-auto">
-            Set spending limits by category to track your budget.
+            Set spending limits by category to track your budget and control your spending.
           </p>
           <button
             onClick={() => setShowModal(true)}
@@ -150,7 +214,10 @@ export default function FinanceBudgetsPage() {
             Create Your First Budget
           </button>
         </div>
-      ) : (
+      )}
+
+      {/* Detailed Budget List */}
+      {budgetCount > 0 && (
         <BudgetCategoryBreakdown
           budgets={budgets!}
           txByCategory={txByCategory}
@@ -200,48 +267,6 @@ export default function FinanceBudgetsPage() {
         variant="danger"
         isLoading={deleteBudget.isPending}
       />
-    </div>
-  )
-}
-
-// ─── Summary Card ──────────────────────────────────────────
-
-function SummaryCard({ label, value, subtitle, badge, badgeColor, valueColor, subtitleColor, progress, progressColor }: {
-  label: string
-  value: string
-  subtitle?: string
-  badge?: string
-  badgeColor?: "error" | "warning" | "success"
-  valueColor?: string
-  subtitleColor?: string
-  progress?: number
-  progressColor?: string
-}) {
-  const badgeClasses = {
-    error: "bg-error/10 text-error",
-    warning: "bg-amber-500/10 text-amber-500",
-    success: "bg-success/10 text-success",
-  }
-
-  return (
-    <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted">{label}</p>
-        {badge && (
-          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums", badgeClasses[badgeColor ?? "success"])}>
-            {badge}
-          </span>
-        )}
-      </div>
-      <p className={cn("text-2xl font-bold tabular-nums tracking-tight", valueColor ?? "text-foreground")}>{value}</p>
-      {subtitle && (
-        <p className={cn("text-xs mt-1", subtitleColor ?? "text-foreground-muted")}>{subtitle}</p>
-      )}
-      {progress != null && (
-        <div className="mt-3 h-[3px] bg-background-secondary rounded-full overflow-hidden">
-          <div className={cn("h-full rounded-full transition-all duration-500", progressColor ?? "bg-primary")} style={{ width: `${progress}%` }} />
-        </div>
-      )}
     </div>
   )
 }

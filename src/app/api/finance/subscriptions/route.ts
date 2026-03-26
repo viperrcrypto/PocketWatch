@@ -160,6 +160,37 @@ export async function GET(req: NextRequest) {
 
     const logoMap = new Map(logoTxs.map((t) => [t.merchantName, t.logoUrl]))
 
+    // Batch-fetch linked transactions (the exact charge that proves "paid")
+    const linkedTxIds = subscriptions
+      .map((s) => s.lastTransactionId)
+      .filter((id): id is string => id != null)
+    const linkedTxs = linkedTxIds.length > 0
+      ? await db.financeTransaction.findMany({
+          where: { id: { in: linkedTxIds } },
+          select: {
+            id: true,
+            name: true,
+            merchantName: true,
+            amount: true,
+            date: true,
+            accountId: true,
+            category: true,
+            account: { select: { name: true, mask: true, institution: { select: { institutionName: true } } } },
+          },
+        })
+      : []
+    const linkedTxMap = new Map(linkedTxs.map((t) => [t.id, {
+      id: t.id,
+      name: t.name,
+      merchantName: t.merchantName,
+      amount: t.amount,
+      date: t.date.toISOString().split("T")[0],
+      accountName: t.account?.name ?? null,
+      accountMask: t.account?.mask ?? null,
+      institutionName: t.account?.institution?.institutionName ?? null,
+      category: t.category,
+    }]))
+
     const accountMap = new Map(
       accounts.map((a) => [a.id, {
         accountName: formatAccountLabel(a),
@@ -227,6 +258,7 @@ export async function GET(req: NextRequest) {
         accountType: acct?.accountType ?? null,
         institutionName: acct?.institutionName ?? null,
         recentTransactions: txByMerchant.get(s.merchantName) ?? [],
+        linkedTransaction: (s as { lastTransactionId?: string }).lastTransactionId ? linkedTxMap.get((s as { lastTransactionId?: string }).lastTransactionId!) ?? null : null,
       }
     })
 
