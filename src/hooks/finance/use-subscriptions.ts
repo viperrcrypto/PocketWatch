@@ -32,6 +32,17 @@ export interface SubscriptionItem {
   accountType: string | null
   institutionName: string | null
   recentTransactions: Array<{ amount: number; date: string; name: string }>
+  linkedTransaction: {
+    id: string
+    name: string
+    merchantName: string | null
+    amount: number
+    date: string
+    accountName: string | null
+    accountMask: string | null
+    institutionName: string | null
+    category: string | null
+  } | null
   billType: string | null
   classificationReason: string | null
   originalMerchantName: string | null

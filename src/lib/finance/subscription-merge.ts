@@ -26,6 +26,7 @@ export interface UnifiedSubscription {
   plaidStreamId: string | null
   isActive: boolean
   billType: string | null
+  lastTransactionId: string | null
 }
 
 interface DetectedSub {
@@ -38,6 +39,7 @@ interface DetectedSub {
   accountId: string | null
   lastChargeDate: Date | string | null
   nextChargeDate: Date | string | null
+  lastTransactionId: string | null
   status: string
   isWanted: boolean
   notes: string | null
@@ -151,6 +153,7 @@ export function mergeSubscriptions(
         plaidStreamId: match.streamId,
         isActive: match.isActive,
         billType: sub.billType,
+        lastTransactionId: sub.lastTransactionId,
       })
     } else {
       result.push({
@@ -173,6 +176,7 @@ export function mergeSubscriptions(
         plaidStreamId: null,
         isActive: sub.status === "active",
         billType: sub.billType,
+        lastTransactionId: sub.lastTransactionId,
       })
     }
   }
@@ -204,6 +208,7 @@ export function mergeSubscriptions(
       plaidStreamId: ps.streamId,
       isActive: ps.isActive,
       billType: null, // classified later during enrichment
+      lastTransactionId: null, // Plaid-only subs have no linked transaction initially
     })
   }
 

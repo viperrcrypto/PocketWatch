@@ -131,6 +131,7 @@ export function BudgetSubscriptionsSection() {
         accountType={sub.accountType}
         institutionName={sub.institutionName}
         recentTransactions={sub.recentTransactions}
+        linkedTransaction={sub.linkedTransaction}
         cancelReminderDate={sub.cancelReminderDate}
         onUpdateStatus={(id, status) => updateSub.mutate({ subscriptionId: id, status })}
         onToggleWanted={(id, isWanted) => updateSub.mutate({ subscriptionId: id, isWanted })}

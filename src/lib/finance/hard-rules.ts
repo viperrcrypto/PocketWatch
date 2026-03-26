@@ -148,5 +148,10 @@ export function detectTransferByName(tx: TransactionContext): HardRuleResult | n
  * CC payment detection runs first (more specific), then general transfers.
  */
 export function applyHardRules(tx: TransactionContext): HardRuleResult | null {
+  // Never override Plaid's explicit income classification — payroll deposits
+  // often contain "ACH CREDIT" / "ACH DEPOSIT" keywords that would falsely
+  // match transfer patterns, wiping out income from analytics.
+  if (tx.plaidCategoryPrimary?.startsWith("INCOME")) return null
+
   return detectCCPayment(tx) ?? detectTransferByName(tx) ?? null
 }

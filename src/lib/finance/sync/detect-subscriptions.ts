@@ -111,27 +111,28 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
       const amountChanged = amountDiff > 0.1
       const isUserCurated = matchingExisting.nickname || matchingExisting.notes
 
-      if ((freqChanged || amountChanged) && !isUserCurated) {
-        if (amountChanged) {
-          priceChanges.push({
-            merchantName: matchingExisting.merchantName,
-            oldAmount: matchingExisting.amount,
-            newAmount: sub.amount,
-          })
-        }
-        await db.financeSubscription.update({
-          where: { id: matchingExisting.id },
-          data: {
-            ...(freqChanged && { frequency: sub.frequency }),
-            ...(amountChanged && { amount: sub.amount }),
-            lastChargeDate: new Date(sub.lastChargeDate),
-            nextChargeDate: new Date(sub.nextChargeDate),
-            accountId: sub.accountId,
-            lastTransactionId: sub.lastTransactionId,
-          },
+      if (amountChanged && !isUserCurated) {
+        priceChanges.push({
+          merchantName: matchingExisting.merchantName,
+          oldAmount: matchingExisting.amount,
+          newAmount: sub.amount,
         })
-        updatedCount++
       }
+
+      // Always update dates + linked transaction (even if amount/freq unchanged)
+      // so the proof link stays current. Only update amount/freq if actually changed.
+      await db.financeSubscription.update({
+        where: { id: matchingExisting.id },
+        data: {
+          ...(!isUserCurated && freqChanged && { frequency: sub.frequency }),
+          ...(!isUserCurated && amountChanged && { amount: sub.amount }),
+          lastChargeDate: new Date(sub.lastChargeDate),
+          nextChargeDate: new Date(sub.nextChargeDate),
+          accountId: sub.accountId,
+          lastTransactionId: sub.lastTransactionId,
+        },
+      })
+      updatedCount++
       continue
     }
 

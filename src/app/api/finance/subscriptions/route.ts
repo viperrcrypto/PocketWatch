@@ -258,7 +258,7 @@ export async function GET(req: NextRequest) {
         accountType: acct?.accountType ?? null,
         institutionName: acct?.institutionName ?? null,
         recentTransactions: txByMerchant.get(s.merchantName) ?? [],
-        linkedTransaction: (s as { lastTransactionId?: string }).lastTransactionId ? linkedTxMap.get((s as { lastTransactionId?: string }).lastTransactionId!) ?? null : null,
+        linkedTransaction: s.lastTransactionId ? linkedTxMap.get(s.lastTransactionId) ?? null : null,
       }
     })
 

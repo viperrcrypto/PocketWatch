@@ -145,7 +145,7 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
   const recurringVsOneTime = { recurring: round(recurringSpend), oneTime: round(spending - recurringSpend), fixedCostRatio: spending > 0 ? round((recurringSpend / spending) * 100) : 0 }
 
   const dayTotals = [0, 0, 0, 0, 0, 0, 0]
-  for (const tx of txs) { if (tx.amount > 0) dayTotals[tx.date.getDay()] += tx.amount }
+  for (const tx of realSpendTxs) { dayTotals[tx.date.getDay()] += tx.amount }
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
   const dayOfWeekPatterns = dayLabels.map((label, i) => ({ day: label, total: round(dayTotals[i]) }))
 
@@ -170,7 +170,8 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
 
   // Anomaly flags
   const prevCatMap = new Map<string, number>()
-  for (const tx of prevTxs) { if (tx.amount > 0) prevCatMap.set(tx.category ?? "Uncategorized", (prevCatMap.get(tx.category ?? "Uncategorized") ?? 0) + tx.amount) }
+  const prevRealSpend = prevTxs.filter(isRealSpend)
+  for (const tx of prevRealSpend) { prevCatMap.set(tx.category ?? "Uncategorized", (prevCatMap.get(tx.category ?? "Uncategorized") ?? 0) + tx.amount) }
 
   const anomalies = [...categoryMap.entries()].filter(([cat, data]) => { const prev = prevCatMap.get(cat) ?? 0; return prev > 0 && data.total > prev * 2 })
     .map(([category, data]) => ({ category, currentAmount: round(data.total), previousAmount: round(prevCatMap.get(category) ?? 0), multiplier: round(data.total / (prevCatMap.get(category) ?? 1)) }))
@@ -224,12 +225,12 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
     date: t.date.toISOString().slice(0, 10), logoUrl: t.logoUrl,
   }))
 
-  const savingsRate = income > 0 ? round(((income - spending) / income) * 100) : 0
+  const savingsRate = income > 0 ? Math.max(-100, round(((income - spending) / income) * 100)) : 0
 
   const healthScore = computeHealthScore({ savingsRate, budgetHealth, spendingChange: prevSpending > 0 ? (spending - prevSpending) / prevSpending : 0, recurringRatio: recurringVsOneTime.fixedCostRatio, uncategorizedRatio: txs.length > 0 ? uncategorizedCount / txs.length : 0 })
 
   // Spending streaks
-  const spendingDates = new Set(txs.filter((t) => t.amount > 0).map((t) => t.date.toISOString().slice(0, 10)))
+  const spendingDates = new Set(realSpendTxs.map((t) => t.date.toISOString().slice(0, 10)))
   const allDays: string[] = []
   for (let d = new Date(currentStart); d < currentEnd && d <= new Date(); d.setDate(d.getDate() + 1)) { allDays.push(d.toISOString().slice(0, 10)) }
   const noSpendDays = allDays.filter((d) => !spendingDates.has(d)).length
