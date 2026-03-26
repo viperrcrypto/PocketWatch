@@ -307,14 +307,22 @@ export default function ExchangeBalancesPage() {
             <div className="flex items-center gap-3 mb-4">
               {/* Search */}
               <div className="relative flex-1 max-w-xs">
-                <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted text-sm">search</span>
+                <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search assets..."
-                  className="w-full pl-9 pr-3 py-2 bg-transparent border border-card-border rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none text-foreground placeholder-foreground-muted/40 transition-colors text-sm"
+                  className="w-full pl-9 pr-8 py-2 bg-transparent border border-card-border rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none text-foreground placeholder-foreground-muted/40 transition-colors text-sm"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: 14 }}>close</span>
+                  </button>
+                )}
               </div>
 
               {/* Exchange filter */}

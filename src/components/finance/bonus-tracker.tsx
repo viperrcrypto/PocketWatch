@@ -290,9 +290,13 @@ export function BonusTrackerSection() {
             data-protonpass-ignore
             data-form-type="other"
           />
-          {isFetching && (
+          {isFetching ? (
             <span className="material-symbols-rounded animate-spin text-foreground-muted flex-shrink-0" style={{ fontSize: 16 }}>progress_activity</span>
-          )}
+          ) : query ? (
+            <button onClick={() => setQuery("")} className="text-foreground-muted hover:text-foreground transition-colors flex-shrink-0">
+              <span className="material-symbols-rounded" style={{ fontSize: 14 }}>close</span>
+            </button>
+          ) : null}
         </div>
 
         {/* Filters */}

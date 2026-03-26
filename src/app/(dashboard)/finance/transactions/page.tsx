@@ -237,21 +237,14 @@ export default function FinanceTransactionsPage() {
             </span>
           </div>
 
-          <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
-            {!search && (
-              <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted/40 pointer-events-none" style={{ fontSize: 15 }}>
-                search
-              </span>
-            )}
+          <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
+            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               placeholder="Search merchants, descriptions..."
-              className={cn(
-                "w-full pr-8 py-1.5 rounded-lg bg-background-secondary border border-card-border text-xs text-foreground placeholder:text-foreground-muted/50",
-                search ? "pl-3" : "pl-8"
-              )}
+              className="w-full pl-9 pr-8 py-1.5 rounded-lg bg-background-secondary border border-card-border text-xs text-foreground placeholder:text-foreground-muted/50"
             />
             {search && (
               <button

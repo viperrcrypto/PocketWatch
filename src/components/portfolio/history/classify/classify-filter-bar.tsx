@@ -35,13 +35,14 @@ export function ClassifyFilterBar({
     <div className="bg-card border border-card-border p-4 mb-6 rounded-xl space-y-4">
       {/* Search */}
       <div className="relative">
+        <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") onSearchChange("") }}
           placeholder="Search by tx hash, address, or symbol..."
-          className="w-full bg-background border border-card-border-hover focus:border-foreground outline-none py-2 px-4 pr-9 text-foreground placeholder-foreground-muted transition-colors rounded-lg text-sm font-data"
+          className="w-full bg-background border border-card-border-hover focus:border-foreground outline-none py-2 pl-9 pr-9 text-foreground placeholder-foreground-muted transition-colors rounded-lg text-sm font-data"
         />
         {search && (
           <button

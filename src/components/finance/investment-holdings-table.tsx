@@ -131,14 +131,22 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" style={{ fontSize: 14 }}>search</span>
+            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or ticker..."
-              className="w-full sm:w-56 pl-9 pr-3 py-1.5 text-xs border border-card-border rounded-lg bg-background text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50"
+              className="w-full sm:w-56 pl-9 pr-8 py-1.5 text-xs border border-card-border rounded-lg bg-background text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50"
             />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>close</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-1 overflow-x-auto">
             {TYPE_FILTERS.map((f) => (
