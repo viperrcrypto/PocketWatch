@@ -169,10 +169,11 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
           <div className="flex items-center gap-1">
             <button
               onClick={handleLock}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-foreground-muted hover:text-foreground hover:bg-background-secondary"
+              className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-foreground-muted hover:text-foreground hover:bg-background-secondary"
+              aria-label="Lock"
+              title="Lock"
             >
               <span className="material-symbols-rounded text-lg" aria-hidden="true">lock_open</span>
-              <span>Lock</span>
             </button>
             <div className="w-px h-5 bg-card-border" />
             <NotificationBell />
