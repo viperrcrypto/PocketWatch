@@ -72,21 +72,44 @@ function inferType(security: Holding["security"]): string {
   return rawType || "equity"
 }
 
+/** Shorten verbose Plaid sector names */
+const SECTOR_ALIASES: Record<string, string> = {
+  "investment trusts or mutual funds": "Funds",
+  "investment trusts/mutual funds": "Funds",
+  "real estate investment trusts": "REITs",
+  "information technology": "Technology",
+  "consumer discretionary": "Consumer",
+  "consumer staples": "Consumer Staples",
+  "health care": "Healthcare",
+  "communication services": "Media & Comms",
+  "materials": "Materials",
+  "industrials": "Industrials",
+  "utilities": "Utilities",
+  "energy": "Energy",
+  "financials": "Financials",
+}
+
 /** Infer sector from security data when Plaid's sector field is null */
 function inferSector(security: Holding["security"]): string {
-  if (!security) return "Unclassified"
-  if (security.sector && security.sector !== "Other" && security.sector !== "Miscellaneous") return security.sector
-  if (security.industry) return security.industry
-  if (security.isCashEquivalent) return "Cash & Equivalents"
+  if (!security) return "Mixed"
+
+  if (security.sector && security.sector !== "Other" && security.sector !== "Miscellaneous") {
+    return SECTOR_ALIASES[security.sector.toLowerCase()] ?? security.sector
+  }
+  if (security.industry) {
+    return SECTOR_ALIASES[security.industry.toLowerCase()] ?? security.industry
+  }
+  if (security.isCashEquivalent) return "Cash"
 
   const name = (security.name ?? "").toLowerCase()
-  if (name.includes("s&p") || name.includes("total stock") || name.includes("total market")) return "Broad Market"
+  if (name.includes("s&p") || name.includes("total stock") || name.includes("total market") || name.includes("index")) return "Broad Market"
   if (name.includes("bond") || name.includes("treasury") || name.includes("fixed")) return "Fixed Income"
   if (name.includes("international") || name.includes("emerging")) return "International"
-  if (name.includes("real estate") || name.includes("reit")) return "Real Estate"
-  if (name.includes("tech") || name.includes("technology")) return "Technology"
+  if (name.includes("real estate") || name.includes("reit")) return "REITs"
+  if (name.includes("tech")) return "Technology"
+  if (name.includes("exchange") || name.includes("tds") || name.includes("target date") || name.includes("retirement")) return "Target Date"
 
-  return "Unclassified"
+  return "Mixed"
 }
 
 // ─── Active Shape Renderer ─────────────────────────────────────
@@ -178,7 +201,9 @@ export function InvestmentAllocationChart({ holdings, totalValue, compact = fals
 
   const activeSegment = activeIndex != null ? segments[activeIndex] : null
   const centerAmount = activeSegment ? activeSegment.value : totalValue
-  const centerLabel = activeSegment ? activeSegment.label : "total"
+  // Truncate label for center display to prevent overflow
+  const rawLabel = activeSegment ? activeSegment.label : "TOTAL"
+  const centerLabel = rawLabel.length > 10 ? rawLabel.slice(0, 9) + "..." : rawLabel
 
   if (segments.length === 0) return null
 
