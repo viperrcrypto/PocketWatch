@@ -90,7 +90,7 @@ export default function FinanceTransactionsPage() {
       <div className="flex items-center justify-between">
         <FinancePageHeader
           title="Transactions"
-          subtitle={isLoading ? undefined : `${total.toLocaleString()} transactions`}
+          subtitle={isLoading ? undefined : `${total.toLocaleString()} transactions${needsAttention > 0 ? ` \u00b7 ${needsAttention} uncategorized` : ""}`}
         />
         <Link
           href="/finance/categorize?mode=rebuild"
@@ -100,45 +100,6 @@ export default function FinanceTransactionsPage() {
           AI Categorize
         </Link>
       </div>
-
-      {/* Categorization Banner */}
-      {needsAttention > 0 && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-orange-500/5 border border-orange-500/20 rounded-xl">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="material-symbols-rounded text-orange-500 shrink-0" style={{ fontSize: 18 }}>label_off</span>
-            <p className="text-xs text-foreground truncate">
-              <span className="font-semibold">{needsAttention}</span>
-              <span className="text-foreground-muted"> need categorizing</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => {
-                try {
-                  autoCategorize.mutate(undefined, {
-                    onSuccess: (result) => {
-                      if (result.categorized > 0) toast.success(`Categorized ${result.categorized} transaction${result.categorized > 1 ? "s" : ""}`)
-                      else toast.info("No matches — try AI Categorize")
-                    },
-                    onError: (err) => toast.error(err.message ?? "Failed"),
-                  })
-                } catch { toast.error("Failed to start") }
-              }}
-              disabled={autoCategorize.isPending}
-              className="px-2.5 py-1 text-[11px] font-medium border border-card-border rounded-md hover:bg-background-secondary transition-colors disabled:opacity-50"
-            >
-              {autoCategorize.isPending ? "..." : "Quick Fix"}
-            </button>
-            <Link href="/finance/categorize" className="px-2.5 py-1 text-[11px] font-medium border border-card-border rounded-md hover:bg-background-secondary transition-colors">
-              Review
-            </Link>
-            <Link href="/finance/categorize?mode=rebuild" className="px-2.5 py-1 text-[11px] font-medium bg-foreground text-background rounded-md hover:opacity-90 transition-opacity flex items-center gap-1">
-              <span className="material-symbols-rounded" style={{ fontSize: 12 }}>auto_awesome</span>
-              AI Fix All
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Filter Bar */}
       <div className="bg-card border border-card-border rounded-xl p-4">
