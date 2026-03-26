@@ -5,7 +5,7 @@
   "scripts": {
     "db:backup": "pg_dump pocketwatch > backups/pocketwatch-$(date +%Y%m%d-%H%M%S).sql && echo 'Backup saved to backups/'",
     "db:prepare": "npm run db:backup 2>/dev/null; prisma generate && (prisma migrate deploy || prisma db push)",
-    "dev": "npm run db:prepare && pkill -f 'next dev' 2>/dev/null; rm -rf .next && next dev --no-turbopack --hostname 0.0.0.0 --port 3500",
+    "dev": "npm run db:prepare && pkill -f 'next dev' 2>/dev/null; rm -rf .next && NEXT_DISABLE_TURBOPACK=1 next dev --hostname 0.0.0.0 --port 3500",
     "build": "if [ -n \"$DATABASE_MIGRATE_URL\" ]; then prisma db push --accept-data-loss --url \"$DATABASE_MIGRATE_URL\"; fi && prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "npm run db:prepare && next start",
