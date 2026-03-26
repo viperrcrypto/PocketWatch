@@ -146,7 +146,6 @@ export default function FinanceTransactionsPage() {
               { key: "charges", label: "Charges" },
               { key: "refunds", label: "Refunds" },
               { key: "pending", label: "Pending" },
-              { key: "recurring", label: "Recurring" },
             ] as const).map((opt) => (
               <button
                 key={opt.key}
