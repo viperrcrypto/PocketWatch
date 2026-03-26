@@ -220,8 +220,8 @@ async function runQualityCheck(userId: string): Promise<QualityCheck> {
 
   // Count categorized vs uncategorized
   const [total, uncategorized] = await Promise.all([
-    db.financeTransaction.count({ where: { userId, isDuplicate: false } }),
-    db.financeTransaction.count({ where: { userId, isDuplicate: false, OR: [{ category: null }, { category: "Uncategorized" }] } }),
+    db.financeTransaction.count({ where: { userId, isDuplicate: false, isExcluded: false } }),
+    db.financeTransaction.count({ where: { userId, isDuplicate: false, isExcluded: false, OR: [{ category: null }, { category: "Uncategorized" }] } }),
   ])
   const categorized = total - uncategorized
   const categorizedPct = total > 0 ? Math.round((categorized / total) * 100) : 0
@@ -231,8 +231,8 @@ async function runQualityCheck(userId: string): Promise<QualityCheck> {
 
   // Check income classification
   const [incomeAgg, transferAgg] = await Promise.all([
-    db.financeTransaction.aggregate({ where: { userId, isDuplicate: false, category: "Income" }, _count: true, _sum: { amount: true } }),
-    db.financeTransaction.aggregate({ where: { userId, isDuplicate: false, category: "Transfer" }, _count: true, _sum: { amount: true } }),
+    db.financeTransaction.aggregate({ where: { userId, isDuplicate: false, isExcluded: false, category: "Income" }, _count: true, _sum: { amount: true } }),
+    db.financeTransaction.aggregate({ where: { userId, isDuplicate: false, isExcluded: false, category: "Transfer" }, _count: true, _sum: { amount: true } }),
   ])
 
   const incomeCount = incomeAgg._count

@@ -54,9 +54,8 @@ export async function detectAndNotify(userId: string): Promise<{ alertsSent: num
           channels: sentChannels,
         },
       })
+      alertsSent++
     }
-
-    alertsSent++
   }
 
   if (alertsSent > 0) {

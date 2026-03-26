@@ -142,7 +142,7 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
 
   // Match recurring transactions: either flagged isRecurring or merchant matches a detected subscription
   const subMerchants = new Set(subs.map((s) => (s.merchantName ?? "").toLowerCase()).filter(Boolean))
-  const recurringSpend = txs.filter((t) => t.amount > 0 && (t.isRecurring || subMerchants.has((t.merchantName ?? "").toLowerCase()))).reduce((s, t) => s + t.amount, 0)
+  const recurringSpend = realSpendTxs.filter((t) => t.isRecurring || subMerchants.has((t.merchantName ?? "").toLowerCase())).reduce((s, t) => s + t.amount, 0)
   const recurringVsOneTime = { recurring: round(recurringSpend), oneTime: round(spending - recurringSpend), fixedCostRatio: spending > 0 ? round((recurringSpend / spending) * 100) : 0 }
 
   const dayTotals = [0, 0, 0, 0, 0, 0, 0]
@@ -203,7 +203,7 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
   const monthlySubTotal = activeSubs.reduce((s, sub) => s + toMonthly(sub), 0)
   const trueSubs = activeSubs.filter((s) => s.billType === "subscription" || !s.billType)
   const monthlySubsOnly = trueSubs.reduce((s, sub) => s + toMonthly(sub), 0)
-  const subscriptionSummary = { monthlyTotal: round(monthlySubTotal), monthlySubsOnly: round(monthlySubsOnly), activeCount: activeSubs.length, unwantedCount: unwantedSubs.length, potentialSavings: round(unwantedSubs.reduce((s, sub) => s + sub.amount, 0)) }
+  const subscriptionSummary = { monthlyTotal: round(monthlySubTotal), monthlySubsOnly: round(monthlySubsOnly), activeCount: activeSubs.length, unwantedCount: unwantedSubs.length, potentialSavings: round(unwantedSubs.reduce((s, sub) => s + toMonthly(sub), 0)) }
 
   // Frequent merchants — use realSpendTxs to exclude transfers/investments
   const merchantFreq = new Map<string, { count: number; total: number; category: string | null; logoUrl: string | null }>()

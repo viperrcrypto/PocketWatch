@@ -347,6 +347,7 @@ async function detectLargeTransactions(userId: string): Promise<NewAlert[]> {
 
   return large
     .filter((t) => !alertedIds.has(t.id))
+    .filter((t) => !t.category || !NON_SPENDING_CATEGORIES.has(t.category))
     .map((txn) => {
       const merchant = txn.merchantName ?? txn.name
       return {
