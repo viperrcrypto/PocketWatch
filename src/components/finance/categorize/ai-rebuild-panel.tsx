@@ -47,7 +47,7 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
         />
         <ModeCard
           title="Full Rebuild"
-          description="Re-evaluate ALL transactions. AI will review and fix miscategorizations."
+          description={`Re-categorize ALL ${reviewCount > 0 ? reviewCount + " review items + " : ""}transactions from scratch. Fixes wrong categories and re-evaluates everything.`}
           icon="restart_alt"
           variant="warning"
           onClick={() => { setPreviewedMode("full"); start("full", true) }}
