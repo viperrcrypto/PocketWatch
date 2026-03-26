@@ -83,52 +83,39 @@ export default function FinanceTransactionsPage() {
   const reviewCount = reviewData?.count ?? 0
   const hasFilters = search || category || accountId || txType || dateRange !== "this-month"
   const uncategorizedCount = deep?.uncategorizedCount ?? 0
-  const needsAttention = uncategorizedCount + reviewCount
-
   return (
     <div className="space-y-6">
-      <FinancePageHeader
-        title="Transactions"
-        subtitle={isLoading ? undefined : `${total.toLocaleString()} transactions`}
-      />
-
-      {/* Uncategorized banner */}
-      {!isLoading && needsAttention > 0 && (
-        <div className="bg-card border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-rounded text-amber-500" style={{ fontSize: 20 }}>label_off</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {needsAttention.toLocaleString()} uncategorized transaction{needsAttention !== 1 ? "s" : ""}
-              </p>
-              <p className="text-xs text-foreground-muted mt-0.5">
-                Categorize to unlock budgets, insights, and spending trends
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+      <div className="flex items-center justify-between">
+        <FinancePageHeader
+          title="Transactions"
+          subtitle={isLoading ? undefined : (
+            <>
+              {total.toLocaleString()} transactions
+              {uncategorizedCount > 0 && (
+                <> &middot; <span className="text-amber-500 font-semibold">{uncategorizedCount} need categorizing</span></>
+              )}
+            </>
+          )}
+        />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {uncategorizedCount > 0 && (
             <Link
               href="/finance/categorize"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
             >
               <span className="material-symbols-rounded" style={{ fontSize: 14 }}>checklist</span>
-              Manual Review
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/20 leading-none">
-                Recommended
-              </span>
+              Review
             </Link>
-            <Link
-              href="/finance/categorize?mode=rebuild"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium border border-card-border rounded-lg hover:bg-background-secondary transition-colors"
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 14 }}>auto_awesome</span>
-              AI Categorize
-            </Link>
-          </div>
+          )}
+          <Link
+            href="/finance/categorize?mode=rebuild"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-card-border rounded-lg hover:bg-background-secondary transition-colors"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>auto_awesome</span>
+            AI Categorize
+          </Link>
         </div>
-      )}
+      </div>
 
       {/* Filter Bar */}
       <div className="bg-card border border-card-border rounded-xl p-4">

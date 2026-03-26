@@ -66,7 +66,7 @@ export async function POST(req: NextRequest): Promise<Response> {
           const { merchants, txsByMerchant } = await fetchMerchantsForRebuild(user.id, mode)
           let txCount = 0
           for (const ids of txsByMerchant.values()) txCount += ids.length
-          send("preview", { merchantCount: merchants.length, txCount, batchCount: Math.ceil(merchants.length / 50) })
+          send("preview", { merchantCount: merchants.length, txCount, batchCount: Math.ceil(merchants.length / 120) })
           controller.close()
           return
         }

@@ -46,14 +46,13 @@ export default function CategorizePage() {
           )}
         >
           Review
-          {reviewCount > 0 && (
-            <span className={cn(
-              "px-1.5 py-0.5 text-[10px] font-semibold rounded-full tabular-nums",
-              mode === "review" ? "bg-orange-500/10 text-orange-500" : "bg-foreground-muted/10 text-foreground-muted"
-            )}>
-              {reviewCount}
-            </span>
-          )}
+          <span className={cn(
+            "px-1.5 py-0.5 text-[10px] font-semibold rounded-full tabular-nums",
+            !reviewCount && "invisible",
+            mode === "review" ? "bg-orange-500/10 text-orange-500" : "bg-foreground-muted/10 text-foreground-muted"
+          )}>
+            {reviewCount || 0}
+          </span>
         </button>
         <button
           onClick={() => router.push("/finance/categorize?mode=rebuild")}
@@ -66,14 +65,13 @@ export default function CategorizePage() {
         >
           <span className="material-symbols-rounded" style={{ fontSize: 15 }}>auto_awesome</span>
           AI Rebuild
-          {uncategorizedCount > 0 && (
-            <span className={cn(
-              "px-1.5 py-0.5 text-[10px] font-semibold rounded-full tabular-nums",
-              mode === "rebuild" ? "bg-primary/10 text-primary" : "bg-foreground-muted/10 text-foreground-muted"
-            )}>
-              {uncategorizedCount}
-            </span>
-          )}
+          <span className={cn(
+            "px-1.5 py-0.5 text-[10px] font-semibold rounded-full tabular-nums",
+            !uncategorizedCount && "invisible",
+            mode === "rebuild" ? "bg-primary/10 text-primary" : "bg-foreground-muted/10 text-foreground-muted"
+          )}>
+            {uncategorizedCount || 0}
+          </span>
         </button>
       </div>
 

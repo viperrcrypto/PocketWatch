@@ -84,7 +84,7 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
             {state.preview.txCount} transactions across {state.preview.batchCount} batch{state.preview.batchCount !== 1 ? "es" : ""}
           </p>
           <p className="text-xs text-foreground-muted mt-2">
-            Estimated time: {Math.ceil(state.preview.batchCount * 8 / 60)}–{Math.ceil(state.preview.batchCount * 12 / 60)} minutes
+            Estimated time: ~{Math.max(1, Math.ceil(Math.ceil(state.preview.batchCount / 2) * 10 / 60))} minute{Math.ceil(Math.ceil(state.preview.batchCount / 2) * 10 / 60) > 1 ? "s" : ""}
           </p>
         </div>
         <div className="flex items-center justify-center gap-3">

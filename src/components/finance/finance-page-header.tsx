@@ -4,7 +4,7 @@ import { ReactNode } from "react"
 
 interface FinancePageHeaderProps {
   title: string
-  subtitle?: string
+  subtitle?: ReactNode
   actions?: ReactNode
 }
 

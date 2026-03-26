@@ -113,13 +113,18 @@ async function callClaudeCLI(prompt: string, model?: string): Promise<string> {
     child.stdout.on("data", (d: Buffer) => { stdout += d.toString() })
     child.stderr.on("data", (d: Buffer) => { stderr += d.toString() })
 
+    let killed = false
     const timer = setTimeout(() => {
+      killed = true
       child.kill("SIGTERM")
-      reject(new Error("Claude CLI timed out after 120s"))
-    }, 120_000)
+      // SIGKILL fallback if SIGTERM doesn't work after 5s
+      setTimeout(() => { try { child.kill("SIGKILL") } catch { /* already dead */ } }, 5_000)
+      reject(new Error("Claude CLI timed out after 180s"))
+    }, 180_000)
 
     child.on("close", (code) => {
       clearTimeout(timer)
+      if (killed) return // already rejected by timeout
       if (code === 0) resolve(stdout.trim())
       else reject(new Error(`Claude CLI exited with code ${code}: ${(stderr || stdout).slice(0, 500)}`))
     })
@@ -148,7 +153,7 @@ async function callClaudeAPI(apiKey: string, prompt: string, model?: string): Pr
     },
     body: JSON.stringify({
       model: model ?? "claude-sonnet-4-20250514",
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     }),
     signal: AbortSignal.timeout(60_000),
@@ -176,7 +181,7 @@ async function callOpenAI(apiKey: string, prompt: string, model?: string): Promi
       model: model ?? "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
-      max_tokens: 2048,
+      max_tokens: 4096,
     }),
     signal: AbortSignal.timeout(60_000),
   })

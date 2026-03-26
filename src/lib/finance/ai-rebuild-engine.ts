@@ -9,7 +9,8 @@ import { cleanMerchantName, CATEGORIES, CONFIDENCE, uncategorizedWhere } from ".
 import { callAIProviderRaw, type AIProviderType } from "./ai-providers"
 import { buildRebuildMerchants, buildRebuildPrompt, parseRebuildResponse, type RebuildMerchant, type RebuildAIResult } from "./ai-rebuild-prompt"
 
-const BATCH_SIZE = 50
+const BATCH_SIZE = 120
+const CONCURRENCY = 2
 const MAX_CUSTOM_CATEGORIES = 5
 
 export interface RebuildParams {
@@ -109,22 +110,21 @@ export async function runRebuildBatches(
   let batchesCompleted = 0
   let batchesFailed = 0
 
-  for (let i = 0; i < totalBatches; i++) {
-    if (cancelSignal.cancelled) {
-      send("progress", { batchIndex: i, totalBatches, merchantsProcessed: i * BATCH_SIZE, totalMerchants: merchants.length, message: "Cancelled" })
-      break
-    }
+  // Process batches with concurrency limit
+  let merchantsProcessed = 0
+
+  async function processBatch(i: number) {
+    if (cancelSignal.cancelled) return
 
     const batch = merchants.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE)
-    send("progress", { batchIndex: i, totalBatches, merchantsProcessed: i * BATCH_SIZE, totalMerchants: merchants.length, message: `Processing batch ${i + 1}/${totalBatches}` })
+    send("progress", { batchIndex: i, totalBatches, merchantsProcessed, totalMerchants: merchants.length, message: `Processing batch ${i + 1}/${totalBatches}` })
 
     let succeeded = false
-    for (let attempt = 0; attempt < 3 && !succeeded; attempt++) {
+    for (let attempt = 0; attempt < 2 && !succeeded; attempt++) {
       try {
         if (attempt > 0) {
-          const delayMs = 2000 * attempt
-          send("progress", { batchIndex: i, totalBatches, merchantsProcessed: i * BATCH_SIZE, totalMerchants: merchants.length, message: `Retrying batch ${i + 1} (attempt ${attempt + 1})...` })
-          await new Promise((r) => setTimeout(r, delayMs))
+          send("progress", { batchIndex: i, totalBatches, merchantsProcessed, totalMerchants: merchants.length, message: `Retrying batch ${i + 1}...` })
+          await new Promise((r) => setTimeout(r, 2_000))
         }
 
         const prompt = buildRebuildPrompt(batch, customCategories.map((c) => c.label), existingRules, mode)
@@ -139,6 +139,7 @@ export async function runRebuildBatches(
         customCategoriesCreated += batchResults.newCustomCategories.length
         customBudget.remaining -= batchResults.newCustomCategories.length
         batchesCompleted++
+        merchantsProcessed += batch.length
 
         for (const label of batchResults.newCustomCategories) {
           validCategories.add(label)
@@ -150,12 +151,20 @@ export async function runRebuildBatches(
         })
         succeeded = true
       } catch (err) {
-        if (attempt === 2) {
+        if (attempt === 1) {
           batchesFailed++
-          send("error", { batchIndex: i, message: err instanceof Error ? err.message : "Batch failed after 3 attempts" })
+          merchantsProcessed += batch.length
+          send("error", { batchIndex: i, message: err instanceof Error ? err.message : "Batch failed" })
         }
       }
     }
+  }
+
+  // Run batches with concurrency limit
+  for (let i = 0; i < totalBatches; i += CONCURRENCY) {
+    if (cancelSignal.cancelled) break
+    const chunk = Array.from({ length: Math.min(CONCURRENCY, totalBatches - i) }, (_, k) => i + k)
+    await Promise.allSettled(chunk.map((idx) => processBatch(idx)))
   }
 
   // Invalidate caches
