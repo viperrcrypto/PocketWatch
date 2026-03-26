@@ -205,51 +205,20 @@ export default function InvestmentsPage() {
 
   return (
     <div className="space-y-5">
-      {/* ── Header: Title + Summary Cards ── */}
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Investments</h1>
-          <p className="text-foreground-muted text-sm mt-0.5">
-            {isLoading ? "Loading..." : `${formatCurrency(totalValue)} across ${totalAccounts} account${totalAccounts !== 1 ? "s" : ""}`}
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">Investments</h1>
+        <div className="flex items-center gap-3 mt-1 flex-wrap">
+          <p className="text-sm text-foreground-muted">
+            {isLoading ? "Loading..." : formatCurrency(totalValue)} across {totalAccounts} account{totalAccounts !== 1 ? "s" : ""}
           </p>
-        </div>
-        <div className="flex gap-3 flex-wrap">
-          {/* P&L Card */}
-          <div className="bg-card border border-card-border rounded-xl px-5 py-4 min-w-[150px]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={cn("size-7 rounded-lg flex items-center justify-center border", isGain ? "bg-success-muted border-success/20" : "bg-error-muted border-error/20")}>
-                <span className={cn("material-symbols-rounded", isGain ? "text-success" : "text-error")} style={{ fontSize: 14 }}>
-                  {isGain ? "trending_up" : "trending_down"}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted">P&L</span>
-            </div>
-            <div className={cn("text-xl font-black font-data tabular-nums", isGain ? "text-success" : "text-error")}>
-              {stats.totalGainLoss != null ? `${isGain ? "+" : ""}${formatCurrency(stats.totalGainLoss)}` : "--"}
-            </div>
-            <div className="text-[10px] text-foreground-muted mt-0.5 whitespace-nowrap">
-              {stats.gainPct != null ? (() => { const pct = Math.abs(stats.gainPct) < 0.05 ? 0 : stats.gainPct; return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% return` })() : "No cost basis data"}
-            </div>
-          </div>
-          {/* Holdings Card */}
-          <div className="bg-card border border-card-border rounded-xl px-5 py-4 min-w-[150px]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="size-7 rounded-lg bg-primary-muted flex items-center justify-center border border-primary/20">
-                <span className="material-symbols-rounded text-primary" style={{ fontSize: 14 }}>show_chart</span>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted">Holdings</span>
-            </div>
-            <div className="text-xl font-black font-data tabular-nums text-foreground">{stats.holdingsCount}</div>
-            <div className="text-[10px] text-foreground-muted mt-0.5">
-              {connectedAccountCount > 0 ? `${connectedAccountCount} linked` : ""}{connectedAccountCount > 0 && manualAccounts.length > 0 ? " · " : ""}{manualAccounts.length > 0 ? `${manualAccounts.length} manual` : ""}
-            </div>
-          </div>
-          {/* Date Widget */}
-          <div className="bg-card border border-card-border rounded-xl px-5 py-4 flex flex-col items-center justify-center min-w-[90px]">
-            <span className="text-primary text-[11px] font-black uppercase tracking-wider">{now.toLocaleDateString("en-US", { month: "short" })}</span>
-            <span className="text-3xl font-black text-foreground leading-none mt-1">{now.getDate()}</span>
-            <span className="text-[10px] text-foreground-muted font-bold mt-1">{now.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}</span>
-          </div>
+          {stats.totalGainLoss != null && (
+            <span className={cn("text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full", isGain ? "bg-success/10 text-success" : "bg-error/10 text-error")}>
+              {isGain ? "+" : ""}{formatCurrency(stats.totalGainLoss)}
+              {stats.gainPct != null && ` (${stats.gainPct >= 0 ? "+" : ""}${stats.gainPct.toFixed(1)}%)`}
+            </span>
+          )}
+          <span className="text-xs text-foreground-muted">{stats.holdingsCount} holdings · {connectedAccountCount} linked</span>
         </div>
       </div>
 
