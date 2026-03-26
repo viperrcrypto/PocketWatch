@@ -1,94 +1,50 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import {
   useFinanceBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget,
   useFinanceDeepInsights, useFinanceTransactions,
-  useAutoCategorize, useUpdateTransactionCategory,
-  useUpcomingBills, useFinanceSubscriptions,
+  useUpdateTransactionCategory,
   useBudgetSuggestions, useSpendingByMonth,
 } from "@/hooks/use-finance"
 import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
 import { BudgetCategoryBreakdown } from "@/components/finance/budgets/budget-category-breakdown"
-import { BudgetSpendingTable } from "@/components/finance/budgets/budget-spending-table"
 import { BudgetAddModal } from "@/components/finance/budgets/budget-add-modal"
-import { BudgetStatCards } from "@/components/finance/budgets/budget-stat-cards"
-import { BudgetSuggestionsCard } from "@/components/finance/budgets/budget-suggestions-card"
-import { BudgetUserCard } from "@/components/finance/budgets/budget-user-card"
 import { BudgetUntrackedSection } from "@/components/finance/budgets/budget-untracked-section"
 import { ConfirmDialog } from "@/components/finance/confirm-dialog"
-import { BudgetSubscriptionsSection } from "@/components/finance/budgets/budget-subscriptions-section"
 import { getBudgetableCategories } from "@/lib/finance/categories"
-import { usePanelState } from "@/hooks/use-panel-state"
-import { cn } from "@/lib/utils"
-
-type BudgetView = "budgets" | "subscriptions"
+import { formatCurrency, cn } from "@/lib/utils"
 
 export default function FinanceBudgetsPage() {
-  const router = useRouter()
   const { data: budgets, isLoading, isError } = useFinanceBudgets()
   const { data: deep } = useFinanceDeepInsights()
   const { data: txData } = useFinanceTransactions({ limit: 100 })
-  const { data: billsData } = useUpcomingBills()
-  const { data: subsData } = useFinanceSubscriptions()
   const { data: suggestions } = useBudgetSuggestions()
-  const [spendingMonth, setSpendingMonth] = useState<string | null>(null)
-  const { data: monthIndex } = useSpendingByMonth() // get availableMonths list
-  const { data: monthlySpending } = useSpendingByMonth(spendingMonth ?? undefined)
+  const { data: monthlySpending } = useSpendingByMonth()
   const createBudget = useCreateBudget()
   const updateBudget = useUpdateBudget()
   const deleteBudget = useDeleteBudget()
-  const autoCategorize = useAutoCategorize()
   const updateCategory = useUpdateTransactionCategory()
-
-  const [activeView, setActiveView] = useState<BudgetView>("budgets")
-  const { isOpen: isDualView, toggle: toggleDualView } = usePanelState("budgetDualView", true)
 
   const [showModal, setShowModal] = useState(false)
   const [newCategory, setNewCategory] = useState("")
   const [newAmount, setNewAmount] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [formError, setFormError] = useState("")
-  const [catResult, setCatResult] = useState<{ categorized: number; remaining: number } | null>(null)
 
-  const hasBudgets = (budgets?.length ?? 0) > 0
   const totalBudgeted = budgets?.reduce((s, b) => s + b.monthlyLimit, 0) ?? 0
   const totalSpent = budgets?.reduce((s, b) => s + b.spent, 0) ?? 0
-  const bills = billsData?.bills ?? []
-  const subscriptions = subsData?.subscriptions ?? []
-  const uncategorizedCount = deep?.uncategorizedCount ?? 0
+  const remaining = totalBudgeted - totalSpent
+  const percentUsed = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0
+  const budgetCount = budgets?.length ?? 0
+  const overBudgetCount = budgets?.filter((b) => b.percentUsed > 100).length ?? 0
+
   const defaultCategories = suggestions?.suggestions ?? []
-  const defaultTotal = suggestions?.totalAvgSpending ?? 0
-  const monthsAnalyzed = suggestions?.monthsAnalyzed ?? 0
-  const availableMonths = monthIndex?.availableMonths ?? []
-
-  // When a specific month is selected, use that month's data; otherwise 6-mo avg
-  const spendingCategories = spendingMonth && monthlySpending
-    ? monthlySpending.categories.map((c) => ({ category: c.category, avgMonthly: c.total, suggested: 0, lastMonth: 0, monthsOfData: 1 }))
-    : defaultCategories
-  const totalAvgSpending = spendingMonth && monthlySpending
-    ? monthlySpending.totalSpending
-    : defaultTotal
-  const deletingBudget = budgets?.find((b) => b.id === deletingId)
-  const billsTotal = bills.reduce((s, b) => s + b.amount, 0)
-
-  // Three-state logic
-  const budgetedCategories = useMemo(
-    () => new Set(budgets?.map((b) => b.category) ?? []),
-    [budgets]
-  )
+  const budgetedCategories = useMemo(() => new Set(budgets?.map((b) => b.category) ?? []), [budgets])
   const untrackedCategories = useMemo(
-    () => spendingCategories.filter((c) => !budgetedCategories.has(c.category)),
-    [spendingCategories, budgetedCategories]
+    () => defaultCategories.filter((c) => !budgetedCategories.has(c.category)),
+    [defaultCategories, budgetedCategories]
   )
-  const budgetState: "zero" | "partial" | "full" =
-    (budgets?.length ?? 0) === 0
-      ? "zero"
-      : untrackedCategories.length > 0
-      ? "partial"
-      : "full"
 
   const txByCategory = useMemo(() => {
     const map: Record<string, NonNullable<typeof txData>["transactions"]> = {}
@@ -104,11 +60,7 @@ export default function FinanceBudgetsPage() {
     ? (() => { const [y, m] = deep.currentMonth.split("-").map(Number); return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) })()
     : new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
-  const now = new Date()
-  const daysRemaining = useMemo(() => {
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    return lastDay - now.getDate()
-  }, [now.getFullYear(), now.getMonth(), now.getDate()])
+  const deletingBudget = budgets?.find((b) => b.id === deletingId)
 
   const handleCreate = () => {
     if (!newCategory) { setFormError("Select a category"); return }
@@ -121,16 +73,10 @@ export default function FinanceBudgetsPage() {
     )
   }
 
-  const handleBudgetAll = () => {
-    for (const cat of untrackedCategories) {
-      createBudget.mutate({ category: cat.category, monthlyLimit: cat.suggested })
-    }
-  }
-
   if (isError) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Budgets</h1>
+        <h1 className="text-xl font-semibold text-foreground">Budgets</h1>
         <div className="bg-card border border-error/30 rounded-xl p-8 text-center">
           <span className="material-symbols-rounded text-error mb-2 block" style={{ fontSize: 32 }}>error</span>
           <p className="text-sm text-error">Failed to load budgets.</p>
@@ -139,195 +85,94 @@ export default function FinanceBudgetsPage() {
     )
   }
 
-  // Top 3 subscriptions sorted by amount for stat card
-  const topSubscriptions = [...subscriptions]
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 3)
-    .map((s) => ({ merchantName: s.merchantName, nickname: s.nickname, amount: s.amount }))
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">
-            {activeView === "budgets" ? "Budgets" : "Subscriptions & Bills"}
-          </h1>
-          <p className="text-foreground-muted text-sm mt-0.5">{currentMonth}</p>
+          <h1 className="text-xl font-semibold text-foreground">Budgets</h1>
+          <p className="text-sm text-foreground-muted mt-0.5">{currentMonth}</p>
         </div>
-        <span className="text-[11px] font-bold text-foreground-muted tabular-nums">
-          {now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-        </span>
-      </div>
-
-      {/* View Toggle: Budgets vs Subscriptions */}
-      <div className="flex items-center gap-0.5 bg-foreground/[0.05] rounded-xl p-1 w-fit border border-card-border/40">
         <button
-          onClick={() => setActiveView("budgets")}
-          className={cn(
-            "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-            activeView === "budgets"
-              ? "bg-card text-foreground shadow-card border border-card-border/60"
-              : "text-foreground-muted hover:text-foreground",
-          )}
+          onClick={() => setShowModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-card-border rounded-lg hover:bg-background-secondary transition-colors"
         >
-          <span className="material-symbols-rounded" style={{ fontSize: 14 }} aria-hidden="true">savings</span>
-          Budgets
-        </button>
-        <button
-          onClick={() => setActiveView("subscriptions")}
-          className={cn(
-            "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-            activeView === "subscriptions"
-              ? "bg-card text-foreground shadow-card border border-card-border/60"
-              : "text-foreground-muted hover:text-foreground",
-          )}
-        >
-          <span className="material-symbols-rounded" style={{ fontSize: 14 }} aria-hidden="true">autorenew</span>
-          Subscriptions
-        </button>
-      </div>
-
-      {activeView === "subscriptions" ? (
-        <BudgetSubscriptionsSection />
-      ) : (
-      <>
-      {/* Stat Cards */}
-      <BudgetStatCards
-        hasBudgets={hasBudgets}
-        totalBudgeted={totalBudgeted}
-        totalSpent={totalSpent}
-        budgetCount={budgets?.length ?? 0}
-        daysRemaining={daysRemaining}
-        totalAvgSpending={totalAvgSpending}
-        monthsAnalyzed={monthsAnalyzed}
-        subscriptionTotal={subsData?.monthlyTotal ?? 0}
-        subscriptionCount={subscriptions.length}
-        billsCount={bills.length}
-        billsTotal={billsTotal}
-        nextBillDays={bills.length > 0 ? bills[0].daysUntil : null}
-        subscriptions={topSubscriptions}
-      />
-
-      {/* Two-Card Layout */}
-      {isLoading ? (
-        <FinanceCardSkeleton />
-      ) : (
-        <>
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-foreground/[0.05] rounded-xl p-1 w-fit border border-card-border/40">
-            <button
-              onClick={() => { if (!isDualView) toggleDualView() }}
-              className={cn(
-                "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-                isDualView
-                  ? "bg-card text-foreground shadow-card border border-card-border/60"
-                  : "text-foreground-muted hover:text-foreground",
-              )}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 13 }} aria-hidden="true">compare_arrows</span>
-              Compare
-            </button>
-            <button
-              onClick={() => { if (isDualView) toggleDualView() }}
-              className={cn(
-                "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-                !isDualView
-                  ? "bg-card text-foreground shadow-card border border-card-border/60"
-                  : "text-foreground-muted hover:text-foreground",
-              )}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 13 }} aria-hidden="true">savings</span>
-              Budget
-            </button>
-          </div>
-
-          <div className={cn("grid grid-cols-1 gap-5", isDualView && "lg:grid-cols-2")}>
-            {isDualView && (
-              <BudgetSuggestionsCard
-                suggestions={spendingCategories}
-                totalAvgSpending={totalAvgSpending}
-                monthsAnalyzed={monthsAnalyzed}
-                availableMonths={availableMonths}
-                selectedMonth={spendingMonth}
-                onMonthChange={setSpendingMonth}
-              />
-            )}
-            <BudgetUserCard
-              budgetState={budgetState}
-              budgets={budgets?.map((b) => ({
-                id: b.id,
-                category: b.category,
-                monthlyLimit: b.monthlyLimit,
-                spent: b.spent,
-                percentUsed: b.percentUsed,
-              })) ?? []}
-              totalSpent={totalSpent}
-              totalBudgeted={totalBudgeted}
-              untrackedCount={untrackedCategories.length}
-              onOpenWorkshop={() => router.push("/finance/budgets/workshop")}
-              onAddSingle={() => setShowModal(true)}
-            />
-          </div>
-        </>
-      )}
-
-      {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center sm:justify-between gap-2 sm:gap-3 bg-card border border-card-border rounded-xl p-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          {uncategorizedCount > 0 && (
-            <button
-              onClick={() => { setCatResult(null); autoCategorize.mutate(undefined, { onSuccess: (data) => setCatResult(data) }) }}
-              disabled={autoCategorize.isPending}
-              className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 hover:bg-primary-hover transition-colors disabled:opacity-50 shadow-sm"
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 14 }}>auto_awesome</span>
-              Auto-categorize
-            </button>
-          )}
-          {catResult && (
-            <span className="text-[10px] text-foreground-muted">{catResult.categorized > 0 ? `${catResult.categorized} done` : "No matches"}</span>
-          )}
-          <Link href="/finance/budgets/workshop" className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-all border border-card-border">
-            Workshop
-          </Link>
-          <Link href="/finance/budgets/insights" className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-all border border-card-border flex items-center gap-1.5">
-            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>analytics</span>
-            Full Analysis
-          </Link>
-        </div>
-        <button onClick={() => setShowModal(true)} className="text-primary text-xs font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 border border-primary/30 hover:bg-primary hover:text-white transition-all w-full sm:w-auto">
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>add</span>
           Add Budget
         </button>
       </div>
 
-      {/* Category Detail */}
+      {/* Summary Cards */}
+      {isLoading ? (
+        <div className="grid grid-cols-3 gap-4"><FinanceCardSkeleton /><FinanceCardSkeleton /><FinanceCardSkeleton /></div>
+      ) : budgetCount > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <SummaryCard
+            label="TOTAL BUDGET"
+            value={formatCurrency(totalBudgeted, "USD", 0)}
+            subtitle={`${budgetCount} categories`}
+          />
+          <SummaryCard
+            label="SPENT"
+            value={formatCurrency(totalSpent, "USD", 0)}
+            badge={`${percentUsed}%`}
+            badgeColor={percentUsed > 100 ? "error" : percentUsed > 80 ? "warning" : "success"}
+            valueColor={percentUsed > 100 ? "text-error" : undefined}
+            progress={Math.min(percentUsed, 100)}
+            progressColor={percentUsed > 100 ? "bg-error" : percentUsed > 80 ? "bg-amber-500" : "bg-success"}
+          />
+          <SummaryCard
+            label="REMAINING"
+            value={formatCurrency(remaining, "USD", 0)}
+            subtitle={remaining < 0 ? "Over budget" : `${overBudgetCount > 0 ? `${overBudgetCount} over` : "On track"}`}
+            valueColor={remaining < 0 ? "text-error" : "text-success"}
+            subtitleColor={remaining < 0 ? "text-error" : overBudgetCount > 0 ? "text-amber-500" : "text-success"}
+          />
+        </div>
+      ) : null}
+
+      {/* Budget Categories */}
       {isLoading ? (
         <FinanceCardSkeleton />
-      ) : budgetState === "zero" ? (
-        <BudgetSpendingTable categories={spendingCategories} monthsAnalyzed={monthsAnalyzed} totalAvgSpending={totalAvgSpending} />
+      ) : budgetCount === 0 ? (
+        <div className="bg-card border border-card-border rounded-xl p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-rounded text-primary" style={{ fontSize: 24 }}>savings</span>
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-1.5">No budgets yet</h3>
+          <p className="text-sm text-foreground-muted mb-4 max-w-sm mx-auto">
+            Set spending limits by category to track your budget.
+          </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-5 py-2.5 bg-foreground text-background rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Create Your First Budget
+          </button>
+        </div>
       ) : (
-        <>
-          <BudgetCategoryBreakdown
-            budgets={budgets!}
-            txByCategory={txByCategory}
-            onEditBudget={(id, limit) => updateBudget.mutate({ budgetId: id, monthlyLimit: limit })}
-            onDeleteBudget={(id) => setDeletingId(id)}
-            onCategoryChange={(txId, cat, rule) => updateCategory.mutate({ transactionId: txId, category: cat, createRule: rule })}
-            onAddBudget={() => setShowModal(true)}
-          />
-          {budgetState === "partial" && (
-            <BudgetUntrackedSection
-              untrackedCategories={untrackedCategories}
-              txByCategory={txByCategory}
-              onAddBudget={(cat, limit) => createBudget.mutate({ category: cat, monthlyLimit: limit })}
-              onBudgetAll={handleBudgetAll}
-            />
-          )}
-        </>
+        <BudgetCategoryBreakdown
+          budgets={budgets!}
+          txByCategory={txByCategory}
+          onEditBudget={(id, limit) => updateBudget.mutate({ budgetId: id, monthlyLimit: limit })}
+          onDeleteBudget={(id) => setDeletingId(id)}
+          onCategoryChange={(txId, cat, rule) => updateCategory.mutate({ transactionId: txId, category: cat, createRule: rule })}
+          onAddBudget={() => setShowModal(true)}
+        />
       )}
-      </>
+
+      {/* Untracked Spending */}
+      {budgetCount > 0 && untrackedCategories.length > 0 && (
+        <BudgetUntrackedSection
+          untrackedCategories={untrackedCategories}
+          txByCategory={txByCategory}
+          onAddBudget={(cat, limit) => createBudget.mutate({ category: cat, monthlyLimit: limit })}
+          onBudgetAll={() => {
+            for (const cat of untrackedCategories) {
+              createBudget.mutate({ category: cat.category, monthlyLimit: cat.suggested })
+            }
+          }}
+        />
       )}
 
       {/* Modals */}
@@ -355,6 +200,48 @@ export default function FinanceBudgetsPage() {
         variant="danger"
         isLoading={deleteBudget.isPending}
       />
+    </div>
+  )
+}
+
+// ─── Summary Card ──────────────────────────────────────────
+
+function SummaryCard({ label, value, subtitle, badge, badgeColor, valueColor, subtitleColor, progress, progressColor }: {
+  label: string
+  value: string
+  subtitle?: string
+  badge?: string
+  badgeColor?: "error" | "warning" | "success"
+  valueColor?: string
+  subtitleColor?: string
+  progress?: number
+  progressColor?: string
+}) {
+  const badgeClasses = {
+    error: "bg-error/10 text-error",
+    warning: "bg-amber-500/10 text-amber-500",
+    success: "bg-success/10 text-success",
+  }
+
+  return (
+    <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted">{label}</p>
+        {badge && (
+          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums", badgeClasses[badgeColor ?? "success"])}>
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className={cn("text-2xl font-bold tabular-nums tracking-tight", valueColor ?? "text-foreground")}>{value}</p>
+      {subtitle && (
+        <p className={cn("text-xs mt-1", subtitleColor ?? "text-foreground-muted")}>{subtitle}</p>
+      )}
+      {progress != null && (
+        <div className="mt-3 h-[3px] bg-background-secondary rounded-full overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all duration-500", progressColor ?? "bg-primary")} style={{ width: `${progress}%` }} />
+        </div>
+      )}
     </div>
   )
 }
