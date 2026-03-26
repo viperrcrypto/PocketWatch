@@ -4,6 +4,7 @@ import { memo } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { SidebarNavSection } from "./sidebar-nav-section"
 import { SidebarEditControls } from "./sidebar-edit-controls"
 import {
@@ -174,6 +175,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
               <span>Lock</span>
             </button>
             <div className="w-px h-5 bg-card-border" />
+            <NotificationBell />
             <button
               onClick={() => { router.push("/settings"); onClose?.() }}
               className={cn(

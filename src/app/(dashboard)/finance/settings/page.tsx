@@ -18,7 +18,6 @@ import {
 import { useSyncInstitution } from "@/hooks/finance"
 import { financeFetch } from "@/hooks/finance/shared"
 import { useQueryClient } from "@tanstack/react-query"
-import { useClearAllData } from "@/hooks/use-clear-data"
 import { FinancePageHeader } from "@/components/finance/finance-page-header"
 import { ConfirmDialog } from "@/components/finance/confirm-dialog"
 import { PlaidDataStatusCard } from "@/components/finance/plaid-data-status"

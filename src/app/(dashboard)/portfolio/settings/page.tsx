@@ -5,15 +5,14 @@ import { SyncDiagnosticsSection } from "@/components/portfolio/settings/sync-dia
 import { SolanaKeyWarning } from "@/components/portfolio/settings/solana-key-warning"
 import { ApiKeysSection } from "@/components/portfolio/settings/api-keys-section"
 import { ExchangeConnectionsSection } from "@/components/portfolio/settings/exchange-connections-section"
-import { PreferencesSection } from "@/components/portfolio/settings/preferences-section"
 import { DataManagementSection } from "@/components/portfolio/settings/data-management-section"
 
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PortfolioPageHeader
-        title="Settings"
-        subtitle="API keys, exchange connections, and preferences"
+        title="Crypto Settings"
+        subtitle="API keys, exchange connections, and sync controls"
       />
 
       {/* Section 0: History Sync Diagnostics */}
@@ -21,7 +20,6 @@ export default function SettingsPage() {
 
       {/* Solana / Helius key warning (auto-hides when not needed) */}
       <SolanaKeyWarning onAddHeliusKey={() => {
-        // Scroll to API Keys section and let user click "Add Key" on Helius
         document.getElementById("api-keys-section")?.scrollIntoView({ behavior: "smooth" })
       }} />
 
@@ -33,10 +31,7 @@ export default function SettingsPage() {
       {/* Section 2: Exchange Connections */}
       <ExchangeConnectionsSection />
 
-      {/* Section 3: Preferences */}
-      <PreferencesSection />
-
-      {/* Section 4: Data Management */}
+      {/* Section 3: Data Management */}
       <DataManagementSection />
     </div>
   )

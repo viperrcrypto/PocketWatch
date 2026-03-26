@@ -6,7 +6,6 @@ import {
   useWipeAndRestartSync,
   useSyncProgress,
 } from "@/hooks/use-portfolio-tracker"
-import { useClearAllData } from "@/hooks/use-clear-data"
 import { CollapsibleSection } from "./collapsible-section"
 import { DataQualityCheck } from "./data-quality-check"
 
@@ -18,10 +17,6 @@ export function DataManagementSection() {
   const wipeAndRestart = useWipeAndRestartSync()
   const [nukeConfirm, setNukeConfirm] = useState(false)
   const [nukeSuccess, setNukeSuccess] = useState(false)
-
-  const clearAllData = useClearAllData()
-  const [clearAllConfirm, setClearAllConfirm] = useState(false)
-  const [clearAllSuccess, setClearAllSuccess] = useState(false)
 
   const { refetch: refetchSync } = useSyncProgress({ advance: false, reconstruct: false, autoStart: false })
 
@@ -39,16 +34,6 @@ export function DataManagementSection() {
         setNukeConfirm(false)
         setNukeSuccess(true)
         setTimeout(() => refetchSync(), 1000)
-      },
-    })
-  }
-
-  const handleClearAllData = () => {
-    setClearAllSuccess(false)
-    clearAllData.mutate(undefined, {
-      onSuccess: () => {
-        setClearAllConfirm(false)
-        setClearAllSuccess(true)
       },
     })
   }
