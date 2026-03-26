@@ -17,6 +17,7 @@ export interface TxFilters {
   maxAmount?: string
   sort?: string
   order?: string
+  txType?: string
 }
 
 // ─── Fetch Helper ───────────────────────────────────────────────

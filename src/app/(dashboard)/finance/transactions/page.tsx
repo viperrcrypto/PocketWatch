@@ -53,6 +53,7 @@ export default function FinanceTransactionsPage() {
   const [category, setCategory] = useState(searchParams.get("category") ?? "")
   const [accountId, setAccountId] = useState(searchParams.get("account") ?? "")
   const [dateRange, setDateRange] = useState(category ? "all" : "this-month")
+  const [txType, setTxType] = useState("")
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
 
@@ -67,6 +68,7 @@ export default function FinanceTransactionsPage() {
     accountId: accountId || undefined,
     startDate: dates.start,
     endDate: dates.end,
+    txType: txType || undefined,
   })
   const { data: institutions } = useFinanceAccounts()
   const { data: deep } = useFinanceDeepInsights()
@@ -79,7 +81,7 @@ export default function FinanceTransactionsPage() {
 
   const { data: reviewData } = useReviewCount()
   const reviewCount = reviewData?.count ?? 0
-  const hasFilters = search || category || accountId || dateRange !== "this-month"
+  const hasFilters = search || category || accountId || txType || dateRange !== "this-month"
   const uncategorizedCount = deep?.uncategorizedCount ?? 0
   const needsAttention = uncategorizedCount + reviewCount
 
@@ -180,6 +182,31 @@ export default function FinanceTransactionsPage() {
                 )}
               >
                 {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Transaction type filter */}
+          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg">
+            {([
+              { key: "", label: "All" },
+              { key: "charges", label: "Charges" },
+              { key: "refunds", label: "Refunds" },
+              { key: "pending", label: "Pending" },
+              { key: "recurring", label: "Recurring" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => { setTxType(opt.key); setPage(1) }}
+                className={cn(
+                  "px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-150",
+                  txType === opt.key
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-transparent text-foreground-muted hover:text-foreground"
+                )}
+              >
+                {opt.label}
               </button>
             ))}
           </div>
