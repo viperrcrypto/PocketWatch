@@ -57,7 +57,7 @@ export function BudgetCategoryBreakdown({
             Edit All
           </Link>
         </div>
-        {budgets.map((b) => (
+        {[...budgets].sort((a, b) => b.percentUsed - a.percentUsed).map((b) => (
           <BudgetCategoryRow
             key={b.id}
             budget={b}

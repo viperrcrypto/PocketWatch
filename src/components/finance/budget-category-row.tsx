@@ -75,11 +75,19 @@ export function BudgetCategoryRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-semibold text-foreground">{budget.category}</span>
-            <span className="font-data text-[10px] sm:text-xs font-black text-foreground tabular-nums">
-              {formatCurrency(budget.spent)} <span className="font-medium text-foreground-muted">/ {formatCurrency(budget.monthlyLimit)}</span>
-            </span>
+            <div className="text-right flex-shrink-0">
+              <span className="font-data text-[10px] sm:text-xs font-bold text-foreground tabular-nums">
+                {formatCurrency(budget.spent)} <span className="font-medium text-foreground-muted">/ {formatCurrency(budget.monthlyLimit)}</span>
+              </span>
+              <span className={cn(
+                "ml-2 text-[10px] font-semibold tabular-nums",
+                budget.percentUsed > 100 ? "text-error" : budget.percentUsed > 80 ? "text-amber-500" : "text-success"
+              )}>
+                {Math.round(budget.percentUsed)}%
+              </span>
+            </div>
           </div>
-          <BudgetProgressBar spent={budget.spent} limit={budget.monthlyLimit} color={meta.hex} />
+          <BudgetProgressBar spent={budget.spent} limit={budget.monthlyLimit} />
         </div>
 
         {/* Actions */}
