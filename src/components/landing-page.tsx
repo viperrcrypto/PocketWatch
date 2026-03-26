@@ -47,7 +47,9 @@ export function LandingPage() {
         setHasPasskeys(!!data.hasPasskeys)
       })
       .catch((err) => {
-        if (!controller.signal.aborted) setMode("setup")
+        // Default to unlock (not setup) when status check fails —
+        // the vault almost certainly exists, the server was just slow/restarting
+        if (!controller.signal.aborted) setMode("unlock")
       })
     return () => controller.abort()
   }, [])
