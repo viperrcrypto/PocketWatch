@@ -240,8 +240,15 @@ export async function syncSimpleFIN(
         if (!account) continue
 
         const cleaned = cleanMerchantName(txn.merchantName || txn.rawName)
+        // FIX Bug 8: Pass accountType + amount so hard rules fire for CC payments/transfers
         const cat = categorizeTransaction(
-          { merchantName: cleaned, rawName: txn.rawName },
+          {
+            merchantName: cleaned,
+            rawName: txn.rawName,
+            amount: txn.amount,
+            accountType: account.type ?? "depository",
+            accountSubtype: account.subtype ?? null,
+          },
           userRules
         )
 
@@ -262,8 +269,11 @@ export async function syncSimpleFIN(
             merchantName: cleaned,
             amount: txn.amount,
             currency: txn.currency,
-            category: cat.category,
+            // FIX Bug 12: Store null instead of "Uncategorized" string
+            category: cat.category === "Uncategorized" ? null : cat.category,
             subcategory: cat.subcategory,
+            isAutoApplied: ["hard_rule", "rule", "keyword", "merchant_map"].includes(cat.source),
+            needsReview: cat.needsReview,
             isPending: txn.isPending,
             notes: txn.memo,
           },

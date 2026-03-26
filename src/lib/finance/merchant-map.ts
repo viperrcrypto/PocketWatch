@@ -59,7 +59,8 @@ export const MERCHANT_MAP: Record<string, CategoryResult> = {
   "AMAZON": { category: "Shopping", subcategory: "Online Shopping" },
   "AMZN": { category: "Shopping", subcategory: "Online Shopping" },
   "APPLE.COM": { category: "Shopping", subcategory: "Electronics" },
-  "APPLE": { category: "Shopping", subcategory: "Electronics" },
+  "APPLE STORE": { category: "Shopping", subcategory: "Electronics" },
+  // "APPLE" removed — too generic, matches SNAPPLE/APPLEBEE'S. Use APPLE.COM/APPLE STORE instead.
   "FEDEX": { category: "Shopping", subcategory: "Shipping" },
   "UPS": { category: "Shopping", subcategory: "Shipping" },
   "USPS": { category: "Shopping", subcategory: "Shipping" },

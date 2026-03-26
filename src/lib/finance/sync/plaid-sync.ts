@@ -113,7 +113,7 @@ export async function syncPlaid(
             currency: txn.isoCurrencyCode ?? "USD",
             category: cat.category === "Uncategorized" ? null : cat.category,
             subcategory: cat.subcategory,
-            isAutoApplied: cat.source === "rule" || cat.source === "keyword",
+            isAutoApplied: ["hard_rule", "rule", "keyword", "merchant_map", "plaid"].includes(cat.source),
             needsReview: cat.needsReview,
             plaidCategory: txn.personalFinanceCategory?.detailed ?? null,
             plaidCategoryPrimary: txn.personalFinanceCategory?.primary ?? null,
@@ -153,6 +153,28 @@ export async function syncPlaid(
 
       for (const txn of result.modified) {
         const cleaned = cleanMerchantName(txn.merchantName || txn.name)
+        // FIX Bug 17: Re-categorize modified transactions (pending→settled often
+        // changes merchant name and Plaid category, making old category wrong)
+        const existingTx = await tx.financeTransaction.findFirst({
+          where: { userId: institution!.userId, externalId: txn.transactionId },
+          select: { isAutoApplied: true, category: true },
+        })
+        // Only re-categorize if the system auto-applied (user hasn't manually corrected)
+        const shouldRecategorize = !existingTx || existingTx.isAutoApplied || !existingTx.category
+        const modAcct = institution!.accounts.find((a) => a.externalId === txn.accountId)
+        const modCat = shouldRecategorize ? categorizeTransaction(
+          {
+            merchantName: cleaned,
+            rawName: txn.name,
+            plaidCategory: txn.personalFinanceCategory?.detailed ?? null,
+            plaidCategoryPrimary: txn.personalFinanceCategory?.primary ?? null,
+            amount: txn.amount,
+            accountType: (modAcct as { type?: string })?.type ?? "depository",
+            accountSubtype: (modAcct as { subtype?: string | null })?.subtype ?? null,
+          },
+          userRules
+        ) : null
+
         await tx.financeTransaction.updateMany({
           where: {
             userId: institution!.userId,
@@ -163,6 +185,14 @@ export async function syncPlaid(
             merchantName: cleaned,
             amount: txn.amount,
             isPending: txn.pending,
+            plaidCategory: txn.personalFinanceCategory?.detailed ?? null,
+            plaidCategoryPrimary: txn.personalFinanceCategory?.primary ?? null,
+            ...(modCat ? {
+              category: modCat.category === "Uncategorized" ? null : modCat.category,
+              subcategory: modCat.subcategory,
+              isAutoApplied: ["hard_rule", "rule", "keyword", "merchant_map", "plaid"].includes(modCat.source),
+              needsReview: modCat.needsReview,
+            } : {}),
           },
         })
         totalModified++
@@ -248,12 +278,14 @@ export async function fetchFullPlaidHistory(
   })
 
   const accountMap = new Map<string, string>()
+  const accountTypeMap = new Map<string, { type: string; subtype: string | null }>()
   const allAccounts = await db.financeAccount.findMany({
     where: { userId, institutionId: { in: institutions.map((i) => i.id) } },
-    select: { id: true, externalId: true },
+    select: { id: true, externalId: true, type: true, subtype: true },
   })
   for (const a of allAccounts) {
     accountMap.set(a.externalId, a.id)
+    accountTypeMap.set(a.externalId, { type: a.type, subtype: a.subtype })
   }
 
   const userRules = await db.financeCategoryRule.findMany({
@@ -322,6 +354,8 @@ export async function fetchFullPlaidHistory(
             const internalAccountId = accountMap.get(tx.accountId)
             if (!internalAccountId) return null
             const cleaned = cleanMerchantName(tx.merchantName ?? tx.name)
+            // FIX Bug 7: Pass accountType so hard rules fire for CC payments/transfers
+            const acctInfo = accountTypeMap.get(tx.accountId)
             const cat = categorizeTransaction(
               {
                 merchantName: cleaned,
@@ -329,7 +363,10 @@ export async function fetchFullPlaidHistory(
                 plaidCategory: tx.personalFinanceCategory
                   ? `${tx.personalFinanceCategory.primary}|${tx.personalFinanceCategory.detailed}`
                   : null,
+                plaidCategoryPrimary: tx.personalFinanceCategory?.primary ?? null,
                 amount: tx.amount,
+                accountType: acctInfo?.type ?? "depository",
+                accountSubtype: acctInfo?.subtype ?? null,
               },
               userRules,
             )

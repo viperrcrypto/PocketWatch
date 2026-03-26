@@ -14,6 +14,22 @@ export function isGibberishName(name: string): boolean {
   return false
 }
 
+/**
+ * Parse a date string or Date object safely, using UTC to avoid timezone off-by-one.
+ * Plaid/Prisma @db.Date fields return UTC midnight — using local time shifts the day.
+ */
+export function parseLocalDate(d: Date | string | null): Date | null {
+  if (!d) return null
+  if (typeof d === "string") {
+    // Parse "YYYY-MM-DD" as local date, not UTC
+    const parts = d.split("T")[0].split("-").map(Number)
+    if (parts.length >= 3) return new Date(parts[0], parts[1] - 1, parts[2])
+    return new Date(d)
+  }
+  // Date objects from Prisma @db.Date are UTC midnight — convert to local
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+}
+
 /** Check if a date falls within a given month (YYYY-MM) */
 export function isInMonth(date: Date, monthStr: string): boolean {
   const y = date.getFullYear()
@@ -48,8 +64,8 @@ export function advanceDate(date: Date, frequency: string): void {
 /** Project the next charge date from last charge + frequency */
 export function projectNextDate(lastDate: Date | string | null, frequency: string): Date | null {
   if (!lastDate) return null
-  const next = new Date(lastDate)
-  if (isNaN(next.getTime())) return null
+  const next = parseLocalDate(lastDate)
+  if (!next || isNaN(next.getTime())) return null
   advanceDate(next, frequency)
   return next
 }

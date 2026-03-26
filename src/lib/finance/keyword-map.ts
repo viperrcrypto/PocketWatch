@@ -29,7 +29,9 @@ const KEYWORD_MAP: Array<{ keywords: string[]; result: CategoryResult }> = [
   { keywords: ["payment to", "credit card", "card ending in", "bill pay", "autopay"], result: { category: "Transfer", subcategory: "Bank Transfer" } },
   { keywords: ["brokerage", "invest", "trading"], result: { category: "Investment", subcategory: null } },
   { keywords: ["dividend", "interest earned"], result: { category: "Income", subcategory: "Dividends" } },
-  { keywords: ["refund", "return", "credit memo", "reimbursement"], result: { category: "Income", subcategory: "Refund" } },
+  // FIX Bug 6: Refunds should be "Fees & Charges / Refund" not "Income" —
+  // categorizing refunds as income inflates both income and spending totals
+  { keywords: ["refund", "return", "credit memo", "reimbursement"], result: { category: "Fees & Charges", subcategory: "Refund" } },
   { keywords: ["car rental", "rent a car"], result: { category: "Travel", subcategory: "Rental Car" } },
   { keywords: ["toll", "ez pass", "fastrak", "sunpass"], result: { category: "Transportation", subcategory: null } },
   { keywords: ["wire transfer", "ach transfer", "ach payment", "ach deposit", "external transfer"], result: { category: "Transfer", subcategory: "Bank Transfer" } },
@@ -37,7 +39,7 @@ const KEYWORD_MAP: Array<{ keywords: string[]; result: CategoryResult }> = [
   { keywords: ["subscription", "recurring", "membership"], result: { category: "Bills & Utilities", subcategory: null } },
   { keywords: ["psychiatr", "therapist", "therapy", "counseling", "mental health", "psycholog"], result: { category: "Health & Fitness", subcategory: "Mental Health" } },
   { keywords: ["benefit", "benefits", "hsa", "fsa"], result: { category: "Health & Fitness", subcategory: null } },
-  { keywords: ["income life", "life insurance", "whole life", "term life"], result: { category: "Bills & Utilities", subcategory: "Insurance" } },
+  // FIX Bug 18: Removed duplicate insurance entry — already handled by line 18 above
   { keywords: ["chase credit crd", "epay"], result: { category: "Transfer", subcategory: "Bank Transfer" } },
   { keywords: ["management", "property mgmt", "ny management", "managemen"], result: { category: "Housing", subcategory: "Rent" } },
   { keywords: ["rocket money", "truebill"], result: { category: "Bills & Utilities", subcategory: "Financial Services" } },

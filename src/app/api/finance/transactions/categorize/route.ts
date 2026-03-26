@@ -51,8 +51,9 @@ export async function POST() {
       )
 
       if (result.category !== "Uncategorized") {
-        const isAutoApplied = result.source === "rule" || result.source === "keyword"
-        const needsReview = result.needsReview && result.confidence < CONFIDENCE.AUTO_APPLY
+        // FIX Bug 16 + 5: Include all auto-applied sources; use result.needsReview directly
+        const isAutoApplied = ["hard_rule", "rule", "keyword", "merchant_map", "plaid"].includes(result.source)
+        const needsReview = result.needsReview
         updates.push(
           db.financeTransaction.update({
             where: { id: tx.id },

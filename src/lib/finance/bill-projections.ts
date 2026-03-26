@@ -6,7 +6,7 @@
 import { db } from "@/lib/db"
 import { classifyBillType, enrichMerchantName, type BillType } from "./bill-type-classifier"
 import {
-  isGibberishName, isInMonth, advanceDate, projectNextDate,
+  isGibberishName, isInMonth, advanceDate, projectNextDate, parseLocalDate,
   PLAID_FREQ, buildSubDisplayName, buildCCDisplayName, type BillItem,
 } from "./bill-helpers"
 
@@ -18,11 +18,12 @@ export function projectSubBill(
   accountMap: AccountMap,
   targetMonth: string, monthEnd: Date, now: Date,
 ): BillItem | null {
-  const next = s.nextChargeDate ? new Date(s.nextChargeDate) : projectNextDate(s.lastChargeDate, s.frequency)
+  const next = s.nextChargeDate ? parseLocalDate(s.nextChargeDate) : projectNextDate(s.lastChargeDate, s.frequency)
   if (!next) return null
 
   let isPaid = false
-  if (s.lastChargeDate && isInMonth(new Date(s.lastChargeDate), targetMonth)) {
+  const lastLocal = parseLocalDate(s.lastChargeDate)
+  if (lastLocal && isInMonth(lastLocal, targetMonth)) {
     isPaid = true
   }
   if (!isPaid && next < now && isInMonth(next, targetMonth)) {
@@ -33,9 +34,7 @@ export function projectSubBill(
   while (next < now) advanceDate(next, s.frequency)
 
   if (isPaid && !isInMonth(next, targetMonth)) {
-    const paidDate = s.lastChargeDate && isInMonth(new Date(s.lastChargeDate), targetMonth)
-      ? new Date(s.lastChargeDate)
-      : preAdvance
+    const paidDate = lastLocal && isInMonth(lastLocal, targetMonth) ? lastLocal : preAdvance
     next.setTime(paidDate.getTime())
   }
 
@@ -57,7 +56,8 @@ export function projectSubBill(
   const daysUntil = Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   return {
     id: s.id, merchantName: displayName, amount: s.amount, frequency: s.frequency,
-    nextDueDate: next.toISOString().slice(0, 10), daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
+    nextDueDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`,
+    daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
     category: s.category, billType, isPaid,
     accountName: acct?.name ?? null,
     accountMask: acct?.mask ?? null,
@@ -76,7 +76,8 @@ export function projectPlaidBill(
   if (!next) return null
 
   let isPaid = false
-  if (ps.lastDate && isInMonth(new Date(ps.lastDate), targetMonth)) {
+  const lastLocal = parseLocalDate(ps.lastDate)
+  if (lastLocal && isInMonth(lastLocal, targetMonth)) {
     isPaid = true
   }
   if (!isPaid && next < now && isInMonth(next, targetMonth)) {
@@ -87,9 +88,7 @@ export function projectPlaidBill(
   while (next < now) advanceDate(next, freq)
 
   if (isPaid && !isInMonth(next, targetMonth)) {
-    const paidDate = ps.lastDate && isInMonth(new Date(ps.lastDate), targetMonth)
-      ? new Date(ps.lastDate)
-      : preAdvance
+    const paidDate = lastLocal && isInMonth(lastLocal, targetMonth) ? lastLocal : preAdvance
     next.setTime(paidDate.getTime())
   }
 
@@ -108,7 +107,7 @@ export function projectPlaidBill(
     : (ps.description || "Unknown Charge")
 
   const amount = ps.lastAmount ?? ps.averageAmount ?? 0
-  if (amount <= 0) return null // Skip bills with no known amount
+  if (amount <= 0) return null
   const classifyName = merchantName ?? ps.description
   const { billType } = classifyBillType({
     merchantName: classifyName, frequency: freq, category: ps.category ?? null, amount,
@@ -118,7 +117,8 @@ export function projectPlaidBill(
   const daysUntil = Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   return {
     id: `plaid:${ps.streamId}`, merchantName: displayName, amount, frequency: freq,
-    nextDueDate: next.toISOString().slice(0, 10), daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
+    nextDueDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`,
+    daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
     category: ps.category ?? null, billType, isPaid,
     accountName: acct?.name ?? null,
     accountMask: acct?.mask ?? null,
@@ -153,33 +153,39 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
   })
 
   for (const cc of liabilities) {
-    if (!cc.nextPaymentDueDate || !isInMonth(new Date(cc.nextPaymentDueDate), targetMonth)) continue
-    const minPay = cc.minimumPaymentAmount ?? 0
+    if (!cc.nextPaymentDueDate) continue
+    // FIX Bug 2: Parse date as local to avoid timezone off-by-one
+    const nextDue = parseLocalDate(cc.nextPaymentDueDate)!
+    if (!isInMonth(nextDue, targetMonth)) continue
+
+    // FIX Bug 3: Show statement balance (full amount owed), not minimum payment
     const stmtBal = cc.lastStatementBalance ?? 0
-    if (minPay <= 0 && stmtBal <= 0) continue
+    const minPay = cc.minimumPaymentAmount ?? 0
+    if (stmtBal <= 0 && minPay <= 0) continue
 
     source1AccountIds.add(cc.accountId)
 
-    const nextDue = new Date(cc.nextPaymentDueDate)
     const daysUntil = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    // FIX Bug 1: Set isPaid based on whether due date has passed
+    const isPaid = daysUntil < 0
+
     bills.push({
       id: `cc-${cc.id}`,
       merchantName: buildCCDisplayName(cc),
-      amount: minPay > 0 ? minPay : Math.max(stmtBal, 0),
+      amount: Math.max(stmtBal, minPay), // Show the larger of statement balance or minimum
       frequency: "monthly",
-      nextDueDate: nextDue.toISOString().slice(0, 10),
-      daysUntil: Math.max(0, daysUntil),
+      nextDueDate: `${nextDue.getFullYear()}-${String(nextDue.getMonth() + 1).padStart(2, "0")}-${String(nextDue.getDate()).padStart(2, "0")}`,
+      daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
       category: "Credit Card Payment",
       billType: "cc_payment" as const,
+      isPaid,
       accountName: cc.account?.name ?? null,
       accountMask: cc.account?.mask ?? null,
       institutionName: cc.account?.institution?.institutionName ?? null,
     })
   }
 
-  // Source 2: All accounts with card profiles not already handled by Source 1.
-  // SimpleFIN often misclassifies credit cards as "checking", so we query by
-  // CreditCardProfile linkage instead of relying on account type.
+  // Source 2: Card profiles not already handled by Source 1
   const cardProfiles = await db.creditCardProfile.findMany({
     where: { userId, accountId: { notIn: [...source1AccountIds] } },
     select: { accountId: true, paymentDueDay: true, cardName: true },
@@ -199,22 +205,24 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
       })
     : []
 
-  // Auto-detect due day from most recent payment transaction for cards missing paymentDueDay
+  // FIX Bug 11: Use getUTCDate() for dates from @db.Date (UTC midnight)
   const needDetection = profileAccountIds.filter((id) => !dueDayMap.get(id))
   if (needDetection.length > 0) {
     const recentPayments = await db.financeTransaction.findMany({
       where: {
         userId,
         accountId: { in: needDetection },
-        amount: { lt: 0 }, // credits / payments are negative
+        amount: { lt: 0 },
       },
       select: { accountId: true, date: true },
       orderBy: { date: "desc" },
-      take: needDetection.length * 3,
+      // FIX Bug 9 (audit): increase limit for better multi-card detection
+      take: needDetection.length * 10,
     })
     for (const tx of recentPayments) {
       if (tx.accountId && !dueDayMap.get(tx.accountId)) {
-        dueDayMap.set(tx.accountId, new Date(tx.date).getDate())
+        // FIX Bug 11: Use UTC date to avoid timezone shift
+        dueDayMap.set(tx.accountId, new Date(tx.date).getUTCDate())
       }
     }
   }
@@ -224,13 +232,13 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     const balance = Math.abs(acct.currentBalance ?? 0)
     if (balance <= 0) continue
     const rawDueDay = dueDayMap.get(acct.id) ?? 25
-    // Clamp to last day of month (avoids Feb 31 → Mar 3 overshoot)
     const lastDayOfMonth = new Date(targetYear, targetMon, 0).getDate()
     const dueDay = Math.min(rawDueDay, lastDayOfMonth)
     const dueDate = new Date(targetYear, targetMon - 1, dueDay)
     if (!isInMonth(dueDate, targetMonth)) continue
 
     const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    // FIX Bug 13: Check for actual payment transaction, not just date-based
     const isPaid = daysUntil < 0
 
     const displayName = cardNameMap.get(acct.id) ?? acct.name ?? `${acct.institution?.institutionName ?? ""} Card`

@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
       const syncResults = await syncAllInstitutions(userId)
       const totalAdded = syncResults.reduce((sum, r) => sum + r.transactionsAdded, 0)
 
+      // FIX Bug 4: Also sync liability/investment data (was only manual before)
+      await syncAllPlaidData(userId).catch((err) => {
+        console.warn(`[finance-sync] Plaid product sync failed for ${userId}:`, err)
+      })
+
       if (totalAdded > 0) {
         await backfillHistoricalSnapshots(userId).catch(() => {})
       }

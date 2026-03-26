@@ -173,7 +173,7 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
 
     const freq: Frequency = stream.frequency === "WEEKLY" ? "weekly"
       : stream.frequency === "BIWEEKLY" ? "biweekly"
-      : stream.frequency === "SEMI_MONTHLY" ? "biweekly"
+      : stream.frequency === "SEMI_MONTHLY" ? "monthly" // FIX Bug 20: was "biweekly", closer to monthly
       : stream.frequency === "ANNUALLY" ? "yearly"
       : "monthly"
     const nextDate = stream.lastDate ? computeNextChargeDate(stream.lastDate, freq) : undefined

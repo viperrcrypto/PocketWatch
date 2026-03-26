@@ -51,15 +51,16 @@ export async function GET() {
 
     // Run all queries in parallel
     const [thisMonthSpending, lastMonthSpending, thisMonthIncome, lastMonthIncome, topMerchants] = await Promise.all([
+      // FIX Bug 5: Exclude Transfer/Income/Investment from spending totals
       db.financeTransaction.groupBy({
         by: ["category"],
-        where: { ...baseWhere, date: { gte: thisMonthStart, lt: thisMonthEnd }, amount: { gt: 0 } },
+        where: { ...baseWhere, date: { gte: thisMonthStart, lt: thisMonthEnd }, amount: { gt: 0 }, category: { notIn: ["Transfer", "Income", "Investment", "Crypto"] } },
         _sum: { amount: true },
       }),
       lastMonthStart && lastMonthEnd
         ? db.financeTransaction.groupBy({
             by: ["category"],
-            where: { ...baseWhere, date: { gte: lastMonthStart, lt: lastMonthEnd }, amount: { gt: 0 } },
+            where: { ...baseWhere, date: { gte: lastMonthStart, lt: lastMonthEnd }, amount: { gt: 0 }, category: { notIn: ["Transfer", "Income", "Investment", "Crypto"] } },
             _sum: { amount: true },
           })
         : Promise.resolve([]),
@@ -91,13 +92,14 @@ export async function GET() {
     const categoryComparison = thisMonthSpending.map((s) => {
       const thisAmount = s._sum.amount ?? 0
       const lastAmount = lastMonthMap.get(s.category) ?? 0
-      const change = lastAmount > 0 ? ((thisAmount - lastAmount) / lastAmount) * 100 : 0
+      // FIX Bug 7: Show null for new categories instead of 0%
+      const change = lastAmount > 0 ? ((thisAmount - lastAmount) / lastAmount) * 100 : (thisAmount > 0 ? null : 0)
 
       return {
         category: s.category,
         thisMonth: Math.round(thisAmount * 100) / 100,
         lastMonth: Math.round(lastAmount * 100) / 100,
-        changePercent: Math.round(change * 10) / 10,
+        changePercent: change != null ? Math.round(change * 10) / 10 : null,
       }
     }).sort((a, b) => b.thisMonth - a.thisMonth)
 

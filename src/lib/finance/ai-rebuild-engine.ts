@@ -5,7 +5,7 @@
 
 import { db } from "@/lib/db"
 import { invalidateCache } from "@/lib/cache"
-import { cleanMerchantName, CATEGORIES, CONFIDENCE } from "./categorize"
+import { cleanMerchantName, CATEGORIES, CONFIDENCE, uncategorizedWhere } from "./categorize"
 import { callAIProviderRaw, type AIProviderType } from "./ai-providers"
 import { buildRebuildMerchants, buildRebuildPrompt, parseRebuildResponse, type RebuildMerchant, type RebuildAIResult } from "./ai-rebuild-prompt"
 
@@ -44,10 +44,10 @@ export async function fetchMerchantsForRebuild(
   userId: string,
   mode: "uncategorized" | "full"
 ): Promise<{ merchants: RebuildMerchant[]; txsByMerchant: Map<string, string[]> }> {
-  const whereBase = { userId, isDuplicate: false, isExcluded: false }
+  // FIX Bug 10 (audit): Use canonical uncategorizedWhere instead of duplicating logic
   const where = mode === "uncategorized"
-    ? { ...whereBase, OR: [{ category: null }, { category: "" }, { category: "Uncategorized" }] }
-    : whereBase
+    ? uncategorizedWhere(userId)
+    : { userId, isDuplicate: false, isExcluded: false }
 
   const txRows = await db.financeTransaction.findMany({
     where,

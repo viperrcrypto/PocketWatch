@@ -20,14 +20,17 @@ export async function GET() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
+    // FIX Bug 10: Exclude Transfer/Income/Investment from budget spending
+    // and use lt (exclusive) for month end to avoid timezone boundary issues
     const spending = await db.financeTransaction.groupBy({
       by: ["category"],
       where: {
         userId: user.id,
-        date: { gte: monthStart, lte: monthEnd },
+        date: { gte: monthStart, lt: new Date(now.getFullYear(), now.getMonth() + 1, 1) },
         amount: { gt: 0 },
         isExcluded: false,
         isDuplicate: false,
+        category: { notIn: ["Transfer", "Income", "Investment"] },
       },
       _sum: { amount: true },
     })

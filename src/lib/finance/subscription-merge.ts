@@ -66,7 +66,7 @@ export type TransactionDateMap = Map<string, Date>
 const PLAID_FREQUENCY_MAP: Record<string, string> = {
   WEEKLY: "weekly",
   BIWEEKLY: "biweekly",
-  SEMI_MONTHLY: "biweekly",
+  SEMI_MONTHLY: "monthly",
   MONTHLY: "monthly",
   ANNUALLY: "yearly",
 }

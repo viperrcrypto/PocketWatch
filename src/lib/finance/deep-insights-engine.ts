@@ -95,7 +95,11 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
     }),
   ])
 
-  const dayOfMonth = Math.max(1, new Date().getDate())
+  // FIX Bug 15: Use data month's day-of-month, not wall clock (they may differ
+  // when the latest data month isn't the current calendar month)
+  const now = new Date()
+  const isCurrentCalendarMonth = Number(cmParts[0]) === now.getFullYear() && Number(cmParts[1]) === (now.getMonth() + 1)
+  const dayOfMonth = isCurrentCalendarMonth ? Math.max(1, now.getDate()) : new Date(Number(cmParts[0]), Number(cmParts[1]), 0).getDate()
   const daysInMonth = new Date(Number(cmParts[0]), Number(cmParts[1]), 0).getDate()
   // Exclude transfers, payments, and investments from spending calculations
   const EXCLUDED_CATEGORIES = new Set(["transfer", "payment", "credit card payment", "internal transfer", "loan payment", "investment"])
@@ -144,10 +148,10 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
   const dayOfWeekPatterns = dayLabels.map((label, i) => ({ day: label, total: round(dayTotals[i]) }))
 
-  // Category drilldown
+  // FIX Bug 14: Use realSpendTxs (filtered) instead of raw txs for category drilldown
+  // This prevents transfers and CC payments from appearing in topCategories
   const categoryMap = new Map<string, { total: number; merchants: Map<string, number>; subcats: Map<string, number> }>()
-  for (const tx of txs) {
-    if (tx.amount <= 0) continue
+  for (const tx of realSpendTxs) {
     const cat = tx.category ?? "Uncategorized"
     const entry = categoryMap.get(cat) ?? { total: 0, merchants: new Map(), subcats: new Map() }
     entry.total += tx.amount
