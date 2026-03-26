@@ -35,7 +35,7 @@ export function ClassifyFilterBar({
     <div className="bg-card border border-card-border p-4 mb-6 rounded-xl space-y-4">
       {/* Search */}
       <div className="relative">
-        <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
+        <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
         <input
           type="text"
           value={search}

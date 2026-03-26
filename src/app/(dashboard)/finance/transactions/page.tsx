@@ -238,7 +238,7 @@ export default function FinanceTransactionsPage() {
           </div>
 
           <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
-            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
+            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
             <input
               type="text"
               value={search}

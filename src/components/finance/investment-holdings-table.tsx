@@ -131,7 +131,7 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
+            <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
             <input
               type="text"
               value={search}

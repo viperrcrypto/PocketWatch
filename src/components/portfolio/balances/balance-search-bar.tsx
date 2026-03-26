@@ -30,7 +30,7 @@ export function BalanceSearchBar({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
+          <span className="material-symbols-rounded absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-foreground-muted pointer-events-none" style={{ fontSize: 16 }}>search</span>
           <input
             type="text"
             value={search}
