@@ -33,6 +33,7 @@ export interface RebuildSummary {
   customCategoriesCreated: number
   batchesCompleted: number
   batchesFailed: number
+  failedMerchants: string[]
   durationMs: number
 }
 
@@ -90,7 +91,7 @@ export async function runRebuildBatches(
   send("preview", { merchantCount: merchants.length, txCount: sumTxCount(txsByMerchant), batchCount: totalBatches })
 
   if (merchants.length === 0) {
-    const summary: RebuildSummary = { totalMerchants: 0, totalTxCategorized: 0, rulesCreated: 0, rulesUpdated: 0, customCategoriesCreated: 0, batchesCompleted: 0, batchesFailed: 0, durationMs: Date.now() - start }
+    const summary: RebuildSummary = { totalMerchants: 0, totalTxCategorized: 0, rulesCreated: 0, rulesUpdated: 0, customCategoriesCreated: 0, batchesCompleted: 0, batchesFailed: 0, failedMerchants: [], durationMs: Date.now() - start }
     send("complete", { summary })
     return summary
   }
@@ -109,6 +110,7 @@ export async function runRebuildBatches(
   let customCategoriesCreated = 0
   let batchesCompleted = 0
   let batchesFailed = 0
+  const failedMerchants: string[] = []
 
   // Process batches with concurrency limit
   let merchantsProcessed = 0
@@ -154,6 +156,7 @@ export async function runRebuildBatches(
         if (attempt === 1) {
           batchesFailed++
           merchantsProcessed += batch.length
+          failedMerchants.push(...batch.map((m) => m.name))
           send("error", { batchIndex: i, message: err instanceof Error ? err.message : "Batch failed" })
         }
       }
@@ -180,6 +183,7 @@ export async function runRebuildBatches(
     customCategoriesCreated,
     batchesCompleted,
     batchesFailed,
+    failedMerchants,
     durationMs: Date.now() - start,
   }
 
