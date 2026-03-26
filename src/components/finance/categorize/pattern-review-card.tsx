@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { formatCurrency, cn } from "@/lib/utils"
 import { getCategoryMeta } from "@/lib/finance/categories"
 import { CategoryPicker } from "@/components/finance/category-picker"
@@ -19,6 +19,16 @@ export function PatternReviewCard({ transaction: tx, onAccept, onChange, onSkip,
   const [showPicker, setShowPicker] = useState(false)
   const currentMeta = getCategoryMeta(tx.currentCategory)
   const topSuggestion = tx.suggestedCategories[0]
+
+  // "C" key toggles category picker
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === "c" || e.key === "C") setShowPicker((v) => !v)
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
 
   return (
     <div className="bg-card border border-card-border rounded-2xl overflow-hidden">

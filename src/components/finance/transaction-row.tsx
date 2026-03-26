@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { cn, formatCurrency } from "@/lib/utils"
 import { CategoryBadge } from "./category-badge"
 import { AmountDisplay } from "./amount-display"
+import { MerchantIcon } from "./merchant-icon"
 import { FINANCE_CATEGORIES, getCategoryMeta } from "@/lib/finance/categories"
 
 interface TransactionRowProps {
@@ -94,9 +95,7 @@ export function TransactionRow({
         aria-expanded={expanded}
       >
         <div className="w-10 sm:w-16 text-[10px] sm:text-xs text-foreground/70 font-data">{displayDate}</div>
-        {logoUrl && (
-          <MerchantLogo url={logoUrl} />
-        )}
+        <MerchantIcon logoUrl={logoUrl} category={category} size="sm" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">
             {merchantName || name}
@@ -283,15 +282,3 @@ export function TransactionRow({
   )
 }
 
-function MerchantLogo({ url }: { url: string }) {
-  const [failed, setFailed] = useState(false)
-  if (failed) return null
-  return (
-    <img
-      src={url}
-      alt=""
-      className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
-      onError={() => setFailed(true)}
-    />
-  )
-}
