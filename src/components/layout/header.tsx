@@ -9,12 +9,15 @@ interface HeaderProps {
 
 export const Header = memo(function Header({ title, onMenuClick }: HeaderProps) {
   return (
-    <header className="lg:hidden h-12 flex items-center justify-between px-4 sticky top-0 z-30 bg-background-secondary">
+    <header
+      className="md:hidden min-h-12 flex items-center justify-between px-4 sticky top-0 z-30 bg-background-secondary mobile-header"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="flex items-center gap-4 flex-shrink-0">
         <button
           onClick={onMenuClick}
           aria-label="Open navigation menu"
-          className="p-2 -ml-2 rounded-lg hover:bg-background-secondary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-2 -ml-2 rounded-lg hover:bg-background-secondary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95 active:opacity-70"
         >
           <span className="material-symbols-rounded text-xl text-foreground-muted" aria-hidden="true">menu</span>
         </button>

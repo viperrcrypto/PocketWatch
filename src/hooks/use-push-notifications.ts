@@ -80,10 +80,14 @@ export function usePushNotifications() {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
       if (sub) {
+        const endpoint = sub.endpoint
         await sub.unsubscribe()
+        // Send endpoint so server removes only THIS device, not all devices
         await fetch("/api/notifications/push/subscribe", {
           method: "DELETE",
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
+          body: JSON.stringify({ endpoint }),
         })
       }
       setIsSubscribed(false)

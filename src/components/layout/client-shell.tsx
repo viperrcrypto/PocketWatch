@@ -10,6 +10,12 @@ const DynamicToaster = dynamic(
 const DynamicPWAPrompt = dynamic(
   () => import("@/components/pwa-install-prompt").then((m) => ({ default: m.PWAInstallPrompt }))
 )
+const DynamicOfflineBanner = dynamic(
+  () => import("@/components/offline-banner").then((m) => ({ default: m.OfflineBanner }))
+)
+const DynamicPushPrompt = dynamic(
+  () => import("@/components/push-notification-prompt").then((m) => ({ default: m.PushNotificationPrompt }))
+)
 
 function useActiveTheme() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
@@ -32,11 +38,44 @@ export function ClientShell() {
   const theme = useActiveTheme()
 
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
+    if (!("serviceWorker" in navigator)) return
+
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        // Check for updates periodically (every 30 min)
+        setInterval(() => reg.update(), 30 * 60 * 1000)
+
+        // Detect when a new SW is waiting to activate
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing
+          if (!newWorker) return
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              // New version available — show update toast
+              import("sonner").then(({ toast }) => {
+                toast("Update available", {
+                  description: "Tap to refresh and get the latest version.",
+                  duration: Infinity,
+                  action: {
+                    label: "Update",
+                    onClick: () => {
+                      newWorker.postMessage({ type: "SKIP_WAITING" })
+                      window.location.reload()
+                    },
+                  },
+                })
+              })
+            }
+          })
+        })
+      })
+      .catch((err) => {
         console.warn("[SW] Registration failed:", err)
       })
-    }
   }, [])
 
   return (
@@ -55,6 +94,8 @@ export function ClientShell() {
         }}
       />
       <DynamicPWAPrompt />
+      <DynamicOfflineBanner />
+      <DynamicPushPrompt />
     </>
   )
 }

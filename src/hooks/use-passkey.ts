@@ -13,25 +13,23 @@ export function usePasskey() {
 
   const supported = typeof window !== "undefined" && browserSupportsWebAuthn()
 
-  const authenticate = useCallback(async (): Promise<boolean> => {
+  const authenticate = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
     setError(null)
     setLoading(true)
     try {
-      // 1. Get authentication options from server
       const optionsRes = await fetch("/api/auth/passkey/authenticate-options", {
         method: "POST",
       })
       if (!optionsRes.ok) {
         const data = await optionsRes.json().catch(() => null)
-        setError(data?.error ?? `Server error (${optionsRes.status})`)
-        return false
+        const msg = data?.error ?? `Server error (${optionsRes.status})`
+        setError(msg)
+        return { ok: false, error: msg }
       }
       const options = await optionsRes.json()
 
-      // 2. Prompt user for passkey (browser native UI)
       const credential = await startAuthentication({ optionsJSON: options })
 
-      // 3. Send credential to server for verification
       const verifyRes = await fetch("/api/auth/passkey/authenticate-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,19 +37,20 @@ export function usePasskey() {
       })
       if (!verifyRes.ok) {
         const data = await verifyRes.json().catch(() => null)
-        setError(data?.error ?? "Passkey authentication failed")
-        return false
+        const msg = data?.error ?? "Passkey authentication failed"
+        setError(msg)
+        return { ok: false, error: msg }
       }
 
-      return true
+      return { ok: true }
     } catch (err) {
-      // User cancelled or browser error
       if (err instanceof Error && err.name === "NotAllowedError") {
-        setError(null) // User cancelled — not an error
-        return false
+        setError(null)
+        return { ok: false } // User cancelled — not an error
       }
-      setError(err instanceof Error ? err.message : "Passkey authentication failed")
-      return false
+      const msg = err instanceof Error ? err.message : "Passkey authentication failed"
+      setError(msg)
+      return { ok: false, error: msg }
     } finally {
       setLoading(false)
     }

@@ -119,6 +119,9 @@ export const rateLimiters = {
 
   /** Sensitive admin actions: 10 requests per minute */
   admin: createRateLimiter({ limit: 10, windowSeconds: 60 }),
+
+  /** Notification test: 3 requests per minute */
+  notificationTest: createRateLimiter({ limit: 3, windowSeconds: 60 }),
 }
 
 /**

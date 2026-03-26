@@ -3,6 +3,9 @@
 # database backups
 /backups
 
+# server logs
+/logs
+
 # dependencies
 /node_modules
 /.pnp

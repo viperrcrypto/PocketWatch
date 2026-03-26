@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { apiError } from "@/lib/api-error"
-import { getCurrentUser, getSession } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/auth"
 import { createRegistrationOptions, getRpConfig } from "@/lib/passkey"
 import { db } from "@/lib/db"
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const rp = getRpConfig(request)
     const options = await createRegistrationOptions(
       user.id,
-      user.id,
+      "PocketWatch Vault",
       existing.map((p) => p.credentialId),
       rp,
     )

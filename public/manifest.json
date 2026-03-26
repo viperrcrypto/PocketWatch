@@ -2,10 +2,12 @@
   "name": "PocketWatch",
   "short_name": "PocketWatch",
   "description": "See everything you own. In one place.",
-  "start_url": "/portfolio",
+  "start_url": "/net-worth",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#ffffff",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/img/pwa-icon-192.png",
@@ -16,6 +18,34 @@
       "src": "/img/pwa-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/img/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Net Worth",
+      "short_name": "Worth",
+      "url": "/net-worth"
+    },
+    {
+      "name": "Portfolio",
+      "short_name": "Assets",
+      "url": "/portfolio"
+    },
+    {
+      "name": "Finance",
+      "short_name": "Finance",
+      "url": "/finance"
+    },
+    {
+      "name": "Chat",
+      "short_name": "Chat",
+      "url": "/chat"
     }
   ]
 }

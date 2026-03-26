@@ -13,8 +13,10 @@ export async function POST(request: NextRequest) {
     if (!body) return apiError("E1231", "Invalid request body", 400)
 
     // Find the passkey by credential ID from the response
-    const credentialIdB64 = body.id as string | undefined
-    if (!credentialIdB64) return apiError("E1232", "Missing credential ID", 400)
+    if (typeof body.id !== "string" || !body.id) {
+      return apiError("E1232", "Missing credential ID", 400)
+    }
+    const credentialIdB64 = body.id
 
     const passkey = await db.passkey.findUnique({
       where: { credentialId: credentialIdB64 },
@@ -38,7 +40,10 @@ export async function POST(request: NextRequest) {
       return apiError("E1234", "Passkey authentication failed", 401)
     }
 
-    // Update the counter and last-used timestamp
+    // Create session first — if this fails, the counter stays unchanged so the
+    // user can retry. Counter update failing is recoverable; a stale session is not.
+    await createSessionWithWrappedDek(user.id, passkey.wrappedDek)
+
     await db.passkey.update({
       where: { id: passkey.id },
       data: {
@@ -46,9 +51,6 @@ export async function POST(request: NextRequest) {
         lastUsedAt: new Date(),
       },
     })
-
-    // Create a session using the wrapped DEK stored during registration
-    await createSessionWithWrappedDek(user.id, passkey.wrappedDek)
 
     return NextResponse.json({ success: true })
   } catch (error) {

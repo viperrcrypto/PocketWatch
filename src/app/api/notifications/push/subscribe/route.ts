@@ -44,36 +44,74 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Store subscription in Settings model (single-user vault)
+    const newSub = {
+      endpoint: parsed.data.endpoint,
+      keys: parsed.data.keys,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Multi-device: store subscriptions as array, dedup by endpoint
+    const existing = await db.settings.findUnique({ where: { key: "push_subscriptions" } })
+    let subs: Array<{ endpoint: string; keys: { p256dh: string; auth: string }; createdAt?: string }> = []
+
+    if (existing?.value && Array.isArray(existing.value)) {
+      subs = existing.value as typeof subs
+    }
+
+    // Remove existing sub with same endpoint (re-subscribe), add new one
+    subs = [...subs.filter((s) => s.endpoint !== newSub.endpoint), newSub]
+
+    // Cap at 10 devices to prevent abuse
+    if (subs.length > 10) subs = subs.slice(-10)
+
     await db.settings.upsert({
-      where: { key: "push_subscription" },
-      create: {
-        key: "push_subscription",
-        value: {
-          endpoint: parsed.data.endpoint,
-          keys: parsed.data.keys,
-        },
-      },
-      update: {
-        value: {
-          endpoint: parsed.data.endpoint,
-          keys: parsed.data.keys,
-        },
-      },
+      where: { key: "push_subscriptions" },
+      create: { key: "push_subscriptions", value: subs as any },
+      update: { value: subs as any },
     })
 
-    return NextResponse.json({ subscribed: true })
+    return NextResponse.json({ subscribed: true, deviceCount: subs.length })
   } catch (err) {
     return apiError("N5012", "Failed to save push subscription", 500, err)
   }
 }
 
-export async function DELETE() {
+const deleteSchema = z.object({
+  endpoint: z.string().url().optional(),
+})
+
+export async function DELETE(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return apiError("N5020", "Authentication required", 401)
 
   try {
-    await db.settings.delete({ where: { key: "push_subscription" } }).catch(() => {})
+    const body = await req.json().catch(() => ({}))
+    const parsed = deleteSchema.safeParse(body)
+    const endpoint = parsed.success ? parsed.data.endpoint : undefined
+
+    if (endpoint) {
+      // Remove specific device subscription
+      const existing = await db.settings.findUnique({ where: { key: "push_subscriptions" } })
+      if (existing?.value && Array.isArray(existing.value)) {
+        const remaining = (existing.value as Array<{ endpoint: string }>).filter(
+          (s) => s.endpoint !== endpoint,
+        )
+        if (remaining.length > 0) {
+          await db.settings.update({
+            where: { key: "push_subscriptions" },
+            data: { value: remaining as any },
+          })
+        } else {
+          await db.settings.delete({ where: { key: "push_subscriptions" } }).catch(() => {})
+        }
+      }
+    } else {
+      // Remove all subscriptions
+      await db.settings.delete({ where: { key: "push_subscriptions" } }).catch(() => {})
+      // Also clean up legacy key
+      await db.settings.delete({ where: { key: "push_subscription" } }).catch(() => {})
+    }
+
     return NextResponse.json({ unsubscribed: true })
   } catch (err) {
     return apiError("N5022", "Failed to remove subscription", 500, err)

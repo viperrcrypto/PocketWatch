@@ -5,11 +5,15 @@
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { sendNotification } from "@/lib/notifications/dispatcher"
-import { NextResponse } from "next/server"
+import { rateLimiters, getClientId } from "@/lib/rate-limit"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return apiError("N4001", "Authentication required", 401)
+
+  const rl = rateLimiters.notificationTest(getClientId(req))
+  if (!rl.success) return apiError("N4004", "Too many test notifications — try again later", 429)
 
   try {
     const results = await sendNotification(user.id, {

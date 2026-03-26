@@ -83,9 +83,9 @@ export function LandingPage() {
 
   async function handlePasskeyAuth() {
     setError(null)
-    const success = await passkey.authenticate()
-    if (success) redirectAfterAuth()
-    else if (passkey.error) setError(passkey.error)
+    const result = await passkey.authenticate()
+    if (result.ok) redirectAfterAuth()
+    else if (result.error) setError(result.error)
   }
 
   async function handleReset() {

@@ -3,6 +3,24 @@
 /* Wire Tailwind dark: to app data-theme instead of OS prefers-color-scheme */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Local Material Symbols fallback — icons work offline when Google Fonts CDN is unreachable */
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("/fonts/material-symbols-rounded-latin-ext.ttf") format("truetype");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("/fonts/material-symbols-rounded-latin.ttf") format("truetype");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ═══ Auth Flow Transitions ═══ */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -1436,6 +1454,11 @@ html {
   to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 @keyframes flex-shine {
   0% { left: -100%; }
   100% { left: 200%; }
@@ -1518,8 +1541,48 @@ html {
   padding-bottom: 72px;
 }
 
-@media (min-width: 1024px) {
+/* Tablet: rail sidebar replaces bottom nav */
+@media (min-width: 768px) {
   .has-bottom-nav {
     padding-bottom: 0;
+  }
+}
+
+/* ─── Pull-to-refresh prevention ─── */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* ─── Touch feedback — remove default tap highlight ─── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Active press states for interactive elements ─── */
+.mobile-nav-pill:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active {
+  opacity: 0.7;
+  transform: scale(0.97);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+/* ─── iOS momentum scroll on list containers ─── */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ─── GPU layer promotion for animated panels ─── */
+.sidebar-panel {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* ─── Dynamic Island / standalone PWA safe area ─── */
+@media (display-mode: standalone) {
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
   }
 }

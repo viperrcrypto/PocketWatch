@@ -60,7 +60,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
           "bg-card",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ boxShadow: "2px 0 12px rgba(0,0,0,0.04)" }}
+        style={{ boxShadow: "2px 0 12px rgba(0,0,0,0.04)", willChange: "transform" }}
       >
         {/* Logo + Theme Toggle */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-card-border flex-shrink-0">

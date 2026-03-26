@@ -28,6 +28,8 @@ interface StoredChallenge {
 }
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+// In-memory store — requires single-process deployment (fine for PocketWatch's
+// single-user vault model). Use Redis/DB if deploying to multi-instance.
 const challengeStore = new Map<string, StoredChallenge>()
 
 export function storeChallenge(userId: string, challenge: string): void {
@@ -99,7 +101,7 @@ export async function createRegistrationOptions(
     },
   } satisfies GenerateRegistrationOptionsOpts)
 
-  storeChallenge(userId, options.challenge)
+  storeChallenge(`register:${userId}`, options.challenge)
   return options
 }
 
@@ -108,7 +110,7 @@ export async function verifyRegistration(
   response: unknown,
   rp: RpConfig,
 ): Promise<Awaited<ReturnType<typeof verifyRegistrationResponse>>> {
-  const expectedChallenge = consumeChallenge(userId)
+  const expectedChallenge = consumeChallenge(`register:${userId}`)
   if (!expectedChallenge) {
     throw new Error("Challenge expired or not found")
   }
@@ -138,7 +140,7 @@ export async function createAuthenticationOptions(
     userVerification: "preferred",
   } satisfies GenerateAuthenticationOptionsOpts)
 
-  storeChallenge(userId, options.challenge)
+  storeChallenge(`auth:${userId}`, options.challenge)
   return options
 }
 
@@ -150,7 +152,7 @@ export async function verifyAuthentication(
   credentialCounter: bigint,
   rp: RpConfig,
 ): Promise<Awaited<ReturnType<typeof verifyAuthenticationResponse>>> {
-  const expectedChallenge = consumeChallenge(userId)
+  const expectedChallenge = consumeChallenge(`auth:${userId}`)
   if (!expectedChallenge) {
     throw new Error("Challenge expired or not found")
   }

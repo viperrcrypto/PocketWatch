@@ -19,10 +19,11 @@ export async function POST(request: NextRequest) {
       return apiError("E1212", "Passkey registration failed verification", 400)
     }
 
-    const { credential, credentialDeviceType, credentialBackedUp } =
-      verification.registrationInfo
+    const { credential } = verification.registrationInfo
 
-    // Get the current session's wrapped DEK to store with the passkey
+    // Copy the session's master-key-wrapped DEK so passkey auth can replay it
+    // into new sessions. If ENCRYPTION_KEY rotates, passkey-stored DEKs become
+    // stale — the user must re-register passkeys after a key rotation.
     const session = await getSession()
     const wrappedDek = session?.encryptedDek ?? null
 
