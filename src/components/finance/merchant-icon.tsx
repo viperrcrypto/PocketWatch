@@ -22,7 +22,7 @@ export function MerchantIcon({ logoUrl, category, size = "md" }: MerchantIconPro
       <img
         src={logoUrl}
         alt=""
-        className={`${dims} ${roundedness} object-cover flex-shrink-0 bg-background-secondary`}
+        className={`${dims} ${roundedness} object-cover flex-shrink-0 bg-white`}
         onError={() => setImgFailed(true)}
       />
     )

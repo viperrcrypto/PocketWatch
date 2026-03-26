@@ -28,10 +28,10 @@ export const FINANCE_CATEGORIES: Record<string, CategoryMeta> = {
     hex: "#ea580c",
   },
   "Transportation": {
-    label: "Transportation", icon: "directions_car", color: "amber",
-    bgClass: "bg-amber-600/10", textClass: "text-amber-600",
-    dotClass: "bg-amber-600", borderClass: "border-amber-600",
-    hex: "#d97706",
+    label: "Transportation", icon: "directions_car", color: "blue",
+    bgClass: "bg-blue-500/10", textClass: "text-blue-500",
+    dotClass: "bg-blue-500", borderClass: "border-blue-500",
+    hex: "#3b82f6",
   },
   "Bills & Utilities": {
     label: "Bills & Utilities", icon: "bolt", color: "cyan",
@@ -100,10 +100,10 @@ export const FINANCE_CATEGORIES: Record<string, CategoryMeta> = {
     hex: "#c026d3",
   },
   "Crypto": {
-    label: "Crypto", icon: "currency_bitcoin", color: "amber",
-    bgClass: "bg-amber-500/10", textClass: "text-amber-500",
-    dotClass: "bg-amber-500", borderClass: "border-amber-500",
-    hex: "#f59e0b",
+    label: "Crypto", icon: "currency_bitcoin", color: "orange",
+    bgClass: "bg-orange-500/10", textClass: "text-orange-500",
+    dotClass: "bg-orange-500", borderClass: "border-orange-500",
+    hex: "#f97316",
   },
   "Taxes": {
     label: "Taxes", icon: "account_balance", color: "red",
