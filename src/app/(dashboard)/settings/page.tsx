@@ -12,7 +12,7 @@ import { CollapsibleSection } from "@/components/settings/collapsible-section"
 
 export default function SystemSettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-lg font-bold text-foreground">System Settings</h1>
