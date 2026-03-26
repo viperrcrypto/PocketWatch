@@ -20,38 +20,43 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
   // Idle — mode selection
   if (state.status === "idle" && !state.preview) {
     return (
-      <div className="space-y-3">
+      <div className="bg-card border border-card-border rounded-xl divide-y divide-card-border">
         {reviewCount > 0 && (
           <Link
             href="/finance/categorize"
-            className="flex items-center justify-between bg-card border border-card-border rounded-xl p-4 hover:bg-background-secondary transition-colors"
+            className="flex items-center justify-between px-5 py-4 hover:bg-background-secondary/50 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <span className="material-symbols-rounded text-orange-500" style={{ fontSize: 20 }}>rate_review</span>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">{reviewCount} items need your review</p>
-                <p className="text-xs text-foreground-muted">AI categorized these but wasn&apos;t confident — review them in Pattern Review</p>
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="material-symbols-rounded text-orange-500 shrink-0" style={{ fontSize: 18 }}>rate_review</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">{reviewCount} items need your review</p>
+                <p className="text-xs text-foreground-muted truncate">AI wasn&apos;t confident — review in Pattern Review</p>
               </div>
             </div>
-            <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>arrow_forward</span>
+            <span className="material-symbols-rounded text-foreground-muted shrink-0" style={{ fontSize: 16 }}>chevron_right</span>
           </Link>
         )}
-        <ModeCard
-          title="Uncategorized Only"
-          description={`Categorize ${uncategorizedCount} uncategorized transactions using AI.`}
-          icon="auto_awesome"
-          disabled={uncategorizedCount === 0}
+        <button
           onClick={() => { setPreviewedMode("uncategorized"); start("uncategorized", true) }}
-        />
-        <ModeCard
-          title="Full Rebuild"
-          description={`Re-categorize ALL ${reviewCount > 0 ? reviewCount + " review items + " : ""}transactions from scratch. Fixes wrong categories and re-evaluates everything.`}
-          icon="restart_alt"
-          variant="warning"
+          disabled={uncategorizedCount === 0}
+          className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-background-secondary/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <span className="material-symbols-rounded text-primary shrink-0" style={{ fontSize: 18 }}>auto_awesome</span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">Uncategorized Only</p>
+            <p className="text-xs text-foreground-muted">{uncategorizedCount} transactions to categorize</p>
+          </div>
+        </button>
+        <button
           onClick={() => { setPreviewedMode("full"); start("full", true) }}
-        />
+          className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-background-secondary/50 transition-colors"
+        >
+          <span className="material-symbols-rounded text-amber-500 shrink-0" style={{ fontSize: 18 }}>restart_alt</span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">Full Rebuild</p>
+            <p className="text-xs text-foreground-muted">Re-categorize everything from scratch</p>
+          </div>
+        </button>
       </div>
     )
   }
