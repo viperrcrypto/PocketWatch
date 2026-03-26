@@ -1,9 +1,10 @@
 /**
  * Hook for AI Rebuild categorization with SSE streaming.
- * Manages connection lifecycle, progress state, and cancellation.
+ * Persists state to localStorage so the user can navigate away during a rebuild
+ * and return to see results. The server continues processing even after disconnect.
  */
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { financeKeys } from "./shared"
 
@@ -61,12 +62,101 @@ const INITIAL_STATE: AIRebuildState = {
   error: null,
 }
 
+const STORAGE_KEY = "pw-ai-rebuild-state"
+
+// ─── Persistence Helpers ────────────────────────────────────────
+
+function saveToStorage(state: AIRebuildState): void {
+  try {
+    // Only persist meaningful states (not idle/counting)
+    if (state.status === "running" || state.status === "complete" || state.status === "paused") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...state,
+        savedAt: Date.now(),
+      }))
+    }
+  } catch { /* localStorage unavailable */ }
+}
+
+function loadFromStorage(): AIRebuildState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const saved = JSON.parse(raw)
+    // Expire after 30 minutes
+    if (Date.now() - (saved.savedAt ?? 0) > 30 * 60 * 1000) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return {
+      status: saved.status,
+      preview: saved.preview,
+      progress: saved.progress,
+      processedMerchants: saved.processedMerchants ?? [],
+      summary: saved.summary,
+      error: saved.error,
+    }
+  } catch { return null }
+}
+
+function clearStorage(): void {
+  try { localStorage.removeItem(STORAGE_KEY) } catch { /* ok */ }
+}
+
 // ─── Hook ───────────────────────────────────────────────────────
 
 export function useAIRebuild() {
   const [state, setState] = useState<AIRebuildState>(INITIAL_STATE)
   const abortRef = useRef<AbortController | null>(null)
   const qc = useQueryClient()
+  const checkedServerRef = useRef(false)
+
+  // On mount: check server for completed rebuild, or restore from localStorage
+  useEffect(() => {
+    if (checkedServerRef.current) return
+    checkedServerRef.current = true
+
+    const recover = async () => {
+      try {
+        const res = await fetch("/api/finance/transactions/ai-rebuild", {
+          credentials: "include",
+        })
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (data.summary) {
+          // Server has a completed rebuild — show it
+          const stored = loadFromStorage()
+          setState({
+            status: "complete",
+            preview: null,
+            progress: null,
+            processedMerchants: stored?.processedMerchants ?? [],
+            summary: data.summary,
+            error: null,
+          })
+          return
+        }
+      } catch { /* server check failed, try localStorage */ }
+
+      // Fall back to localStorage (partial progress from before navigation)
+      const stored = loadFromStorage()
+      if (stored && stored.status !== "idle") {
+        // If was "running" when we left, server may have completed — show as partial
+        setState({
+          ...stored,
+          status: stored.status === "running" ? "paused" : stored.status,
+        })
+      }
+    }
+
+    recover()
+  }, [])
+
+  // Persist state to localStorage on every meaningful update
+  useEffect(() => {
+    saveToStorage(state)
+  }, [state])
 
   const start = useCallback(async (mode: "uncategorized" | "full", dryRun = false) => {
     abortRef.current?.abort()
@@ -141,10 +231,7 @@ export function useAIRebuild() {
               qc.invalidateQueries({ queryKey: financeKeys.all })
               break
             case "error":
-              if (data.batchIndex !== undefined) {
-                // Batch-level error, continue
-                break
-              }
+              if (data.batchIndex !== undefined) break // batch-level, continue
               setState((prev) => ({ ...prev, status: "error", error: data.message }))
               break
           }
@@ -168,6 +255,7 @@ export function useAIRebuild() {
   const reset = useCallback(() => {
     abortRef.current?.abort()
     setState(INITIAL_STATE)
+    clearStorage()
   }, [])
 
   return {
