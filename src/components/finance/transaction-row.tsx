@@ -86,14 +86,14 @@ export function TransactionRow({
         role="button"
         tabIndex={0}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 hover:bg-primary-subtle/30 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset",
+          "flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-primary-subtle/30 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset",
           isPending && "opacity-75",
         )}
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded) } }}
         aria-expanded={expanded}
       >
-        <div className="w-16 text-xs text-foreground/70 font-data">{displayDate}</div>
+        <div className="w-10 sm:w-16 text-[10px] sm:text-xs text-foreground/70 font-data">{displayDate}</div>
         {logoUrl && (
           <MerchantLogo url={logoUrl} />
         )}
@@ -114,7 +114,7 @@ export function TransactionRow({
                 Review
               </a>
             )}
-            <span className="text-xs text-foreground/50">{accountName}{accountMask ? ` ••${accountMask}` : ""}</span>
+            <span className="hidden sm:inline text-xs text-foreground/50">{accountName}{accountMask ? ` ••${accountMask}` : ""}</span>
           </div>
         </div>
         <AmountDisplay amount={amount} />

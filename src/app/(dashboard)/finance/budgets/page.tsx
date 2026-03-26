@@ -165,7 +165,7 @@ export default function FinanceBudgetsPage() {
         <button
           onClick={() => setActiveView("budgets")}
           className={cn(
-            "text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
+            "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
             activeView === "budgets"
               ? "bg-card text-foreground shadow-card border border-card-border/60"
               : "text-foreground-muted hover:text-foreground",
@@ -177,7 +177,7 @@ export default function FinanceBudgetsPage() {
         <button
           onClick={() => setActiveView("subscriptions")}
           className={cn(
-            "text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
+            "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
             activeView === "subscriptions"
               ? "bg-card text-foreground shadow-card border border-card-border/60"
               : "text-foreground-muted hover:text-foreground",
@@ -219,7 +219,7 @@ export default function FinanceBudgetsPage() {
             <button
               onClick={() => { if (!isDualView) toggleDualView() }}
               className={cn(
-                "text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
+                "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
                 isDualView
                   ? "bg-card text-foreground shadow-card border border-card-border/60"
                   : "text-foreground-muted hover:text-foreground",
@@ -231,7 +231,7 @@ export default function FinanceBudgetsPage() {
             <button
               onClick={() => { if (isDualView) toggleDualView() }}
               className={cn(
-                "text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
+                "text-[12px] font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
                 !isDualView
                   ? "bg-card text-foreground shadow-card border border-card-border/60"
                   : "text-foreground-muted hover:text-foreground",
@@ -273,7 +273,7 @@ export default function FinanceBudgetsPage() {
       )}
 
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-card-border rounded-xl p-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center sm:justify-between gap-2 sm:gap-3 bg-card border border-card-border rounded-xl p-3">
         <div className="flex flex-wrap gap-2 items-center">
           {uncategorizedCount > 0 && (
             <button
@@ -296,7 +296,7 @@ export default function FinanceBudgetsPage() {
             Full Analysis
           </Link>
         </div>
-        <button onClick={() => setShowModal(true)} className="text-primary text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 border border-primary/30 hover:bg-primary hover:text-white transition-all">
+        <button onClick={() => setShowModal(true)} className="text-primary text-xs font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 border border-primary/30 hover:bg-primary hover:text-white transition-all w-full sm:w-auto">
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>add</span>
           Add Budget
         </button>

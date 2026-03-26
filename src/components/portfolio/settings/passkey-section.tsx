@@ -38,10 +38,12 @@ export function PasskeySection() {
   async function handleRegister() {
     setActionError(null)
     setSuccess(null)
-    const ok = await register()
-    if (ok) {
+    const result = await register()
+    if (result.ok) {
       setSuccess("Passkey registered successfully")
       loadPasskeys()
+    } else if (result.error) {
+      setActionError(result.error)
     }
   }
 

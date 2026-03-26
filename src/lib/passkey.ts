@@ -66,14 +66,18 @@ export interface RpConfig {
 
 /**
  * Derive RP config from the incoming request.
- * Works in both local dev and production without extra env vars.
+ * Behind a reverse proxy (Cloudflare Tunnel), request.url shows the internal
+ * http://localhost URL — we must use forwarded headers to get the real origin.
  */
 export function getRpConfig(request: Request): RpConfig {
   const url = new URL(request.url)
+  const proto = request.headers.get("x-forwarded-proto") || url.protocol.replace(":", "")
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || url.host
+  const hostname = host.split(":")[0]
   return {
-    rpId: url.hostname,
+    rpId: hostname,
     rpName: "PocketWatch",
-    origin: url.origin,
+    origin: `${proto}://${host}`,
   }
 }
 

@@ -121,7 +121,7 @@ function PopulatedState({
   return (
     <div className="flex-1 flex flex-col">
       {/* Progress ring */}
-      <div className="flex justify-center py-4">
+      <div className="flex justify-center py-2 sm:py-4">
         <BudgetProgressRing
           spent={totalSpent}
           budget={totalBudgeted}
@@ -131,7 +131,7 @@ function PopulatedState({
       </div>
 
       {/* Category list */}
-      <div className="flex-1 overflow-y-auto max-h-[420px] px-4 pb-2 space-y-1">
+      <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[420px] px-3 sm:px-4 pb-2 space-y-1">
         {visible.map((b) => {
           const meta = getCategoryMeta(b.category)
           const barPercent = Math.min(b.percentUsed, 100)

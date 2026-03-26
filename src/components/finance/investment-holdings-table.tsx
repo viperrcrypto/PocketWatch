@@ -97,12 +97,13 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
     })
   }, [filtered, sortField, sortDir])
 
-  const sortHeader = (field: SortField, label: string, align: "left" | "right" = "right") => (
+  const sortHeader = (field: SortField, label: string, align: "left" | "right" = "right", extra?: string) => (
     <th
       key={field}
       className={cn(
         "py-2.5 text-[10px] font-medium uppercase tracking-widest text-foreground-muted cursor-pointer select-none hover:text-foreground transition-colors",
-        align === "left" ? "text-left px-5" : "text-right px-3"
+        align === "left" ? "text-left px-5" : "text-right px-3",
+        extra,
       )}
       onClick={() => toggleSort(field)}
     >
@@ -166,15 +167,15 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[700px]">
+        <table className="w-full text-sm min-w-[480px] sm:min-w-[700px]">
           <thead>
             <tr className="border-b border-card-border/30">
               {sortHeader("name", "Name", "left")}
-              {sortHeader("type", "Type")}
-              <th className="text-right px-3 py-2.5 text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Qty</th>
+              {sortHeader("type", "Type", "right", "hidden sm:table-cell")}
+              <th className="hidden sm:table-cell text-right px-3 py-2.5 text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Qty</th>
               <th className="text-right px-3 py-2.5 text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Price</th>
               {sortHeader("value", "Value")}
-              {sortHeader("pctOfPortfolio", "% Portfolio")}
+              {sortHeader("pctOfPortfolio", "% Portfolio", "right", "hidden sm:table-cell")}
               {sortHeader("gainLoss", "Gain/Loss")}
             </tr>
           </thead>
@@ -225,14 +226,14 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
                   </td>
 
                   {/* Type */}
-                  <td className="text-right px-3 py-3">
+                  <td className="hidden sm:table-cell text-right px-3 py-3">
                     <span className="px-1.5 py-0.5 text-[9px] uppercase bg-background-secondary rounded text-foreground-muted">
                       {h.security?.type ?? "--"}
                     </span>
                   </td>
 
                   {/* Quantity */}
-                  <td className="text-right px-3 py-3 font-data tabular-nums text-foreground">
+                  <td className="hidden sm:table-cell text-right px-3 py-3 font-data tabular-nums text-foreground">
                     {h.quantity != null
                       ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })
                       : "--"}
@@ -249,7 +250,7 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
                   </td>
 
                   {/* % of Portfolio */}
-                  <td className="text-right px-3 py-3">
+                  <td className="hidden sm:table-cell text-right px-3 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <div className="w-16 h-1.5 bg-background-secondary rounded-full overflow-hidden hidden sm:block">
                         <div

@@ -47,31 +47,31 @@ export function BudgetStatCards({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Budgeted */}
-        <div className="bg-card border border-card-border rounded-2xl p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+        <div className="bg-card border border-card-border rounded-2xl p-3 sm:p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
           <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.03]" style={{ background: "radial-gradient(circle, var(--success), transparent 70%)" }} />
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 80%, #000))" }}>
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 80%, #000))" }}>
               <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>account_balance_wallet</span>
             </div>
             <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Budgeted</span>
           </div>
-          <p className="font-data text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
+          <p className="font-data text-xl sm:text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
             {formatCurrency(totalBudgeted, "USD", 0)}
           </p>
           <p className="text-[11px] text-foreground-muted mt-1">{budgetCount} categories tracked</p>
         </div>
 
         {/* Spent — with mini ring */}
-        <div className="bg-card border border-card-border rounded-2xl p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+        <div className="bg-card border border-card-border rounded-2xl p-3 sm:p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000))" }}>
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000))" }}>
                   <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>payments</span>
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Spent</span>
               </div>
-              <p className="font-data text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
+              <p className="font-data text-xl sm:text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
                 {formatCurrency(totalSpent, "USD", 0)}
               </p>
             </div>
@@ -91,7 +91,7 @@ export function BudgetStatCards({
         {/* Remaining */}
         <div
           className={cn(
-            "border rounded-2xl p-5 relative overflow-hidden",
+            "border rounded-2xl p-3 sm:p-5 relative overflow-hidden",
             remaining < 0
               ? "bg-error/5 border-error/20"
               : remaining / totalBudgeted < 0.2
@@ -101,7 +101,7 @@ export function BudgetStatCards({
           style={{ boxShadow: "var(--shadow-sm)" }}
         >
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{
               background: remaining < 0
                 ? "linear-gradient(135deg, var(--error), color-mix(in srgb, var(--error) 80%, #000))"
                 : remaining / totalBudgeted < 0.2
@@ -113,7 +113,7 @@ export function BudgetStatCards({
             <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Remaining</span>
           </div>
           <p className={cn(
-            "font-data text-2xl font-black tabular-nums",
+            "font-data text-xl sm:text-2xl font-black tabular-nums",
             remaining < 0 ? "text-error" : remaining / totalBudgeted < 0.2 ? "text-warning" : "text-foreground"
           )} style={{ letterSpacing: "-0.03em" }}>
             {remaining < 0 ? `-${formatCurrency(Math.abs(remaining), "USD", 0)}` : formatCurrency(remaining, "USD", 0)}
@@ -136,29 +136,29 @@ export function BudgetStatCards({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {/* Avg Spending */}
-      <div className="bg-card border border-card-border rounded-2xl p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="bg-card border border-card-border rounded-2xl p-3 sm:p-5 relative overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.03]" style={{ background: "radial-gradient(circle, var(--success), transparent 70%)" }} />
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 80%, #000))" }}>
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 80%, #000))" }}>
             <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>account_balance_wallet</span>
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Avg Spending</span>
         </div>
-        <p className="font-data text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
+        <p className="font-data text-xl sm:text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
           {formatCurrency(totalAvgSpending, "USD", 0)}
         </p>
         <p className="text-[11px] text-foreground-muted mt-1">{monthsAnalyzed} mo average</p>
       </div>
 
       {/* Subscriptions */}
-      <div className="bg-card border border-card-border rounded-2xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="bg-card border border-card-border rounded-2xl p-3 sm:p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000))" }}>
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000))" }}>
             <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>sync</span>
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Subscriptions</span>
         </div>
-        <p className="font-data text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
+        <p className="font-data text-xl sm:text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
           {formatCurrency(subscriptionTotal)}
         </p>
         <p className="text-[11px] text-foreground-muted mt-1">{subscriptionCount} recurring</p>
@@ -179,9 +179,9 @@ export function BudgetStatCards({
       </div>
 
       {/* Upcoming Bills */}
-      <div className="bg-card border border-card-border rounded-2xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="bg-card border border-card-border rounded-2xl p-3 sm:p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shadow-sm" style={{
             background: nextBillDays != null && nextBillDays <= 3
               ? "linear-gradient(135deg, var(--error), color-mix(in srgb, var(--error) 80%, #000))"
               : "linear-gradient(135deg, var(--warning), color-mix(in srgb, var(--warning) 80%, #000))"
@@ -190,7 +190,7 @@ export function BudgetStatCards({
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted">Upcoming</span>
         </div>
-        <p className="font-data text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
+        <p className="font-data text-xl sm:text-2xl font-black text-foreground tabular-nums" style={{ letterSpacing: "-0.03em" }}>
           {billsCount} Bills
         </p>
         {billsCount > 0 ? (

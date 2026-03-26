@@ -56,7 +56,7 @@ export function usePasskey() {
     }
   }, [])
 
-  const register = useCallback(async (name?: string): Promise<boolean> => {
+  const register = useCallback(async (name?: string): Promise<{ ok: boolean; error?: string }> => {
     setError(null)
     setLoading(true)
     try {
@@ -66,8 +66,9 @@ export function usePasskey() {
       })
       if (!optionsRes.ok) {
         const data = await optionsRes.json().catch(() => null)
-        setError(data?.error ?? `Server error (${optionsRes.status})`)
-        return false
+        const msg = data?.error ?? `Server error (${optionsRes.status})`
+        setError(msg)
+        return { ok: false, error: msg }
       }
       const options = await optionsRes.json()
 
@@ -82,18 +83,20 @@ export function usePasskey() {
       })
       if (!verifyRes.ok) {
         const data = await verifyRes.json().catch(() => null)
-        setError(data?.error ?? "Passkey registration failed")
-        return false
+        const msg = data?.error ?? "Passkey registration failed"
+        setError(msg)
+        return { ok: false, error: msg }
       }
 
-      return true
+      return { ok: true }
     } catch (err) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         setError(null)
-        return false
+        return { ok: false } // User cancelled — not an error
       }
-      setError(err instanceof Error ? err.message : "Passkey registration failed")
-      return false
+      const msg = err instanceof Error ? err.message : "Passkey registration failed"
+      setError(msg)
+      return { ok: false, error: msg }
     } finally {
       setLoading(false)
     }

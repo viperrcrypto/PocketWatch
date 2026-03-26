@@ -58,14 +58,14 @@ export function BudgetCategoryRow({
       <div
         role="button"
         tabIndex={0}
-        className="flex items-center gap-3 px-5 py-3 cursor-pointer hover:bg-foreground/[0.02] transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
+        className="flex items-center gap-3 px-3 sm:px-5 py-3 cursor-pointer hover:bg-foreground/[0.02] transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded) } }}
         aria-expanded={expanded}
       >
         {/* Category icon */}
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
+          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
           style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
         >
           <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>{meta.icon}</span>
@@ -75,7 +75,7 @@ export function BudgetCategoryRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-semibold text-foreground">{budget.category}</span>
-            <span className="font-data text-xs font-black text-foreground tabular-nums">
+            <span className="font-data text-[10px] sm:text-xs font-black text-foreground tabular-nums">
               {formatCurrency(budget.spent)} <span className="font-medium text-foreground-muted">/ {formatCurrency(budget.monthlyLimit)}</span>
             </span>
           </div>

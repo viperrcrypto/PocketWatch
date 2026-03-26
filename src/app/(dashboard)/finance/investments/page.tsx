@@ -144,7 +144,7 @@ export default function InvestmentsPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-black tracking-tight text-foreground">Investments</h1>
-        <div className="bg-card border border-error/30 rounded-xl p-8 text-center">
+        <div className="bg-card border border-error/30 rounded-xl p-5 sm:p-8 text-center">
           <span className="material-symbols-rounded text-error mb-2 block" style={{ fontSize: 32 }}>error</span>
           <p className="text-sm text-error">Failed to load investment data. Please try again.</p>
         </div>

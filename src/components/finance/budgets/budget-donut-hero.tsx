@@ -193,10 +193,10 @@ export function BudgetDonutHero({
       </div>
 
       {/* Body: donut + legend */}
-      <div className="p-5 flex flex-col md:flex-row items-center md:items-start gap-6">
+      <div className="p-3 sm:p-5 flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
         {/* SVG Donut */}
-        <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
-          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+        <div className="relative flex-shrink-0 w-[160px] h-[160px] sm:w-[220px] sm:h-[220px]">
+          <svg width="100%" height="100%" viewBox={`0 0 ${SIZE} ${SIZE}`}>
             {/* Background track */}
             <circle
               cx={CX} cy={CY}
