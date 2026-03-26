@@ -133,6 +133,7 @@ interface DeepInsightsData {
     category: string | null
     logoUrl: string | null
   }>
+  dailySpending: Array<{ date: string; amount: number }>
   uncategorizedCount: number
   uncategorizedPreview: Array<{ id: string; name: string; amount: number; date: string; logoUrl: string | null }>
 }

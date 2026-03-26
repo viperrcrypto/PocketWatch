@@ -24,7 +24,9 @@ import { toast } from "sonner"
 export default function FinanceBudgetsPage() {
   const { data: budgets, isLoading, isError } = useFinanceBudgets()
   const { data: deep } = useFinanceDeepInsights()
-  const { data: txData } = useFinanceTransactions({ limit: 100 })
+  const txNow = new Date()
+  const monthStart = `${txNow.getFullYear()}-${String(txNow.getMonth() + 1).padStart(2, "0")}-01`
+  const { data: txData } = useFinanceTransactions({ limit: 100, startDate: monthStart })
   const { data: suggestions } = useBudgetSuggestions()
   const { data: subsData } = useFinanceSubscriptions()
   const createBudget = useCreateBudget()
@@ -55,17 +57,8 @@ export default function FinanceBudgetsPage() {
   const dailyAvg = dayOfMonth > 0 ? totalSpent / dayOfMonth : 0
   const projectedTotal = Math.round(dailyAvg * daysInMonth)
 
-  // Daily spending for chart
-  const dailySpending = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const tx of txData?.transactions ?? []) {
-      if (tx.amount <= 0 || ["Transfer", "Income", "Investment"].includes(tx.category ?? "")) continue
-      const day = tx.date.includes("T") ? tx.date.slice(0, 10) : tx.date
-      map.set(day, (map.get(day) ?? 0) + tx.amount)
-    }
-    const days = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-    return days.map(([date, amount]) => ({ date, amount }))
-  }, [txData])
+  // Daily spending from deep insights (server-computed from ALL transactions, not client-limited)
+  const dailySpending = deep?.dailySpending ?? []
 
   // Subscriptions for burn rate
   const activeSubs = useMemo(

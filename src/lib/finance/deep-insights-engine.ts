@@ -47,6 +47,7 @@ export interface DeepInsightsResult {
   subscriptionSummary: { monthlyTotal: number; monthlySubsOnly: number; activeCount: number; unwantedCount: number; potentialSavings: number }
   frequentMerchants: Array<{ name: string; count: number; total: number; category: string | null; logoUrl: string | null }>
   largestPurchases: Array<{ id: string; name: string; amount: number; date: string; category: string | null; logoUrl: string | null }>
+  dailySpending: Array<{ date: string; amount: number }>
   uncategorizedCount: number
   uncategorizedPreview: Array<{ id: string; name: string; amount: number; date: string; logoUrl: string | null }>
 }
@@ -257,7 +258,12 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
   }
   const incomeSources = [...incomeBySource.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, amount]) => ({ name, amount: round(amount) }))
 
+  // Daily spending array for charts (sorted by date, from the server-computed dailyTotals)
+  const dailySpending = [...dailyTotals.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, amount]) => ({ date, amount: round(amount) }))
+
   return {
-    currentMonth, previousMonth: prevMonth ?? null, totalSpending: round(spending), totalIncome: round(income), savingsRate, healthScore, spendingVelocity, cashFlowForecast, spendingStreaks, recurringVsOneTime, dayOfWeekPatterns, topCategories, categoryComparison, incomeSources, anomalies, budgetHealth, subscriptionSummary, frequentMerchants, largestPurchases, uncategorizedCount, uncategorizedPreview,
+    currentMonth, previousMonth: prevMonth ?? null, totalSpending: round(spending), totalIncome: round(income), savingsRate, healthScore, spendingVelocity, cashFlowForecast, spendingStreaks, recurringVsOneTime, dayOfWeekPatterns, topCategories, categoryComparison, incomeSources, anomalies, budgetHealth, subscriptionSummary, frequentMerchants, largestPurchases, dailySpending, uncategorizedCount, uncategorizedPreview,
   }
 }
