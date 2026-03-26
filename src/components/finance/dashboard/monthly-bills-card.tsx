@@ -106,7 +106,7 @@ export function MonthlyBillsCard({ isHidden }: MonthlyBillsCardProps) {
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{bill.merchantName}</p>
                           <p className="text-[10px] text-foreground-muted">
-                            {bill.isPaid ? "Paid" : bill.daysUntil === 0 ? "Due today" : bill.daysUntil === 1 ? "Tomorrow" : `In ${bill.daysUntil} days`}
+                            {bill.isPaid ? "Paid" : bill.daysUntil < 0 ? `${Math.abs(bill.daysUntil)}d overdue` : bill.daysUntil === 0 ? "Due today" : bill.daysUntil === 1 ? "Tomorrow" : `In ${bill.daysUntil} days`}
                           </p>
                         </div>
                       </div>

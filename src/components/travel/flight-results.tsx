@@ -125,40 +125,46 @@ export function FlightResults({ flights, onSearchCabin, isMultiSearch, onFiltere
     return Array.from(dates).sort()
   }, [flights, isMultiSearch])
 
-  // Compute filtered results
-  let filtered = [...flights]
-  if (cabinFilter !== "all") filtered = filtered.filter(f => f.cabinClass === cabinFilter)
-  if (typeFilter !== "all") filtered = filtered.filter(f => f.type === typeFilter)
-  if (stopsFilter !== "any") {
-    const max = parseInt(stopsFilter)
-    filtered = filtered.filter(f => f.stops <= max)
-  }
-  if (sourceFilter !== "all") filtered = filtered.filter(f => (f.sources ?? [f.source]).includes(sourceFilter))
-  if (airportFilter !== "all") {
-    const [orig, dest] = airportFilter.split("-")
-    filtered = filtered.filter(f => f.searchOrigin === orig && f.searchDestination === dest)
-  }
-  if (dateFilter !== "all") filtered = filtered.filter(f => f.searchDate === dateFilter)
-
-  filtered.sort((a, b) => {
-    switch (sortBy) {
-      case "valueScore": return b.valueScore - a.valueScore
-      case "price":
-        if (a.type === "cash" && b.type === "cash") return (a.cashPrice || 0) - (b.cashPrice || 0)
-        return (a.points || 0) - (b.points || 0)
-      case "cpp": return (b.realCpp || 0) - (a.realCpp || 0)
-      case "duration": return a.durationMinutes - b.durationMinutes
-      default: return 0
-    }
-  })
-
+  // Compute filtered + sorted results (memoized for stable reference)
   const isFiltered = cabinFilter !== "all" || typeFilter !== "all" || stopsFilter !== "any"
     || sourceFilter !== "all" || airportFilter !== "all" || dateFilter !== "all"
+
+  const filtered = useMemo(() => {
+    let result = [...flights]
+    if (cabinFilter !== "all") result = result.filter(f => f.cabinClass === cabinFilter)
+    if (typeFilter !== "all") result = result.filter(f => f.type === typeFilter)
+    if (stopsFilter !== "any") {
+      const max = parseInt(stopsFilter)
+      result = result.filter(f => f.stops <= max)
+    }
+    if (sourceFilter !== "all") result = result.filter(f => (f.sources ?? [f.source]).includes(sourceFilter))
+    if (airportFilter !== "all") {
+      const parts = airportFilter.split("-")
+      if (parts.length === 2) {
+        const [orig, dest] = parts
+        result = result.filter(f => f.searchOrigin === orig && f.searchDestination === dest)
+      }
+    }
+    if (dateFilter !== "all") result = result.filter(f => f.searchDate === dateFilter)
+
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "valueScore": return b.valueScore - a.valueScore
+        case "price":
+          if (a.type === "cash" && b.type === "cash") return (a.cashPrice || 0) - (b.cashPrice || 0)
+          return (a.points || 0) - (b.points || 0)
+        case "cpp": return (b.realCpp || 0) - (a.realCpp || 0)
+        case "duration": return a.durationMinutes - b.durationMinutes
+        default: return 0
+      }
+    })
+    return result
+  }, [flights, cabinFilter, typeFilter, stopsFilter, sourceFilter, airportFilter, dateFilter, sortBy])
 
   // Report filtered flights to parent so picks can respect filters
   useEffect(() => {
     onFilteredChange?.(isFiltered ? filtered : [])
-  }, [filtered.length, isFiltered, onFilteredChange])
+  }, [filtered, isFiltered, onFilteredChange])
 
   const clearAllFilters = () => {
     setCabinFilter("all")

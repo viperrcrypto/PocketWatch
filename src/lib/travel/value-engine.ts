@@ -310,7 +310,8 @@ export function deduplicateFlights(flights: ValueScoredFlight[]): ValueScoredFli
 
   for (const f of flights) {
     const program = f.type === "award" ? (f.pointsProgram || "UNKNOWN") : "CASH"
-    const key = `${f.origin}-${f.destination}-${f.travelDate || ""}-${f.cabinClass}-${program}-${f.stops}-${f.airline}`
+    const date = f.travelDate || f.searchDate || ""
+    const key = `${f.origin}-${f.destination}-${date}-${f.cabinClass}-${program}-${f.stops}-${f.airline}`
     const group = groups.get(key)
     if (group) {
       group.push(f)
