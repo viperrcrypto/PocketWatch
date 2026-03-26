@@ -27,12 +27,15 @@ export async function detectAndNotify(userId: string): Promise<{ alertsSent: num
   let alertsSent = 0
 
   for (const event of events) {
-    // Send notification first — only persist if at least one channel succeeds
     const payload = formatAlertPayload(event)
     const results = await sendNotification(userId, payload)
     const sentChannels = results.filter((r) => r.sent).map((r) => r.channel)
 
-    // Save to DB (even if no channels succeeded, for history — but mark channels)
+    // Only persist alert if at least one channel was configured.
+    // If no channels exist, skip — so the alert can be re-detected
+    // once the user configures notification channels later.
+    if (results.length === 0) continue
+
     await db.financeAlert.create({
       data: {
         userId,

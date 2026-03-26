@@ -296,8 +296,9 @@ async function detectBillReminders(userId: string): Promise<NewAlert[]> {
     select: { id: true, merchantName: true, amount: true, nextChargeDate: true, nickname: true, frequency: true, accountId: true },
   })
 
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   const existingAlerts = await db.financeAlert.findMany({
-    where: { userId, alertType: "bill_reminder", sentAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    where: { userId, alertType: "bill_reminder", sentAt: { gte: todayStart } },
     select: { metadata: true },
   })
   const alerted = new Set(

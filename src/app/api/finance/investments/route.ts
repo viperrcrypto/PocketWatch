@@ -180,6 +180,11 @@ export async function PATCH(req: NextRequest) {
       return apiError("F9008", "Only manual investments can be updated this way", 400)
     }
 
+    // Prevent conflicting operations
+    if (parsed.value !== undefined && parsed.addPrincipal !== undefined) {
+      return apiError("F9017", "Provide either 'value' or 'addPrincipal', not both", 400)
+    }
+
     // Handle APY rate change with history tracking
     if (parsed.apy !== undefined && parsed.apy !== null && parsed.apy !== account.apy) {
       await updateYieldRate(parsed.accountId, parsed.apy, parsed.apyNote)

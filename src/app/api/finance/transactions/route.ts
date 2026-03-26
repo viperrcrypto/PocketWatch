@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     sort: z.enum(["date", "amount", "merchant"]).default("date"),
     order: z.enum(["asc", "desc"]).default("desc"),
     includeExcluded: z.enum(["true", "false"]).default("false"),
-    txType: z.enum(["all", "charges", "refunds", "credits", "pending", "recurring"]).default("all"),
+    txType: z.enum(["all", "charges", "refunds", "pending", "recurring"]).default("all"),
   })
 
   const qp = querySchema.safeParse(Object.fromEntries(searchParams.entries()))
@@ -56,7 +56,6 @@ export async function GET(req: NextRequest) {
     if (maxAmount !== undefined) where.amount = { ...((where.amount as object) ?? {}), lte: maxAmount }
     if (txType === "charges") where.amount = { ...((where.amount as object) ?? {}), gt: 0 }
     if (txType === "refunds") where.amount = { ...((where.amount as object) ?? {}), lt: 0 }
-    if (txType === "credits") where.amount = { ...((where.amount as object) ?? {}), lt: 0 }
     if (txType === "pending") where.isPending = true
     if (txType === "recurring") where.isRecurring = true
 

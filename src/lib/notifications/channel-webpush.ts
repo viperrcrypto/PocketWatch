@@ -6,6 +6,13 @@
 import { db } from "@/lib/db"
 import type { NotificationPayload } from "./dispatcher"
 
+interface PushSubscription {
+  endpoint: string
+  keys: { p256dh: string; auth: string }
+  deviceLabel?: string
+  createdAt?: string
+}
+
 export async function sendWebPush(_userId: string, payload: NotificationPayload): Promise<boolean> {
   // Load VAPID keys
   const vapidRow = await db.settings.findUnique({ where: { key: "vapid_keys" } })
@@ -14,44 +21,73 @@ export async function sendWebPush(_userId: string, payload: NotificationPayload)
   const vapid = vapidRow.value as { publicKey: string; privateKey: string; subject: string }
   if (!vapid.publicKey || !vapid.privateKey) return false
 
-  // Load push subscription
-  const subRow = await db.settings.findUnique({ where: { key: "push_subscription" } })
-  if (!subRow?.value) return false
+  // Load push subscriptions (array for multi-device support)
+  const subRow = await db.settings.findUnique({ where: { key: "push_subscriptions" } })
+  // Also check legacy single-subscription key for backward compat
+  const legacyRow = !subRow ? await db.settings.findUnique({ where: { key: "push_subscription" } }) : null
 
-  const subscription = subRow.value as { endpoint: string; keys: { p256dh: string; auth: string } }
-  if (!subscription.endpoint) return false
+  let subscriptions: PushSubscription[] = []
+  if (subRow?.value) {
+    subscriptions = Array.isArray(subRow.value)
+      ? (subRow.value as unknown as PushSubscription[])
+      : [subRow.value as unknown as PushSubscription]
+  } else if (legacyRow?.value) {
+    subscriptions = [legacyRow.value as unknown as PushSubscription]
+  }
+
+  if (subscriptions.length === 0) return false
 
   try {
-    // Dynamic import to avoid bundling web-push in client
     const webpush = await import("web-push")
 
-    webpush.setVapidDetails(
-      vapid.subject || "mailto:alerts@pocketwatch.local",
-      vapid.publicKey,
-      vapid.privateKey,
-    )
+    const vapidSubject = process.env.NEXT_PUBLIC_APP_URL || vapid.subject || "mailto:alerts@pocketwatch.local"
+    webpush.setVapidDetails(vapidSubject, vapid.publicKey, vapid.privateKey)
 
     const pushPayload = JSON.stringify({
       title: payload.title,
       body: payload.body,
-      icon: "/favicon.ico",
+      icon: "/img/pwa-icon-192.png",
       tag: payload.tag ?? "pocketwatch-alert",
-      url: payload.url ?? "/finance",
+      url: payload.url ?? "/net-worth",
     })
 
-    await webpush.sendNotification(subscription, pushPayload)
-    return true
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    // Send to all subscriptions, collect expired ones for cleanup
+    const expiredEndpoints: string[] = []
+    const results = await Promise.allSettled(
+      subscriptions.map(async (sub) => {
+        try {
+          await webpush.sendNotification(sub, pushPayload)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err)
+          if (message.includes("410") || message.includes("404")) {
+            expiredEndpoints.push(sub.endpoint)
+          } else {
+            console.error("[notify:webpush] Error:", message)
+          }
+          throw err
+        }
+      }),
+    )
 
-    // If subscription expired or invalid, remove it
-    if (message.includes("410") || message.includes("404")) {
-      await db.settings.delete({ where: { key: "push_subscription" } }).catch(() => {})
-      console.warn("[notify:webpush] Subscription expired, removed")
-    } else {
-      console.error("[notify:webpush] Error:", message)
+    // Remove expired subscriptions
+    if (expiredEndpoints.length > 0) {
+      const remaining = subscriptions.filter((s) => !expiredEndpoints.includes(s.endpoint))
+      if (remaining.length > 0) {
+        await db.settings.upsert({
+          where: { key: "push_subscriptions" },
+          create: { key: "push_subscriptions", value: remaining as any },
+          update: { value: remaining as any },
+        })
+      } else {
+        await db.settings.delete({ where: { key: "push_subscriptions" } }).catch(() => {})
+        await db.settings.delete({ where: { key: "push_subscription" } }).catch(() => {})
+      }
+      console.warn(`[notify:webpush] Removed ${expiredEndpoints.length} expired subscription(s)`)
     }
 
+    return results.some((r) => r.status === "fulfilled")
+  } catch (err) {
+    console.error("[notify:webpush] Error:", err instanceof Error ? err.message : String(err))
     return false
   }
 }
@@ -78,7 +114,7 @@ export async function ensureVapidKeys(): Promise<string> {
       value: {
         publicKey: keys.publicKey,
         privateKey: keys.privateKey,
-        subject: "mailto:alerts@pocketwatch.local",
+        subject: process.env.NEXT_PUBLIC_APP_URL || "mailto:alerts@pocketwatch.local",
       },
     },
     update: {},

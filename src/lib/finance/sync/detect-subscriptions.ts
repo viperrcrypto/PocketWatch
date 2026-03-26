@@ -61,8 +61,10 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
       e.status === "active" &&
       [...EXCLUDED_MERCHANTS].some((m) => e.merchantName.toUpperCase().includes(m))
   )
+  const deletedIds = new Set<string>()
   for (const fp of falsePositives) {
     await db.financeSubscription.delete({ where: { id: fp.id } })
+    deletedIds.add(fp.id)
   }
 
   // Mark stale subscriptions as cancelled:
@@ -75,7 +77,7 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
 
   const activeSubs = existing.filter(
-    (e) => e.status === "active" && e.nextChargeDate && e.nextChargeDate < staleCutoff
+    (e) => !deletedIds.has(e.id) && e.status === "active" && e.nextChargeDate && e.nextChargeDate < staleCutoff
   )
   for (const stale of activeSubs) {
     // Check if there's been a recent transaction from this merchant
