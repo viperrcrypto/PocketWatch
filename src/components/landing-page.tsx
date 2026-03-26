@@ -13,6 +13,7 @@ export function LandingPage() {
   const [loading, setLoading] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [restoreFile, setRestoreFile] = useState<File | null>(null)
+  const [restoreKeysChanged, setRestoreKeysChanged] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -103,6 +104,10 @@ export function LandingPage() {
       const data = await res.json()
       if (!res.ok) { setError(data.error || "Restore failed"); return }
       if (typeof window !== "undefined") sessionStorage.removeItem("__pw_auth_redirect")
+      if (data.keysChanged) {
+        setRestoreKeysChanged(true)
+        return
+      }
       router.push("/net-worth")
     } catch {
       setError("Network error. Please try again.")
@@ -246,48 +251,30 @@ export function LandingPage() {
           </>
         )}
 
-        {mode === "restore" && (
+        {mode === "restore" && (restoreKeysChanged ? (
+          <div className="w-full space-y-4">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg space-y-2">
+              <p className="text-sm font-semibold text-foreground">Restore complete — update your .env</p>
+              <p className="text-xs text-foreground-muted">
+                Copy the ENCRYPTION_KEY and FINANCE_ENCRYPTION_KEY from your original .env to this server and restart.
+              </p>
+            </div>
+            <button onClick={() => router.push("/net-worth")} className="w-full px-6 py-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors">
+              Continue to Dashboard
+            </button>
+          </div>
+        ) : (
           <form onSubmit={handleRestore} className="w-full space-y-4">
-            <p className="text-sm text-foreground-muted text-center">
-              Upload a .pwbackup file and enter the vault password used when it was created.
-            </p>
-            <div>
-              <input
-                type="file"
-                accept=".pwbackup"
-                onChange={(e) => setRestoreFile(e.target.files?.[0] ?? null)}
-                className="w-full text-sm text-foreground-muted file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-card-border file:bg-card file:text-sm file:text-foreground file:font-medium hover:file:bg-card-hover file:cursor-pointer file:transition-colors"
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Vault password"
-                required
-                className="w-full px-4 py-3 text-sm bg-card border border-card-border rounded-lg outline-none focus:border-primary transition-colors placeholder:text-foreground-muted"
-              />
-            </div>
-            {error && (
-              <div className="text-sm text-error bg-error-muted px-4 py-2 rounded-lg">{error}</div>
-            )}
-            <button
-              type="submit"
-              disabled={loading || !restoreFile || !password}
-              className="w-full px-6 py-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-            >
+            <p className="text-sm text-foreground-muted text-center">Upload a .pwbackup file and enter the vault password used when it was created.</p>
+            <input type="file" accept=".pwbackup" onChange={(e) => setRestoreFile(e.target.files?.[0] ?? null)} className="w-full text-sm text-foreground-muted file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-card-border file:bg-card file:text-sm file:text-foreground file:font-medium hover:file:bg-card-hover file:cursor-pointer file:transition-colors" />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Vault password" required className="w-full px-4 py-3 text-sm bg-card border border-card-border rounded-lg outline-none focus:border-primary transition-colors placeholder:text-foreground-muted" />
+            {error && <div className="text-sm text-error bg-error-muted px-4 py-2 rounded-lg">{error}</div>}
+            <button type="submit" disabled={loading || !restoreFile || !password} className="w-full px-6 py-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50">
               {loading ? "Restoring..." : "Restore Backup"}
             </button>
-            <button
-              type="button"
-              onClick={() => { setMode("setup"); setError(null); setPassword(""); setRestoreFile(null) }}
-              className="w-full text-xs text-foreground-muted hover:text-foreground transition-colors text-center"
-            >
-              Back to setup
-            </button>
+            <button type="button" onClick={() => { setMode("setup"); setError(null); setPassword(""); setRestoreFile(null) }} className="w-full text-xs text-foreground-muted hover:text-foreground transition-colors text-center">Back to setup</button>
           </form>
-        )}
+        ))}
       </div>
     </div>
   )

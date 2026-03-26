@@ -65,7 +65,8 @@ export const BACKUP_TABLES: BackupTable[] = [
   { name: "FinanceCategoryRule", tier: 2 },
   { name: "FinanceCustomCategory", tier: 2 },
   { name: "FinanceInvestmentSecurity", tier: 2, updatedAtField: "updatedAt" },
-  { name: "SignUpBonusTracker", tier: 2, updatedAtField: "updatedAt" },
+  // SignUpBonusTracker has optional FK to CreditCardProfile (Tier 4)
+  { name: "SignUpBonusTracker", tier: 5, updatedAtField: "updatedAt" },
   { name: "PortfolioRefreshJob", tier: 2, updatedAtField: "updatedAt", resetJobStatus: true },
   { name: "FlightSearchResult", tier: 2, updatedAtField: "updatedAt" },
   { name: "PlaidSyncJob", tier: 2, updatedAtField: "updatedAt", resetJobStatus: true },

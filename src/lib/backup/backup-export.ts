@@ -25,15 +25,24 @@ export interface BackupPayload {
  * Export all tables into a BackupPayload.
  * Layer 2 fields are auto-decrypted by the Prisma extension (plaintext in payload).
  * Layer 3 fields stay as ciphertext (encrypted by finance/crypto.ts, not Prisma).
+ *
+ * All 54 tables are included even if empty — this ensures import can clear stale rows.
  */
 export async function exportAllTables(): Promise<BackupPayload> {
+  // Validate encryption is configured before exporting
+  if (!process.env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set — cannot create a backup with encrypted data")
+  }
+
   const tables: Record<string, unknown[]> = {}
   let totalRecords = 0
-  let tableCount = 0
 
   for (const table of BACKUP_TABLES) {
     const delegate = getModelDelegate(db, table.name)
-    if (!delegate?.findMany) continue
+    if (!delegate?.findMany) {
+      tables[table.name] = []
+      continue
+    }
 
     // Paginate to avoid memory spikes on large tables
     const records: unknown[] = []
@@ -52,11 +61,8 @@ export async function exportAllTables(): Promise<BackupPayload> {
       }
     } while (batch.length === CHUNK_SIZE)
 
-    if (records.length > 0) {
-      tables[table.name] = records
-      totalRecords += records.length
-      tableCount++
-    }
+    tables[table.name] = records
+    totalRecords += records.length
   }
 
   return {
@@ -64,10 +70,10 @@ export async function exportAllTables(): Promise<BackupPayload> {
     createdAt: new Date().toISOString(),
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
     secrets: {
-      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY ?? null,
+      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
       FINANCE_ENCRYPTION_KEY: process.env.FINANCE_ENCRYPTION_KEY ?? null,
     },
-    stats: { totalRecords, tableCount },
+    stats: { totalRecords, tableCount: BACKUP_TABLES.length },
     tables,
   }
 }

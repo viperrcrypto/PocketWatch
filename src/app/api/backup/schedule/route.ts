@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getCurrentUser, verifyPassword, withUserEncryption } from "@/lib/auth"
+import { getCurrentUser, verifyPassword } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { encrypt } from "@/lib/crypto"
@@ -21,7 +21,7 @@ interface AutoBackupConfig {
   directory: string
   /** Backup encryption key wrapped with ENCRYPTION_KEY */
   wrappedBackupKey: string | null
-  /** PBKDF2 salt used for key derivation (hex) */
+  /** PBKDF2 salt used for key derivation from vault password (hex) */
   backupKeySalt: string | null
   lastBackupAt: string | null
   lastBackupError: string | null
@@ -45,7 +45,6 @@ export async function GET() {
   const setting = await db.settings.findUnique({ where: { key: SETTINGS_KEY } })
   const config = setting ? (setting.value as unknown as AutoBackupConfig) : DEFAULT_CONFIG
 
-  // Don't expose wrapped key to the client
   return NextResponse.json({
     enabled: config.enabled,
     frequency: config.frequency,
@@ -73,14 +72,13 @@ export async function POST(req: NextRequest) {
     return apiError("B3003", "Invalid request body", 400)
   }
 
-  // Load existing config
   const setting = await db.settings.findUnique({ where: { key: SETTINGS_KEY } })
   const config = setting
     ? (setting.value as unknown as AutoBackupConfig)
     : { ...DEFAULT_CONFIG }
 
-  // If enabling, require password to derive backup key
-  if (body.enabled === true && !config.wrappedBackupKey) {
+  // If enabling (or re-enabling), always require password to derive fresh key
+  if (body.enabled === true) {
     if (!body.password) {
       return apiError("B3004", "Password required to enable auto-backup", 400)
     }
@@ -95,8 +93,15 @@ export async function POST(req: NextRequest) {
     const { deriveKey } = await import("@/lib/per-user-crypto")
     const backupKeyHex = await deriveKey(body.password, salt)
 
-    config.wrappedBackupKey = await withUserEncryption(() => encrypt(backupKeyHex))
+    // encrypt() uses ENCRYPTION_KEY directly — no user DEK needed
+    config.wrappedBackupKey = await encrypt(backupKeyHex)
     config.backupKeySalt = salt
+  }
+
+  // If disabling, clear the wrapped key
+  if (body.enabled === false) {
+    config.wrappedBackupKey = null
+    config.backupKeySalt = null
   }
 
   // Update config fields

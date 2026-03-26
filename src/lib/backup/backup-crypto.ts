@@ -8,6 +8,11 @@
  *   [32B] PBKDF2 salt
  *   [12B] AES-GCM IV
  *   [NB] Ciphertext (gzipped JSON + GCM auth tag)
+ *
+ * Both manual and auto-backup produce the same format. The salt in the header
+ * is always the PBKDF2 salt used for key derivation — for manual backups it's
+ * random, for auto-backups it's the stored backupSalt. This means both can
+ * be decrypted with just the vault password.
  */
 
 import { gzipSync, gunzipSync } from "node:zlib"
@@ -52,39 +57,80 @@ async function deriveBackupKey(
 }
 
 /**
- * Encrypt a backup payload into a .pwbackup binary buffer.
+ * Import a raw hex key as a CryptoKey for AES-GCM.
  */
-export async function encryptBackup(
+async function importRawKey(hexKey: string): Promise<CryptoKey> {
+  const bytes = new Uint8Array(32)
+  for (let i = 0; i < 32; i++) {
+    bytes[i] = parseInt(hexKey.slice(i * 2, i * 2 + 2), 16)
+  }
+  return crypto.subtle.importKey(
+    "raw",
+    bytes.buffer as ArrayBuffer,
+    { name: "AES-GCM", length: KEY_LENGTH_BITS },
+    false,
+    ["encrypt", "decrypt"],
+  )
+}
+
+/**
+ * Core encryption: compress + AES-GCM encrypt + assemble binary.
+ */
+async function encryptCore(
   payload: object,
-  password: string,
+  key: CryptoKey,
+  salt: Uint8Array,
 ): Promise<Buffer> {
   const json = JSON.stringify(payload)
   const compressed = gzipSync(Buffer.from(json, "utf-8"), { level: 6 })
 
-  const salt = crypto.getRandomValues(new Uint8Array(32))
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-  const key = await deriveBackupKey(password, salt)
-
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv, tagLength: TAG_LENGTH },
     key,
     compressed,
   )
 
-  // Assemble: magic + version + salt + iv + ciphertext(+tag)
   const output = Buffer.alloc(HEADER_SIZE + ciphertext.byteLength)
   output.set(MAGIC, 0)
   output[4] = FORMAT_VERSION
   output.set(salt, 5)
   output.set(iv, 37)
   output.set(new Uint8Array(ciphertext), HEADER_SIZE)
-
   return output
 }
 
 /**
+ * Encrypt a backup with the vault password (manual export).
+ * Generates a random salt and derives the AES key via PBKDF2.
+ */
+export async function encryptBackup(
+  payload: object,
+  password: string,
+): Promise<Buffer> {
+  const salt = crypto.getRandomValues(new Uint8Array(32))
+  const key = await deriveBackupKey(password, salt)
+  return encryptCore(payload, key, salt)
+}
+
+/**
+ * Encrypt a backup with a pre-derived key + its PBKDF2 salt (auto-backup).
+ * The salt is embedded in the header so decryptBackup(buffer, vaultPassword)
+ * can re-derive the same key — no double PBKDF2.
+ */
+export async function encryptBackupWithDerivedKey(
+  payload: object,
+  derivedKeyHex: string,
+  pbkdf2SaltHex: string,
+): Promise<Buffer> {
+  const key = await importRawKey(derivedKeyHex)
+  const salt = new Uint8Array(pbkdf2SaltHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)))
+  return encryptCore(payload, key, salt)
+}
+
+/**
  * Decrypt a .pwbackup binary buffer into the parsed JSON payload.
- * Throws on wrong password, corrupted file, or version mismatch.
+ * Works for both manual and auto-backup files — both use the vault password.
  */
 export async function decryptBackup(
   buffer: Buffer,
@@ -94,14 +140,12 @@ export async function decryptBackup(
     throw new Error("File is too small to be a valid PocketWatch backup")
   }
 
-  // Validate magic
   for (let i = 0; i < 4; i++) {
     if (buffer[i] !== MAGIC[i]) {
       throw new Error("Not a valid PocketWatch backup file")
     }
   }
 
-  // Validate version
   if (buffer[4] !== FORMAT_VERSION) {
     throw new Error(
       `Unsupported backup version ${buffer[4]}. This version of PocketWatch supports version ${FORMAT_VERSION}.`,

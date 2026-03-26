@@ -13,7 +13,7 @@ import { db } from "@/lib/db"
 import { decrypt } from "@/lib/crypto"
 import { withEncryptionKey } from "@/lib/encryption-context"
 import { exportAllTables } from "@/lib/backup/backup-export"
-import { encryptBackup } from "@/lib/backup/backup-crypto"
+import { encryptBackupWithDerivedKey } from "@/lib/backup/backup-crypto"
 
 const SETTINGS_KEY = "auto_backup"
 
@@ -41,18 +41,17 @@ export async function POST(req: NextRequest) {
 
   const config = setting.value as unknown as AutoBackupConfig
   if (!config.enabled || !config.wrappedBackupKey || !config.backupKeySalt) {
-    return NextResponse.json({ skipped: true, reason: "Auto-backup disabled" })
+    return NextResponse.json({ skipped: true, reason: "Auto-backup disabled or not configured" })
   }
 
   try {
     // Unwrap the backup encryption key
     const backupKeyHex = await decrypt(config.wrappedBackupKey)
 
-    // Derive a user DEK for Layer 2 field decryption during export
+    // Get DEK from the most recent active session for Layer 2 decryption
     const user = await db.user.findFirst()
     if (!user) return apiError("B4003", "No user found", 500)
 
-    // Get DEK from the most recent session
     const session = await db.session.findFirst({
       where: { userId: user.id, expiresAt: { gte: new Date() } },
       orderBy: { createdAt: "desc" },
@@ -70,11 +69,15 @@ export async function POST(req: NextRequest) {
     // Export within encryption context
     const payload = await withEncryptionKey(dekHex, () => exportAllTables())
 
-    // Encrypt with the backup key (uses backupKeySalt as a reference)
-    // We use a random salt per-file for the actual encryption
-    const encrypted = await encryptBackup(payload, backupKeyHex)
+    // Encrypt with the pre-derived key + its PBKDF2 salt
+    // This produces a file decryptable with PBKDF2(vault_password, backupKeySalt)
+    const encrypted = await encryptBackupWithDerivedKey(
+      payload,
+      backupKeyHex,
+      config.backupKeySalt,
+    )
 
-    // Resolve directory path and validate it's within home directory
+    // Resolve and validate directory path
     const dir = config.directory.replace(/^~/, homedir())
     const resolvedDir = resolve(dir)
     const allowedBase = resolve(homedir())
@@ -96,7 +99,9 @@ export async function POST(req: NextRequest) {
       .reverse()
 
     for (const old of files.slice(config.retentionCount)) {
-      await unlink(resolve(resolvedDir, old)).catch(() => { /* ignore */ })
+      await unlink(resolve(resolvedDir, old)).catch((err) => {
+        console.warn(`[backup] Failed to delete old backup ${old}:`, err)
+      })
     }
 
     // Update last backup timestamp
@@ -114,7 +119,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, file: filename, records: payload.stats.totalRecords })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Auto-backup failed"
-    // Save error to config
+    console.error("[backup-worker] Auto-backup failed:", err)
     await db.settings.update({
       where: { key: SETTINGS_KEY },
       data: {
@@ -123,7 +128,7 @@ export async function POST(req: NextRequest) {
           lastBackupError: message,
         })),
       },
-    }).catch(() => { /* ignore settings update failure */ })
+    }).catch(() => {})
 
     return apiError("B4004", message, 500, err)
   }

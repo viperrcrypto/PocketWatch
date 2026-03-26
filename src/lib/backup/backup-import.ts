@@ -112,7 +112,7 @@ async function resetStuckJobs(): Promise<void> {
 
 /**
  * Patch @updatedAt timestamps back to original values.
- * Prisma auto-sets updatedAt on create, so we use individual updates.
+ * Prisma auto-sets updatedAt on create, so we use individual safe updates.
  */
 async function patchTimestamps(
   tables: Record<string, unknown[]>,
@@ -157,6 +157,9 @@ export async function importBackup(
   // Apply backup encryption keys temporarily (safe under advisory lock)
   const { restore: restoreKeys, keysChanged } = applyBackupKeys(payload.secrets)
 
+  // Track DEK for session creation after key restore
+  let dekHex: string | undefined
+
   try {
     // 1. Wipe the database (Settings + User cascade)
     await db.settings.deleteMany()
@@ -170,7 +173,6 @@ export async function importBackup(
     const user = userRecords[0]
     const encryptionSalt = user.encryptionSalt as string | null
 
-    let dekHex: string | undefined
     if (encryptionSalt && isEncryptionConfigured()) {
       dekHex = await deriveKey(vaultPassword, encryptionSalt)
     }
@@ -199,7 +201,11 @@ export async function importBackup(
     // 5. Patch @updatedAt timestamps to original values
     await patchTimestamps(payload.tables)
 
-    // 6. Create a fresh session for the restored user
+    // 6. Restore original env keys BEFORE creating session
+    //    so wrapDek uses the key that will be present at runtime
+    restoreKeys()
+
+    // 7. Create session — DEK wrapped with the RUNTIME key, not backup key
     const restoredUser = await db.user.findFirst()
     if (!restoredUser) {
       throw new Error("User record was not restored — import failed")
@@ -227,8 +233,8 @@ export async function importBackup(
       sessionId: session.id,
     }
   } finally {
+    // restoreKeys is idempotent — safe to call again if session creation threw
     restoreKeys()
-    // Release advisory lock
     await db.$queryRawUnsafe(`SELECT pg_advisory_unlock(${IMPORT_LOCK_ID})`).catch(() => {})
   }
 }
