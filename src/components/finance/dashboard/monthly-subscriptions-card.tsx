@@ -33,6 +33,7 @@ function calcMonthlyBurn(subs: Sub[]): number {
     switch (s.frequency) {
       case "weekly": return sum + s.amount * Math.round(weeksInMonth)
       case "biweekly": return sum + s.amount * Math.round(weeksInMonth / 2)
+      case "semi_monthly": return sum + s.amount * 2
       case "monthly": return sum + s.amount
       case "quarterly": return sum + s.amount / 3
       case "semi_annual": return sum + s.amount / 6

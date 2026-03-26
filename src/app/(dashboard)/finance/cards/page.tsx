@@ -169,6 +169,7 @@ export default function FinanceCardsPage() {
       switch (s.frequency) {
         case "weekly": return sum + s.amount * 4.33
         case "biweekly": return sum + s.amount * 2.17
+        case "semi_monthly": return sum + s.amount * 2
         case "monthly": return sum + s.amount
         case "quarterly": return sum + s.amount / 3
         case "semi_annual": return sum + s.amount / 6

@@ -190,6 +190,7 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
     switch (sub.frequency) {
       case "weekly": return sub.amount * 4.33
       case "biweekly": return sub.amount * 2.17
+      case "semi_monthly": return sub.amount * 2
       case "monthly": return sub.amount
       case "quarterly": return sub.amount / 3
       case "semi_annual": return sub.amount / 6

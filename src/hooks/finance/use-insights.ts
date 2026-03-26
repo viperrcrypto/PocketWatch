@@ -17,7 +17,7 @@ interface InsightsData {
     category: string
     thisMonth: number
     lastMonth: number
-    changePercent: number
+    changePercent: number | null
   }>
   topMerchants: Array<{
     merchantName: string
