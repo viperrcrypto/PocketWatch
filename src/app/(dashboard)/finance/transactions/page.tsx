@@ -101,64 +101,40 @@ export default function FinanceTransactionsPage() {
         </Link>
       </div>
 
-      {/* Categorization Alert — shows for uncategorized OR needs-review */}
+      {/* Categorization Banner */}
       {needsAttention > 0 && (
-        <div className="bg-card border border-card-border rounded-xl p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-rounded text-orange-500" style={{ fontSize: 20 }}>label_off</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-foreground">
-                {uncategorizedCount > 0 && `${uncategorizedCount} uncategorized`}
-                {uncategorizedCount > 0 && reviewCount > 0 && " + "}
-                {reviewCount > 0 && `${reviewCount} need review`}
-              </p>
-              <p className="text-xs text-foreground-muted">Categorize for better insights</p>
-            </div>
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-orange-500/5 border border-orange-500/20 rounded-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="material-symbols-rounded text-orange-500 shrink-0" style={{ fontSize: 18 }}>label_off</span>
+            <p className="text-xs text-foreground truncate">
+              <span className="font-semibold">{needsAttention}</span>
+              <span className="text-foreground-muted"> need categorizing</span>
+            </p>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => {
                 try {
                   autoCategorize.mutate(undefined, {
                     onSuccess: (result) => {
-                      if (result.categorized > 0) {
-                        toast.success(`Categorized ${result.categorized} transaction${result.categorized > 1 ? "s" : ""}${result.remaining > 0 ? ` (${result.remaining} remaining)` : ""}`)
-                      } else {
-                        toast.info("No matches found. Try Manual Review or AI Categorize.")
-                      }
+                      if (result.categorized > 0) toast.success(`Categorized ${result.categorized} transaction${result.categorized > 1 ? "s" : ""}`)
+                      else toast.info("No matches — try AI Categorize")
                     },
-                    onError: (err) => toast.error(err.message ?? "Auto-categorize failed"),
+                    onError: (err) => toast.error(err.message ?? "Failed"),
                   })
-                } catch {
-                  toast.error("Auto-categorize failed to start")
-                }
+                } catch { toast.error("Failed to start") }
               }}
               disabled={autoCategorize.isPending}
-              className="flex-shrink-0 px-3 py-2 text-xs border border-card-border rounded-lg hover:bg-background-secondary transition-colors disabled:opacity-50"
+              className="px-2.5 py-1 text-[11px] font-medium border border-card-border rounded-md hover:bg-background-secondary transition-colors disabled:opacity-50"
             >
-              <span className="font-semibold text-foreground">
-                {autoCategorize.isPending ? "Working..." : "Quick Fix"}
-              </span>
-              <span className="block text-[10px] text-foreground-muted mt-0.5">Local rules — instant</span>
+              {autoCategorize.isPending ? "..." : "Quick Fix"}
             </button>
-            <Link
-              href="/finance/categorize"
-              className="flex-shrink-0 px-3 py-2 text-xs border border-card-border rounded-lg hover:bg-background-secondary transition-colors text-center"
-            >
-              <span className="font-semibold text-foreground">Review Manually</span>
-              <span className="block text-[10px] text-foreground-muted mt-0.5">One at a time</span>
+            <Link href="/finance/categorize" className="px-2.5 py-1 text-[11px] font-medium border border-card-border rounded-md hover:bg-background-secondary transition-colors">
+              Review
             </Link>
-            <Link
-              href="/finance/categorize?mode=rebuild"
-              className="flex-shrink-0 px-3 py-2 text-xs bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity text-center flex flex-col items-center"
-            >
-              <span className="font-semibold flex items-center gap-1">
-                <span className="material-symbols-rounded" style={{ fontSize: 13 }}>auto_awesome</span>
-                AI Categorize All
-              </span>
-              <span className="block text-[10px] opacity-60 mt-0.5">Uses AI — reviews all at once</span>
+            <Link href="/finance/categorize?mode=rebuild" className="px-2.5 py-1 text-[11px] font-medium bg-foreground text-background rounded-md hover:opacity-90 transition-opacity flex items-center gap-1">
+              <span className="material-symbols-rounded" style={{ fontSize: 12 }}>auto_awesome</span>
+              AI Fix All
             </Link>
           </div>
         </div>

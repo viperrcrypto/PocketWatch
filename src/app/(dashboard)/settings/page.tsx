@@ -4,7 +4,6 @@ import { PreferencesSection } from "@/components/settings/preferences-section"
 import { PasswordChangeSection } from "@/components/settings/password-change-section"
 import { PasskeySection } from "@/components/settings/passkey-section"
 import { NotificationSettings } from "@/components/settings/notification-settings"
-import { NotificationPreferencesSection } from "@/components/settings/notification-preferences"
 import { AutoLockSetting } from "@/components/settings/auto-lock-setting"
 import { BackupSection } from "@/components/settings/backup-section"
 import { ClearDataSection } from "@/components/settings/clear-data-section"
@@ -36,21 +35,13 @@ export default function SystemSettingsPage() {
       <PasswordChangeSection />
       <PasskeySection />
 
-      {/* Notification Channels */}
+      {/* Notifications */}
       <CollapsibleSection
-        title="Notification Channels"
-        subtitle="Configure how you receive push notifications"
+        title="Notifications"
+        subtitle="Push notifications, Telegram, and alert channels"
         defaultOpen
       >
         <NotificationSettings />
-      </CollapsibleSection>
-
-      {/* Notification Routing */}
-      <CollapsibleSection
-        title="Notification Routing"
-        subtitle="Per-channel severity, categories, and quiet hours"
-      >
-        <NotificationPreferencesSection />
       </CollapsibleSection>
 
       {/* Backup & Restore */}
