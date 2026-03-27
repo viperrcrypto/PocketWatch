@@ -26,7 +26,7 @@ export function DashboardLayoutInner({
   const { isOpen: chatOpen } = useChat()
 
   return (
-    <div className="min-h-screen fade-in-slow page-bg">
+    <div className="min-h-screen page-bg">
       <GlobalSyncPoller />
       <FinanceSyncPoller />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />

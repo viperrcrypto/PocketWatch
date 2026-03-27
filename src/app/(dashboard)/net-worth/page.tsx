@@ -2,6 +2,8 @@
 
 import { useCombinedNetWorth } from "@/hooks/use-combined-net-worth"
 import { formatCurrency, cn } from "@/lib/utils"
+import { FadeIn } from "@/components/motion/fade-in"
+import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
 import { usePrivacyMode } from "@/hooks/use-privacy-mode"
 import { PrivacyToggle } from "@/components/portfolio/privacy-toggle"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
@@ -44,7 +46,7 @@ export default function NetWorthPage() {
       <Header isHidden={isHidden} togglePrivacy={togglePrivacy} />
 
       {/* Hero Card */}
-      <div className="animate-fade-up mt-6 mb-8">
+      <FadeIn className="mt-6 mb-8">
         <FinanceHeroCard
           label="Total Net Worth"
           value={formatCurrency(totalNetWorth)}
@@ -67,10 +69,10 @@ export default function NetWorthPage() {
             <NetWorthHistoryChart data={history} height={260} />
           )}
         </FinanceHeroCard>
-      </div>
+      </FadeIn>
 
       {/* Breakdown */}
-      <div className="animate-fade-up delay-2">
+      <FadeIn delay={0.1}>
         <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-3">
           Breakdown
         </p>
@@ -90,29 +92,33 @@ export default function NetWorthPage() {
             isHidden={isHidden}
           />
         )}
-      </div>
+      </FadeIn>
 
       {/* Source cards */}
-      <div className="animate-fade-up delay-4 mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SourceCard
-          title="Finance"
-          subtitle="Bank accounts, investments, credit cards"
-          value={fiat.netWorth}
-          icon="account_balance"
-          href="/finance"
-          isHidden={isHidden}
-          isLoading={isLoading}
-        />
-        <SourceCard
-          title="Digital Assets"
-          subtitle="Wallets, exchanges, staking"
-          value={crypto.value}
-          icon="currency_bitcoin"
-          href="/portfolio"
-          isHidden={isHidden}
-          isLoading={isLoading}
-        />
-      </div>
+      <StaggerChildren className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4" staggerMs={80}>
+        <StaggerItem>
+          <SourceCard
+            title="Finance"
+            subtitle="Bank accounts, investments, credit cards"
+            value={fiat.netWorth}
+            icon="account_balance"
+            href="/finance"
+            isHidden={isHidden}
+            isLoading={isLoading}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <SourceCard
+            title="Digital Assets"
+            subtitle="Wallets, exchanges, staking"
+            value={crypto.value}
+            icon="currency_bitcoin"
+            href="/portfolio"
+            isHidden={isHidden}
+            isLoading={isLoading}
+          />
+        </StaggerItem>
+      </StaggerChildren>
     </div>
   )
 }

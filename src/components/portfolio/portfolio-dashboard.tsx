@@ -48,6 +48,8 @@ import {
   usePricesMap,
   useLocationData,
 } from "@/hooks/use-portfolio-dashboard"
+import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
+import { FadeIn } from "@/components/motion/fade-in"
 import {
   useChartData,
   usePeriodChange,
@@ -240,33 +242,47 @@ export function PortfolioDashboard() {
         chartStats={chartStats} historyWarning={historyWarning} syncStatus={syncStatus}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <OverviewStatCard label="Total Value" value={formatFiatValue(effectiveTotalValue)} icon="account_balance" isLoading={headlineLoading} accentColor="#ffffff" isHidden={isHidden} />
-        <OverviewStatCard
-          label="24h Change"
-          value={change24h ? `${change24h.positive ? "+" : ""}${formatFiatValue(change24h.delta)}` : "--"}
-          change={change24h ? { value: `${change24h.positive ? "+" : ""}${change24h.pct.toFixed(2)}%`, positive: change24h.positive } : undefined}
-          icon="trending_up" isLoading={headlineLoading}
-          accentColor={change24h ? (change24h.positive ? "var(--success)" : "var(--error)") : "#2a2a2a"}
-          isHidden={isHidden}
-        />
-        <OverviewStatCard label="Total Assets" value={bothSourcesLoading ? "..." : String(topAssets.length)} icon="token" isLoading={bothSourcesLoading} />
-        <OverviewStatCard label="Active Chains" value={bothSourcesLoading ? "..." : String(activeChains)} icon="device_hub" isLoading={bothSourcesLoading} />
-      </div>
+      <StaggerChildren className="grid grid-cols-2 lg:grid-cols-4 gap-3" staggerMs={60}>
+        <StaggerItem>
+          <OverviewStatCard label="Total Value" value={formatFiatValue(effectiveTotalValue)} icon="account_balance" isLoading={headlineLoading} accentColor="#ffffff" isHidden={isHidden} />
+        </StaggerItem>
+        <StaggerItem>
+          <OverviewStatCard
+            label="24h Change"
+            value={change24h ? `${change24h.positive ? "+" : ""}${formatFiatValue(change24h.delta)}` : "--"}
+            change={change24h ? { value: `${change24h.positive ? "+" : ""}${change24h.pct.toFixed(2)}%`, positive: change24h.positive } : undefined}
+            icon="trending_up" isLoading={headlineLoading}
+            accentColor={change24h ? (change24h.positive ? "var(--success)" : "var(--error)") : "#2a2a2a"}
+            isHidden={isHidden}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <OverviewStatCard label="Total Assets" value={bothSourcesLoading ? "..." : String(topAssets.length)} icon="token" isLoading={bothSourcesLoading} />
+        </StaggerItem>
+        <StaggerItem>
+          <OverviewStatCard label="Active Chains" value={bothSourcesLoading ? "..." : String(activeChains)} icon="device_hub" isLoading={bothSourcesLoading} />
+        </StaggerItem>
+      </StaggerChildren>
 
       {Object.keys(locationData).length > 0 && (
-        <ChainAllocationBar locations={locationData} totalValue={effectiveTotalValue} isHidden={isHidden} />
+        <FadeIn delay={0.15}>
+          <ChainAllocationBar locations={locationData} totalValue={effectiveTotalValue} isHidden={isHidden} />
+        </FadeIn>
       )}
 
-      <QuickActionsGrid />
+      <FadeIn delay={0.2}>
+        <QuickActionsGrid />
+      </FadeIn>
 
-      <ExpandableAssetTable
+      <FadeIn delay={0.25}>
+        <ExpandableAssetTable
         assets={aggregatedAssets} totalValue={effectiveTotalValue} iconMap={iconMap} pricesMap={pricesMap}
         assetMappings={assetMappings} wallets={walletInfoList} isLoading={bothSourcesLoading}
         isResolvingNames={isResolvingNames} overview={overview} blockchainData={blockchainData}
         trackedAccounts={trackedAccounts} balancesError={balancesError} overviewError={overviewError}
         onRefresh={handleRefresh} isRefreshing={!!isRefreshing} refreshCooldown={refreshCooldown} isHidden={isHidden}
       />
+      </FadeIn>
 
       {clickedPoint && (
         <ChartPointDetail

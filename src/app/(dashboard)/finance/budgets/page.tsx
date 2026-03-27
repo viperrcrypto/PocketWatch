@@ -20,6 +20,8 @@ import { ConfirmDialog } from "@/components/finance/confirm-dialog"
 import { getBudgetableCategories } from "@/lib/finance/categories"
 import { formatCurrency, cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { FadeIn } from "@/components/motion/fade-in"
+import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
 
 export default function FinanceBudgetsPage() {
   const { data: budgets, isLoading, isError } = useFinanceBudgets()
@@ -129,7 +131,7 @@ export default function FinanceBudgetsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -157,75 +159,88 @@ export default function FinanceBudgetsPage() {
       ) : (
         <>
           {/* ── 1. Hero: Ring Chart + Spending Trend ── */}
-          <div className="bg-card rounded-2xl p-6" style={{ boxShadow: "var(--shadow-sm)" }}>
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-shrink-0">
-                <BudgetRingChart spent={totalSpent} limit={totalBudgeted} size={200} strokeWidth={16} />
-              </div>
-              <div className="flex-1 w-full">
-                <BudgetSpendingChart dailySpending={dailySpending} budgetLimit={totalBudgeted} projectedTotal={projectedTotal} />
+          <FadeIn>
+            <div className="bg-card rounded-2xl p-6" style={{ boxShadow: "var(--shadow-sm)" }}>
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-shrink-0">
+                  <BudgetRingChart spent={totalSpent} limit={totalBudgeted} size={200} strokeWidth={16} />
+                </div>
+                <div className="flex-1 w-full">
+                  <BudgetSpendingChart dailySpending={dailySpending} budgetLimit={totalBudgeted} projectedTotal={projectedTotal} />
+                </div>
               </div>
             </div>
-          </div>
+          </FadeIn>
 
-          {/* ── 2. Insight Cards ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <InsightCard icon="speed" iconColor="text-primary" label="Pace Check">
-              You&apos;re spending <b className="tabular-nums">{formatCurrency(dailyAvg, "USD", 0)}/day</b>.
-              {projectedTotal > totalBudgeted ? (
-                <> Projected <b className="tabular-nums">{formatCurrency(projectedTotal, "USD", 0)}</b> — <span className="text-error font-semibold">{formatCurrency(projectedTotal - totalBudgeted, "USD", 0)} over.</span></>
-              ) : (
-                <> Projected <b className="tabular-nums">{formatCurrency(projectedTotal, "USD", 0)}</b> — <span className="text-success font-semibold">{formatCurrency(totalBudgeted - projectedTotal, "USD", 0)} under.</span></>
-              )}
-            </InsightCard>
-            <InsightCard icon="warning" iconColor="text-error" label="Biggest Overspend">
-              {worstCategory && worstOver > 0 ? (
-                <><b>{worstCategory.category}</b> is <span className="text-error font-semibold tabular-nums">{formatCurrency(worstOver, "USD", 0)} over</span> ({Math.round(worstCategory.percentUsed)}%).
-                {daysInMonth - dayOfMonth > 0 && <span className="text-foreground-muted"> Reduce {formatCurrency(worstOver / Math.max(1, daysInMonth - dayOfMonth) * 7, "USD", 0)}/week.</span>}</>
-              ) : <span className="text-success font-medium">All categories within budget!</span>}
-            </InsightCard>
-            <InsightCard icon="check_circle" iconColor="text-success" label="On Track">
-              {underBudget.length > 0 ? (
-                <><span className="text-success font-semibold">{underBudget.length} {underBudget.length === 1 ? "category" : "categories"}</span> under budget:
-                {" "}{underBudget.slice(0, 2).map((b) => `${b.category} (${formatCurrency(b.monthlyLimit - b.spent, "USD", 0)} left)`).join(" and ")}.</>
-              ) : <span className="text-error font-medium">All categories over budget.</span>}
-            </InsightCard>
-          </div>
+          {/* ── 2. Insight Strip ── */}
+          <StaggerChildren className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-card-border rounded-xl overflow-hidden" staggerMs={60}>
+            <StaggerItem>
+              <InsightCard icon="speed" iconColor="text-primary" label="Pace Check">
+                <b className="tabular-nums">{formatCurrency(dailyAvg, "USD", 0)}/day</b>
+                {projectedTotal > totalBudgeted
+                  ? <> &middot; <span className="text-error font-semibold">{formatCurrency(projectedTotal - totalBudgeted, "USD", 0)} over</span></>
+                  : <> &middot; <span className="text-success font-semibold">{formatCurrency(totalBudgeted - projectedTotal, "USD", 0)} under</span></>}
+              </InsightCard>
+            </StaggerItem>
+            <StaggerItem>
+              <InsightCard icon="warning" iconColor="text-error" label="Biggest Overspend">
+                {worstCategory && worstOver > 0
+                  ? <><b>{worstCategory.category}</b> <span className="text-error font-semibold tabular-nums">{formatCurrency(worstOver, "USD", 0)} over</span></>
+                  : <span className="text-success font-medium">All within budget</span>}
+              </InsightCard>
+            </StaggerItem>
+            <StaggerItem>
+              <InsightCard icon="check_circle" iconColor="text-success" label="On Track">
+                <span className="text-success font-semibold">{underBudget.length}</span> under budget
+                {underBudget.length > 0 && <> &middot; {underBudget.slice(0, 1).map((b) => `${b.category} (${formatCurrency(b.monthlyLimit - b.spent, "USD", 0)} left)`).join("")}</>}
+              </InsightCard>
+            </StaggerItem>
+          </StaggerChildren>
 
-          {/* ── 3. Budget vs Actual ── */}
-          <BudgetComparisonTable
-            budgets={budgets!.map((b) => ({ category: b.category, budget: b.monthlyLimit, actual: b.spent }))}
-            suggestions={defaultCategories}
-            onAISuggest={() => generateAI.mutate(undefined, { onSuccess: () => toast.success("AI budget suggestions generated"), onError: (e) => toast.error(e.message) })}
-          />
-
-          {/* ── 4. Category Breakdown ── */}
-          <BudgetCategoryBreakdown
-            budgets={budgets!}
-            txByCategory={txByCategory}
-            onEditBudget={(id, limit) => updateBudget.mutate({ budgetId: id, monthlyLimit: limit })}
-            onDeleteBudget={(id) => setDeletingId(id)}
-            onCategoryChange={(txId, cat, rule) => updateCategory.mutate({ transactionId: txId, category: cat, createRule: rule })}
-            onAddBudget={() => setShowModal(true)}
-          />
+          {/* ── 3+4. Budget Variance + Category Breakdown (side by side) ── */}
+          <FadeIn delay={0.15}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-8">
+                <BudgetComparisonTable
+                  budgets={budgets!.map((b) => ({ category: b.category, budget: b.monthlyLimit, actual: b.spent }))}
+                  suggestions={defaultCategories}
+                  onAISuggest={() => generateAI.mutate(undefined, { onSuccess: () => toast.success("AI budget suggestions generated"), onError: (e) => toast.error(e.message) })}
+                />
+              </div>
+              <div className="lg:col-span-4">
+                <BudgetCategoryBreakdown
+                  budgets={budgets!}
+                  txByCategory={txByCategory}
+                  onEditBudget={(id, limit) => updateBudget.mutate({ budgetId: id, monthlyLimit: limit })}
+                  onDeleteBudget={(id) => setDeletingId(id)}
+                  onCategoryChange={(txId, cat, rule) => updateCategory.mutate({ transactionId: txId, category: cat, createRule: rule })}
+                  onAddBudget={() => setShowModal(true)}
+                />
+              </div>
+            </div>
+          </FadeIn>
 
           {/* ── 5. Savings + Subscriptions (side by side) ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <BudgetSavingsCard tips={savingsTips} />
-            <BudgetSubscriptionsBurn
-              subscriptions={activeSubs.slice(0, 8).map((s: { merchantName: string; amount: number; logoUrl?: string | null }) => ({ merchantName: s.merchantName, amount: s.amount, logoUrl: s.logoUrl }))}
-              monthlyTotal={subsData?.monthlyTotal ?? 0}
-            />
-          </div>
+          <FadeIn delay={0.2}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <BudgetSavingsCard tips={savingsTips} />
+              <BudgetSubscriptionsBurn
+                subscriptions={activeSubs.slice(0, 8).map((s: { merchantName: string; amount: number; logoUrl?: string | null }) => ({ merchantName: s.merchantName, amount: s.amount, logoUrl: s.logoUrl }))}
+                monthlyTotal={subsData?.monthlyTotal ?? 0}
+              />
+            </div>
+          </FadeIn>
 
           {/* ── 6. Untracked ── */}
           {untrackedCategories.length > 0 && (
-            <BudgetUntrackedSection
-              untrackedCategories={untrackedCategories}
-              txByCategory={txByCategory}
-              onAddBudget={(cat, limit) => createBudget.mutate({ category: cat, monthlyLimit: limit })}
-              onBudgetAll={() => { for (const c of untrackedCategories) createBudget.mutate({ category: c.category, monthlyLimit: c.suggested }) }}
-            />
+            <FadeIn delay={0.25}>
+              <BudgetUntrackedSection
+                untrackedCategories={untrackedCategories}
+                txByCategory={txByCategory}
+                onAddBudget={(cat, limit) => createBudget.mutate({ category: cat, monthlyLimit: limit })}
+                onBudgetAll={() => { for (const c of untrackedCategories) createBudget.mutate({ category: c.category, monthlyLimit: c.suggested }) }}
+              />
+            </FadeIn>
           )}
         </>
       )}
@@ -241,12 +256,12 @@ export default function FinanceBudgetsPage() {
 
 function InsightCard({ icon, iconColor, label, children }: { icon: string; iconColor: string; label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className={cn("material-symbols-rounded", iconColor)} style={{ fontSize: 16 }}>{icon}</span>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-muted">{label}</p>
+    <div className="bg-card px-4 py-3">
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className={cn("material-symbols-rounded", iconColor)} style={{ fontSize: 14 }}>{icon}</span>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-foreground-muted">{label}</p>
       </div>
-      <p className="text-xs text-foreground leading-relaxed">{children}</p>
+      <p className="text-[11px] text-foreground leading-snug">{children}</p>
     </div>
   )
 }

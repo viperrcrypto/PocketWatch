@@ -20,8 +20,9 @@ import { FinanceStatCard } from "@/components/finance/stat-card"
 import { FinanceEmpty } from "@/components/finance/finance-empty"
 import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
 import { SpendingMonthCard } from "@/components/finance/spending-month-card"
-// MerchantIcon removed — uncategorized preview banner replaced with status link
 import { MonthlyBillsCard } from "@/components/finance/dashboard/monthly-bills-card"
+import { FadeIn } from "@/components/motion/fade-in"
+import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
 
 const NetWorthChart = dynamic(
   () => import("@/components/finance/net-worth-chart").then((m) => m.NetWorthChart),
@@ -145,7 +146,7 @@ export default function FinanceDashboardPage() {
       />
 
       {/* Net Worth Hero Card */}
-      <div className="animate-fade-up mt-6 mb-8">
+      <FadeIn className="mt-6 mb-8">
         <FinanceHeroCard
           label="Net Worth"
           value={formatCurrency(netWorth)}
@@ -216,76 +217,84 @@ export default function FinanceDashboardPage() {
             <p className="text-sm text-foreground-muted text-center py-12">Not enough data for chart</p>
           )}
         </FinanceHeroCard>
-      </div>
+      </FadeIn>
 
       {/* At a Glance — Stat Cards */}
-      <div className="animate-fade-up delay-2 mb-10">
+      <FadeIn delay={0.1} className="mb-10">
         <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-3">At a Glance</p>
         {isLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => <FinanceCardSkeleton key={i} />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <FinanceStatCard
-              label="Cash on Hand"
-              value={formatCurrency(totalCash)}
-              icon="account_balance"
-              accentColor="#10B981"
-              isHidden={isHidden}
-            />
-            <FinanceStatCard
-              label="Credit Card Debt"
-              value={formatCurrency(totalCredit)}
-              icon="credit_card"
-              accentColor="#f97316"
-              isHidden={isHidden}
-            />
-            <FinanceStatCard
-              label="Investments"
-              value={formatCurrency(totalInvestments)}
-              icon="trending_up"
-              accentColor="#8B5CF6"
-              isHidden={isHidden}
-            />
-            {(deep?.budgetHealth?.length ?? 0) > 0 ? (
+          <StaggerChildren className="grid grid-cols-2 lg:grid-cols-4 gap-4" staggerMs={60}>
+            <StaggerItem>
               <FinanceStatCard
-                label="Safe to Spend / Day"
-                value={deep?.cashFlowForecast?.safeDailySpend != null
-                  ? formatCurrency(deep.cashFlowForecast.safeDailySpend)
-                  : "--"}
-                icon="savings"
-                accentColor="#3b82f6"
+                label="Cash on Hand"
+                value={formatCurrency(totalCash)}
+                icon="account_balance"
+                accentColor="#10B981"
                 isHidden={isHidden}
-                change={deep?.cashFlowForecast?.daysRemaining != null
-                  ? { value: `${deep.cashFlowForecast.daysRemaining}d left this month`, positive: true }
-                  : undefined}
               />
-            ) : (
-              <Link
-                href="/finance/budgets"
-                className="rounded-xl p-4 flex flex-col items-center justify-center gap-2 border border-transparent card-hover-lift transition-colors group"
-                style={{
-                  boxShadow: "var(--shadow-sm)",
-                  background: "var(--card)",
-                }}
-              >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #3b82f6, color-mix(in srgb, #3b82f6 80%, #000))" }}>
-                  <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 20 }}>savings</span>
-                </div>
-                <p className="text-xs font-semibold text-foreground">Safe to Spend</p>
-                <p className="text-[10px] text-foreground-muted text-center leading-tight">
-                  Create a budget to see your daily safe spending limit
-                </p>
-                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium">Set up a budget</span>
-              </Link>
-            )}
-          </div>
+            </StaggerItem>
+            <StaggerItem>
+              <FinanceStatCard
+                label="Credit Card Debt"
+                value={formatCurrency(totalCredit)}
+                icon="credit_card"
+                accentColor="#f97316"
+                isHidden={isHidden}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <FinanceStatCard
+                label="Investments"
+                value={formatCurrency(totalInvestments)}
+                icon="trending_up"
+                accentColor="#8B5CF6"
+                isHidden={isHidden}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              {(deep?.budgetHealth?.length ?? 0) > 0 ? (
+                <FinanceStatCard
+                  label="Safe to Spend / Day"
+                  value={deep?.cashFlowForecast?.safeDailySpend != null
+                    ? formatCurrency(deep.cashFlowForecast.safeDailySpend)
+                    : "--"}
+                  icon="savings"
+                  accentColor="#3b82f6"
+                  isHidden={isHidden}
+                  change={deep?.cashFlowForecast?.daysRemaining != null
+                    ? { value: `${deep.cashFlowForecast.daysRemaining}d left this month`, positive: true }
+                    : undefined}
+                />
+              ) : (
+                <Link
+                  href="/finance/budgets"
+                  className="rounded-xl p-4 flex flex-col items-center justify-center gap-2 border border-transparent card-hover-lift transition-colors group h-full"
+                  style={{
+                    boxShadow: "var(--shadow-sm)",
+                    background: "var(--card)",
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #3b82f6, color-mix(in srgb, #3b82f6 80%, #000))" }}>
+                    <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 20 }}>savings</span>
+                  </div>
+                  <p className="text-xs font-semibold text-foreground">Safe to Spend</p>
+                  <p className="text-[10px] text-foreground-muted text-center leading-tight">
+                    Create a budget to see your daily safe spending limit
+                  </p>
+                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium">Set up a budget</span>
+                </Link>
+              )}
+            </StaggerItem>
+          </StaggerChildren>
         )}
-      </div>
+      </FadeIn>
 
       {/* Categorization Status */}
-      <div className="animate-fade-up delay-4 mb-6">
+      <FadeIn delay={0.2} className="mb-6">
         {deep && (deep.uncategorizedCount > 0) ? (
           <Link
             href="/finance/categorize"
@@ -307,17 +316,17 @@ export default function FinanceDashboardPage() {
             <p className="text-xs font-medium text-foreground">All Categorized</p>
           </div>
         )}
-      </div>
+      </FadeIn>
 
       {/* Main Cards: Spending Donut + Bills */}
-      <div className="animate-fade-up delay-5 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <FadeIn delay={0.25} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <SpendingMonthCard />
         <MonthlyBillsCard isHidden={isHidden} />
-      </div>
+      </FadeIn>
 
       {/* Cash Flow Summary */}
       {deep && (
-        <div className="animate-fade-up delay-6 mb-8">
+        <FadeIn delay={0.3} className="mb-8">
           <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>account_balance_wallet</span>
@@ -360,7 +369,7 @@ export default function FinanceDashboardPage() {
               </div>
             )}
           </div>
-        </div>
+        </FadeIn>
       )}
     </div>
   )

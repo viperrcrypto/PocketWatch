@@ -2,7 +2,9 @@
 
 import { memo } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { motion, AnimatePresence, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
+import { fadeIn, durations } from "@/lib/motion"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { SidebarNavSection } from "./sidebar-nav-section"
@@ -24,6 +26,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
   const router = useRouter()
   const { data: reviewCountData } = useReviewCount()
   const financeBadges = reviewCountData?.count ? { "fin-transactions": reviewCountData.count } : undefined
+  const reduce = useReducedMotion()
   const {
     prefs,
     isEditing,
@@ -46,14 +49,21 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
   return (
     <>
       {/* Mobile overlay */}
-      {isOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden cursor-default"
-          onClick={onClose}
-          aria-label="Close navigation menu"
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.button
+            type="button"
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden cursor-default"
+            onClick={onClose}
+            aria-label="Close navigation menu"
+            variants={fadeIn}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={reduce ? { duration: 0 } : { duration: durations.base }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside

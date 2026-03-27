@@ -33,7 +33,7 @@ export function BudgetCategoryBreakdown({
 
   return (
     <section id="category-breakdown">
-      <div className="bg-card border border-card-border rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="bg-card border border-card-border rounded-2xl overflow-hidden h-full flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="px-5 py-3.5 border-b border-card-border/50 bg-foreground/[0.02] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">

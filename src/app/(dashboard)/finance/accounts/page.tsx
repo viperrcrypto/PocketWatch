@@ -20,6 +20,7 @@ import { ReconnectBanner } from "@/components/finance/accounts/reconnect-banner"
 import { AccountTransactions } from "@/components/finance/accounts/account-transactions"
 import { AccountLiabilityDetails } from "@/components/finance/accounts/account-liability-details"
 import { StatementImportSection } from "@/components/finance/accounts/statement-import-section"
+import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
 
 const TYPE_ORDER = ["checking", "savings", "credit", "business_credit", "investment", "brokerage", "loan", "mortgage"]
 
@@ -184,11 +185,11 @@ export default function FinanceAccountsPage() {
       {isLoading ? (
         <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <FinanceCardSkeleton key={i} />)}</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FinanceStatCard label="Net Balance" value={formatCurrency(netBalance)} icon="account_balance_wallet" accentColor="#3b82f6" />
-          <FinanceStatCard label="Total Assets" value={formatCurrency(totalAssets)} icon="savings" accentColor="#10b981" />
-          <FinanceStatCard label="Total Liabilities" value={formatCurrency(totalDebt)} icon="credit_card" accentColor="#ef4444" />
-        </div>
+        <StaggerChildren className="grid grid-cols-1 sm:grid-cols-3 gap-4" staggerMs={60}>
+          <StaggerItem><FinanceStatCard label="Net Balance" value={formatCurrency(netBalance)} icon="account_balance_wallet" accentColor="#3b82f6" /></StaggerItem>
+          <StaggerItem><FinanceStatCard label="Total Assets" value={formatCurrency(totalAssets)} icon="savings" accentColor="#10b981" /></StaggerItem>
+          <StaggerItem><FinanceStatCard label="Total Liabilities" value={formatCurrency(totalDebt)} icon="credit_card" accentColor="#ef4444" /></StaggerItem>
+        </StaggerChildren>
       )}
 
       {/* Account Type Tabs */}

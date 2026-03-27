@@ -26,7 +26,7 @@ export function BudgetComparisonTable({ budgets, suggestions, onAISuggest }: Bud
   })
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+    <div className="bg-card border border-card-border rounded-2xl overflow-hidden h-full flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
       <div className="px-5 py-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Your Budget vs Your Spending</h3>
         <div className="flex items-center gap-0.5 bg-background-secondary rounded-lg p-0.5">
@@ -45,13 +45,13 @@ export function BudgetComparisonTable({ budgets, suggestions, onAISuggest }: Bud
         </div>
       </div>
 
-      <div className="px-5">
+      <div className="px-5 flex-1">
         {/* Header */}
-        <div className="flex items-center py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground-muted">
+        <div className="flex items-center py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-foreground-muted border-b border-card-border/30">
           <span className="flex-1">Category</span>
-          <span className="w-24 text-right">Budget</span>
-          <span className="w-24 text-right">{view === "avg" ? "6mo Avg" : "Actual"}</span>
-          <span className="w-24 text-right">Difference</span>
+          <span className="w-20 text-right">Budget</span>
+          <span className="w-20 text-right">{view === "avg" ? "6mo Avg" : "Actual"}</span>
+          <span className="w-20 text-right">Diff</span>
         </div>
 
         {/* Rows */}
@@ -64,14 +64,14 @@ export function BudgetComparisonTable({ budgets, suggestions, onAISuggest }: Bud
           const meta = getCategoryMeta(row.category)
 
           return (
-            <div key={row.category} className="flex items-center py-2.5 hover:bg-background-secondary/50 transition-colors -mx-2 px-2 rounded-lg">
-              <div className="flex-1 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.hex }} />
-                <span className="text-xs font-medium text-foreground">{row.category}</span>
+            <div key={row.category} className="flex items-center py-2 hover:bg-background-secondary/50 transition-colors -mx-2 px-2 rounded-lg">
+              <div className="flex-1 flex items-center gap-2 min-w-0">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: meta.hex }} />
+                <span className="text-xs font-medium text-foreground truncate">{row.category}</span>
               </div>
-              <span className="w-24 text-right text-xs tabular-nums text-foreground-muted">{formatCurrency(row.budget, "USD", 0)}</span>
-              <span className="w-24 text-right text-xs tabular-nums font-medium text-foreground">{formatCurrency(actual, "USD", 0)}</span>
-              <span className={cn("w-24 text-right text-xs tabular-nums font-semibold", isOver ? "text-error" : "text-success")}>
+              <span className="w-20 text-right text-xs tabular-nums text-foreground-muted">{formatCurrency(row.budget, "USD", 0)}</span>
+              <span className="w-20 text-right text-xs tabular-nums font-medium text-foreground">{formatCurrency(actual, "USD", 0)}</span>
+              <span className={cn("w-20 text-right text-xs tabular-nums font-semibold", isOver ? "text-error" : "text-success")}>
                 {isOver ? `-${formatCurrency(diff, "USD", 0)}` : `+${formatCurrency(Math.abs(diff), "USD", 0)}`}
               </span>
             </div>
