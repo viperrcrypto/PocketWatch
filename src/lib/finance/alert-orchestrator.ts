@@ -60,23 +60,23 @@ export async function detectAndNotify(userId: string): Promise<{ alertsSent: num
     })
     const sentChannels = results.filter((r) => r.sent).map((r) => r.channel)
 
-    // Also persist to FinanceAlert for backward compat with existing UI
-    if (sentChannels.length > 0) {
-      await db.financeAlert.create({
-        data: {
-          userId,
-          alertType: event.alertType,
-          title: event.title,
-          message: event.message,
-          amount: event.amount,
-          merchantName: event.merchantName,
-          transactionId: event.transactionId,
-          metadata: event.metadata ? (event.metadata as Record<string, string | number | boolean | null>) : undefined,
-          channels: sentChannels,
-        },
-      })
-      alertsSent++
-    }
+    // Always persist to FinanceAlert — dedup logic relies on this record existing.
+    // Without it, the same event would re-fire every 15 minutes until the
+    // transaction falls out of the lookback window.
+    await db.financeAlert.create({
+      data: {
+        userId,
+        alertType: event.alertType,
+        title: event.title,
+        message: event.message,
+        amount: event.amount,
+        merchantName: event.merchantName,
+        transactionId: event.transactionId,
+        metadata: event.metadata ? (event.metadata as Record<string, string | number | boolean | null>) : undefined,
+        channels: sentChannels,
+      },
+    })
+    if (sentChannels.length > 0) alertsSent++
   }
 
   if (alertsSent > 0) {
