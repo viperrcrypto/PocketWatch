@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback } from "react"
+import { csrfHeaders } from "@/lib/csrf-client"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { financeFetch, financeKeys } from "./shared"
 
@@ -95,7 +96,7 @@ async function financeFetchLong<T>(path: string, options?: RequestInit): Promise
     const res = await fetch(`/api/finance${path}`, {
       ...options,
       credentials: "include",
-      headers: { "Content-Type": "application/json", ...options?.headers },
+      headers: csrfHeaders({ "Content-Type": "application/json", ...options?.headers }),
       signal: controller.signal,
     })
     if (!res.ok) {

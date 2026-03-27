@@ -22,6 +22,8 @@ export interface TxFilters {
 
 // ─── Fetch Helper ───────────────────────────────────────────────
 
+import { csrfHeaders } from "@/lib/csrf-client"
+
 export async function financeFetch<T>(
   path: string,
   options?: RequestInit & { timeoutMs?: number }
@@ -34,10 +36,10 @@ export async function financeFetch<T>(
     const res = await fetch(`/api/finance${path}`, {
       ...fetchOptions,
       credentials: "include",
-      headers: {
+      headers: csrfHeaders({
         "Content-Type": "application/json",
         ...fetchOptions?.headers,
-      },
+      }),
       signal: controller.signal,
     })
 
@@ -88,6 +90,7 @@ export const financeKeys = {
   identity: () => [...financeKeys.all, "identity"] as const,
   plaidSyncStatus: () => [...financeKeys.all, "plaid-status"] as const,
   income: () => [...financeKeys.all, "income"] as const,
+  incomeStreams: () => [...financeKeys.all, "incomeStreams"] as const,
   aiInsights: () => [...financeKeys.all, "ai-insights"] as const,
   aiSettings: () => [...financeKeys.all, "ai-settings"] as const,
   budgetSuggestions: () => [...financeKeys.all, "budget-suggestions"] as const,

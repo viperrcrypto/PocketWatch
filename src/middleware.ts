@@ -1,36 +1,50 @@
 import { NextRequest, NextResponse } from "next/server"
+import { ensureCsrfCookie, validateCsrf } from "@/lib/csrf"
 
 // Duplicated from @/lib/auth to avoid importing server-only modules in middleware
 const SESSION_COOKIE = "pocketwatch_session"
 
 /**
- * Redirect unauthenticated users away from dashboard routes.
+ * Middleware: auth redirect + CSRF protection.
  *
- * We only check for the presence of the session cookie here — the actual
- * validation (expiry, DB lookup) happens in the API routes. This is enough
- * to catch the most common case: the cookie is missing entirely (server
- * restart, browser cleared cookies, cookie expired and was cleaned up).
+ * 1. Redirect unauthenticated users from dashboard routes to login
+ * 2. Set CSRF cookie on every response (if missing)
+ * 3. Validate CSRF token on mutating API requests
  */
 export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get(SESSION_COOKIE)
+  const { pathname } = request.nextUrl
+  const isApi = pathname.startsWith("/api/")
+  const isDashboard = !isApi
 
-  if (!sessionCookie?.value) {
-    const loginUrl = new URL("/", request.url)
-    // Preserve the original path so we can redirect back after login
-    loginUrl.searchParams.set("redirect", request.nextUrl.pathname)
-    return NextResponse.redirect(loginUrl)
+  // ─── Auth check for dashboard routes ───
+  if (isDashboard) {
+    const sessionCookie = request.cookies.get(SESSION_COOKIE)
+    if (!sessionCookie?.value) {
+      const loginUrl = new URL("/", request.url)
+      loginUrl.searchParams.set("redirect", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
-  return NextResponse.next()
+  // ─── CSRF validation for mutating API requests ───
+  if (isApi) {
+    const csrfError = validateCsrf(request)
+    if (csrfError) return csrfError
+  }
+
+  // ─── Ensure CSRF cookie exists ───
+  const response = NextResponse.next()
+  return ensureCsrfCookie(request, response)
 }
 
 export const config = {
-  // Protect all dashboard routes — these are the (dashboard) route group pages
-  // and all API routes except auth endpoints
   matcher: [
+    // Dashboard routes (auth check)
     "/portfolio/:path*",
     "/finance/:path*",
     "/net-worth/:path*",
     "/tracker/:path*",
+    // API routes (CSRF check)
+    "/api/:path*",
   ],
 }

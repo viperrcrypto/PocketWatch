@@ -432,10 +432,81 @@ async function detectUnusualSpend(userId: string): Promise<NewAlert[]> {
   }]
 }
 
+// ─── Missed Income Detection ─────────────────────────────────
+
+async function detectMissedIncome(userId: string): Promise<NewAlert[]> {
+  const now = new Date()
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+
+  // Already alerted today?
+  const existing = await db.financeAlert.findFirst({
+    where: { userId, alertType: "missed_income", sentAt: { gte: todayStart } },
+    select: { id: true },
+  })
+  if (existing) return []
+
+  // Find recurring income sources (at least 3 occurrences in last 6 months)
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+  const incomeTxs = await db.financeTransaction.findMany({
+    where: { userId, category: "Income", amount: { lt: 0 }, isDuplicate: false, isExcluded: false, date: { gte: sixMonthsAgo } },
+    select: { merchantName: true, name: true, date: true, amount: true },
+    orderBy: { date: "asc" },
+  })
+
+  // Group by merchant, find recurring ones
+  const byMerchant = new Map<string, Date[]>()
+  for (const tx of incomeTxs) {
+    const key = tx.merchantName ?? tx.name ?? "Unknown"
+    const dates = byMerchant.get(key) ?? []
+    dates.push(tx.date)
+    byMerchant.set(key, dates)
+  }
+
+  const alerts: NewAlert[] = []
+
+  for (const [merchant, dates] of byMerchant) {
+    if (dates.length < 3) continue
+    dates.sort((a, b) => a.getTime() - b.getTime())
+
+    // Compute average gap
+    const gaps: number[] = []
+    for (let i = 1; i < dates.length; i++) {
+      gaps.push((dates[i].getTime() - dates[i - 1].getTime()) / (1000 * 60 * 60 * 24))
+    }
+    const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length
+    if (avgGap > 95) continue // skip anything more infrequent than quarterly
+
+    const lastDate = dates[dates.length - 1]
+    const daysSinceLast = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+
+    // Alert if overdue by more than 7 days past expected
+    if (daysSinceLast > avgGap + 7) {
+      const expectedDate = new Date(lastDate.getTime() + avgGap * 24 * 60 * 60 * 1000)
+      const daysLate = Math.round(daysSinceLast - avgGap)
+      alerts.push({
+        alertType: "missed_income",
+        title: "Missed Income",
+        message: `${merchant} usually arrives every ~${Math.round(avgGap)} days — ${daysLate} days late`,
+        merchantName: merchant,
+        metadata: {
+          expectedDate: expectedDate.toISOString(),
+          avgGapDays: Math.round(avgGap),
+          daysLate,
+          lastReceived: lastDate.toISOString(),
+        },
+      })
+    }
+  }
+
+  return alerts.slice(0, 3) // cap at 3 missed income alerts per day
+}
+
 // ─── Main Entry Point ─────────────────────────────────────────
 
 export async function detectFinancialEvents(userId: string): Promise<NewAlert[]> {
-  const [refundsDeposits, doubleCharges, budgetWarnings, billReminders, largeTx, unusualSpend] =
+  const [refundsDeposits, doubleCharges, budgetWarnings, billReminders, largeTx, unusualSpend, missedIncome] =
     await Promise.all([
       detectRefundsAndDeposits(userId),
       detectDoubleCharges(userId),
@@ -443,7 +514,8 @@ export async function detectFinancialEvents(userId: string): Promise<NewAlert[]>
       detectBillReminders(userId),
       detectLargeTransactions(userId),
       detectUnusualSpend(userId),
+      detectMissedIncome(userId),
     ])
 
-  return [...refundsDeposits, ...doubleCharges, ...budgetWarnings, ...billReminders, ...largeTx, ...unusualSpend]
+  return [...refundsDeposits, ...doubleCharges, ...budgetWarnings, ...billReminders, ...largeTx, ...unusualSpend, ...missedIncome]
 }

@@ -208,3 +208,27 @@ export function rateLimitHeaders(result: RateLimitResult): HeadersInit {
     "X-RateLimit-Reset": Math.ceil(result.resetAt / 1000).toString(),
   }
 }
+
+/**
+ * Check rate limit and return headers + error response if exceeded.
+ * Convenience wrapper that combines rateLimit check + header generation.
+ *
+ * @returns `{ ok: true, headers }` if allowed, `{ ok: false, headers, response }` if blocked
+ */
+export function checkRateLimit(
+  limiter: ReturnType<typeof createRateLimiter>,
+  identifier: string,
+): { ok: true; headers: HeadersInit } | { ok: false; headers: HeadersInit; response: { error: string; ref: string } } {
+  const result = limiter(identifier)
+  const headers = rateLimitHeaders(result)
+
+  if (!result.success) {
+    return {
+      ok: false,
+      headers,
+      response: { error: "Too many requests — try again later", ref: "RATE001" },
+    }
+  }
+
+  return { ok: true, headers }
+}

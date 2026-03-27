@@ -28,6 +28,7 @@ function alertSeverity(alert: NewAlert): "info" | "watch" | "urgent" {
     case "bill_reminder":
     case "unusual_spend":
     case "price_change":
+    case "missed_income":
       return "watch"
     case "refund":
     case "deposit":

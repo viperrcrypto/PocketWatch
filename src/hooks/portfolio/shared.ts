@@ -1,6 +1,7 @@
 "use client"
 
 import type { ExternalServiceVerificationState } from "@/lib/portfolio/verification"
+import { csrfHeaders } from "@/lib/csrf-client"
 
 // ─── Fetch Helper ───
 
@@ -10,7 +11,7 @@ export async function portfolioFetch<T>(path: string, options?: RequestInit): Pr
   const res = await fetch(`/api/portfolio${path}`, {
     credentials: "include",
     ...options,
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: csrfHeaders({ "Content-Type": "application/json", ...options?.headers }),
     signal: options?.signal ?? AbortSignal.timeout(CLIENT_TIMEOUT_MS),
   })
   if (!res.ok) {

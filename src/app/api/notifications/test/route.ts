@@ -12,7 +12,7 @@ import { sendBrrr } from "@/lib/notifications/channel-brrr"
 import { sendNtfy } from "@/lib/notifications/channel-ntfy"
 import { sendWebPush } from "@/lib/notifications/channel-webpush"
 import { db } from "@/lib/db"
-import { rateLimiters, getClientId } from "@/lib/rate-limit"
+import { checkRateLimit, rateLimiters, rateLimitHeaders, getClientId } from "@/lib/rate-limit"
 import { NextRequest, NextResponse } from "next/server"
 import type { ChannelResult } from "@/lib/notifications/dispatcher"
 
@@ -27,9 +27,10 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return apiError("N4001", "Authentication required", 401)
 
-  const rl = rateLimiters.notificationTest(getClientId(req))
-  if (!rl.success) return apiError("N4004", "Too many test notifications — try again later", 429)
+  const rl = checkRateLimit(rateLimiters.notificationTest, getClientId(req))
+  if (!rl.ok) return NextResponse.json(rl.response, { status: 429, headers: rl.headers })
 
+  const rlHeaders = rl.headers
   const targetChannel = req.nextUrl.searchParams.get("channel")
 
   try {
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
       sent: results.filter((r) => r.sent).length,
       total: results.length,
       results,
-    })
+    }, { headers: rlHeaders })
   } catch (err) {
     return apiError("N4003", "Test notification failed", 500, err)
   }

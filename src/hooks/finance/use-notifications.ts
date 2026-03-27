@@ -14,11 +14,13 @@ export const notificationKeys = {
 
 // ─── Fetch Helper ────────────────────────────────────────────
 
+import { csrfHeaders } from "@/lib/csrf-client"
+
 async function notifyFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`/api/notifications${path}`, {
     ...options,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: csrfHeaders({ "Content-Type": "application/json", ...options?.headers }),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: "Request failed" }))
