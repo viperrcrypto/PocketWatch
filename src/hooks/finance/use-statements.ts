@@ -3,6 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { csrfHeaders } from "@/lib/csrf-client"
 import { financeKeys, financeFetch } from "./shared"
 import type { AccountCoverage, StatementUploadResult } from "@/lib/finance/statement-types"
 
@@ -29,6 +30,7 @@ export function useUploadStatement() {
       const res = await fetch("/api/finance/statements", {
         method: "POST",
         credentials: "include",
+        headers: csrfHeaders(),
         body: form, // No Content-Type — browser sets multipart boundary
       })
 

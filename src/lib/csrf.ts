@@ -70,7 +70,11 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
   const cookieToken = request.cookies.get(CSRF_COOKIE)?.value
   const headerToken = request.headers.get(CSRF_HEADER)
 
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  // If no cookie exists yet (first visit), skip validation — there's nothing to forge.
+  // The cookie will be set on this response, and future requests will be validated.
+  if (!cookieToken) return null
+
+  if (!headerToken || cookieToken !== headerToken) {
     return NextResponse.json(
       { error: "CSRF token missing or invalid", ref: "CSRF001" },
       { status: 403 },

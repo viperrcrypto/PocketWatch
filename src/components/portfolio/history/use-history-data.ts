@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
+import { csrfHeaders } from "@/lib/csrf-client"
 import {
   useHistoryEvents,
   useAddressBook,
@@ -153,7 +154,7 @@ export function useHistoryData({
     goplusFetchedRef.current = batchKey
     fetch("/api/portfolio/history/spam-check", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...csrfHeaders() },
       body: JSON.stringify({ tokens: ambiguous.slice(0, 20) }),
     })
       .then((res) => res.json())

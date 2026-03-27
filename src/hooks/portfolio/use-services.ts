@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { csrfHeaders } from "@/lib/csrf-client"
 import {
   portfolioFetch,
   portfolioKeys,
@@ -11,7 +12,7 @@ import {
 const COMBINED_NET_WORTH_KEY = ["combined-net-worth"]
 
 async function triggerClearAll() {
-  await fetch("/api/user/clear-data", { method: "POST", credentials: "include" }).catch((err) => {
+  await fetch("/api/user/clear-data", { method: "POST", credentials: "include", headers: csrfHeaders() }).catch((err) => {
     console.warn("[triggerClearAll] Failed to clear data:", err)
   })
 }

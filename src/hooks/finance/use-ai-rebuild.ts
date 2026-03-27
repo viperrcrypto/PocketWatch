@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { csrfHeaders } from "@/lib/csrf-client"
 import { financeKeys } from "./shared"
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ export function useAIRebuild() {
     try {
       const res = await fetch("/api/finance/transactions/ai-rebuild", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         credentials: "include",
         body: JSON.stringify({ mode, dryRun }),
         signal: controller.signal,
@@ -270,7 +271,7 @@ export function useAIRebuild() {
 
   const cancel = useCallback(async () => {
     abortRef.current?.abort()
-    await fetch("/api/finance/transactions/ai-rebuild", { method: "DELETE", credentials: "include" }).catch(() => {})
+    await fetch("/api/finance/transactions/ai-rebuild", { method: "DELETE", credentials: "include", headers: csrfHeaders() }).catch(() => {})
     setState((prev) => ({ ...prev, status: prev.status === "running" ? "paused" : prev.status }))
   }, [])
 

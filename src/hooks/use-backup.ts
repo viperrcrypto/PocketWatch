@@ -3,6 +3,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { csrfHeaders } from "@/lib/csrf-client"
 
 const backupKeys = {
   all: ["backup"] as const,
@@ -16,7 +17,7 @@ export function useExportBackup() {
     mutationFn: async (password: string) => {
       const res = await fetch("/api/backup/export", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ password }),
       })
 
@@ -68,6 +69,7 @@ export function useImportBackup() {
 
       const res = await fetch("/api/backup/import", {
         method: "POST",
+        headers: csrfHeaders(),
         body: formData,
       })
 
@@ -120,7 +122,7 @@ export function useUpdateBackupSchedule() {
     }) => {
       const res = await fetch("/api/backup/schedule", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(data),
       })
 

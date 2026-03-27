@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { csrfHeaders } from "@/lib/csrf-client"
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
@@ -60,7 +61,7 @@ export function usePushNotifications() {
       const subJson = sub.toJSON()
       const res = await fetch("/api/notifications/push/subscribe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
         body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
       })
@@ -91,7 +92,7 @@ export function usePushNotifications() {
         // Send endpoint so server removes only THIS device, not all devices
         await fetch("/api/notifications/push/subscribe", {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          headers: csrfHeaders({ "Content-Type": "application/json" }),
           credentials: "include",
           body: JSON.stringify({ endpoint }),
         })

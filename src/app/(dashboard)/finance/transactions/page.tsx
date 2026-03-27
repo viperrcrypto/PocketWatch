@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -60,6 +60,16 @@ export default function FinanceTransactionsPage() {
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Clear selections when page/filters change — track previous data identity
+  const prevDataRef = useRef<string>("")
+  useEffect(() => {
+    const key = `${page}-${dateRange}-${category}-${accountId}-${txType}-${search}`
+    if (prevDataRef.current && prevDataRef.current !== key) {
+      setSelectedIds(new Set())
+    }
+    prevDataRef.current = key
+  }, [page, dateRange, category, accountId, txType, search])
 
   const dates = dateRange === "custom"
     ? { start: customStart || undefined, end: customEnd || undefined }
