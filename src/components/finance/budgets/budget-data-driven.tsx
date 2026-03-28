@@ -77,7 +77,7 @@ export function BudgetDataDriven({
 
   return (
     <div className="space-y-4">
-      {/* Summary strip — same style as BudgetStatStrip */}
+      {/* Summary strip */}
       <FadeIn>
         <StaggerChildren className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-card-border rounded-xl overflow-hidden" staggerMs={60}>
           <StaggerItem>
@@ -123,7 +123,7 @@ export function BudgetDataDriven({
         </StaggerChildren>
       </FadeIn>
 
-      {/* Category breakdown — same card style as BudgetCategoryCard */}
+      {/* Category cards — identical to BudgetCategoryCard layout */}
       <FadeIn delay={0.05}>
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Spending by Category</h2>
@@ -131,15 +131,16 @@ export function BudgetDataDriven({
           <StaggerChildren className="space-y-2" staggerMs={30}>
             {categories.map((cat) => {
               const meta = getCategoryMeta(cat.category)
-              const vsAvg = cat.avgMonthly > 0 ? ((cat.thisMonth - cat.avgMonthly) / cat.avgMonthly) * 100 : null
-              const isUp = vsAvg !== null && vsAvg > 10
-              const isDown = vsAvg !== null && vsAvg < -10
+              const effectiveLimit = cat.avgMonthly > 0 ? cat.avgMonthly : cat.thisMonth
+              const percentUsed = effectiveLimit > 0 ? Math.round((cat.thisMonth / effectiveLimit) * 100) : 0
+              const isOver = percentUsed > 100
+              const isWarn = percentUsed >= 80 && !isOver
+              const overAmount = cat.thisMonth - effectiveLimit
 
               return (
                 <StaggerItem key={cat.category}>
-                  <div className="bg-card border border-card-border rounded-xl px-4 py-3 hover:border-card-border-hover transition-colors" tabIndex={0} aria-label={`${cat.category}: ${formatCurrency(cat.thisMonth, "USD", 0)} this month`}>
+                  <div className="bg-card border border-card-border rounded-xl px-4 py-3 hover:border-card-border-hover transition-colors" tabIndex={0} aria-label={`${cat.category}: ${percentUsed}% of average`}>
                     <div className="flex items-center gap-3">
-                      {/* Icon — same as BudgetCategoryCard */}
                       <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${meta.hex}18` }}>
                         <span className="material-symbols-rounded" style={{ fontSize: 18, color: meta.hex }}>{meta.icon}</span>
                       </div>
@@ -148,54 +149,42 @@ export function BudgetDataDriven({
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm font-semibold text-foreground truncate">{cat.category}</span>
-                            {/* Status icon — same pattern as BudgetCategoryCard */}
-                            {vsAvg !== null && (
-                              <span className={cn("material-symbols-rounded flex-shrink-0", isUp ? "text-error" : isDown ? "text-success" : "text-foreground-muted")} style={{ fontSize: 14 }} aria-label={isUp ? "Above average" : isDown ? "Below average" : "Near average"}>
-                                {isUp ? "trending_up" : isDown ? "trending_down" : "drag_handle"}
-                              </span>
-                            )}
+                            <span className={cn("material-symbols-rounded flex-shrink-0", isOver ? "text-error" : isWarn ? "text-warning" : "text-success")} style={{ fontSize: 14 }} aria-label={isOver ? "Above average" : isWarn ? "Approaching average" : "Below average"}>
+                              {isOver ? "error" : isWarn ? "warning" : "check_circle"}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-xs text-foreground-muted tabular-nums">
-                              {formatCurrency(cat.thisMonth, "USD", 0)} spent
+                              {formatCurrency(cat.thisMonth, "USD", 0)} spent{cat.avgMonthly > 0 && <><span className="mx-0.5">/</span>{formatCurrency(Math.round(cat.avgMonthly), "USD", 0)}</>}
                             </span>
-                            {cat.avgMonthly > 0 && (
-                              <span className={cn("text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md", isUp ? "bg-error/12 text-error" : isDown ? "bg-success/12 text-success" : "bg-foreground/5 text-foreground-muted")}>
-                                {vsAvg !== null ? `${vsAvg > 0 ? "+" : ""}${Math.round(vsAvg)}%` : "—"}
-                              </span>
-                            )}
+                            <span className={cn("text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md", isOver ? "bg-error/12 text-error" : isWarn ? "bg-warning/12 text-warning" : "bg-success/12 text-success")}>
+                              {percentUsed}%
+                            </span>
                           </div>
                         </div>
 
-                        {/* Progress bar — reuse BudgetProgressBar, treat avg as "limit" */}
-                        <BudgetProgressBar spent={cat.thisMonth} limit={cat.avgMonthly > 0 ? cat.avgMonthly : cat.thisMonth} color={meta.hex} />
+                        <BudgetProgressBar spent={cat.thisMonth} limit={effectiveLimit} color={meta.hex} />
 
                         <div className="flex items-center justify-between mt-1.5">
                           <div className="flex items-center gap-3">
-                            {/* Sparkline — same as BudgetCategoryCard */}
                             {cat.trendData.length > 0 && (
-                              <div className="hidden sm:flex items-end gap-px" aria-hidden="true">
+                              <div className="hidden sm:flex items-end gap-px">
                                 <BudgetSparkline data={cat.trendData} color={meta.hex} />
-                                <span className="text-[9px] text-foreground-muted ml-1.5 tabular-nums">
-                                  avg {formatCurrency(cat.avgMonthly, "USD", 0)}
-                                </span>
+                                {cat.avgMonthly > 0 && (
+                                  <span className="text-[9px] text-foreground-muted ml-1.5 tabular-nums">avg {formatCurrency(cat.avgMonthly, "USD", 0)}</span>
+                                )}
                               </div>
                             )}
-
-                            {/* vs Average alert — same style as "over" alert in BudgetCategoryCard */}
-                            {isUp && vsAvg !== null && (
+                            {isOver && overAmount > 0 && (
                               <span className="text-[10px] text-error font-semibold tabular-nums flex items-center gap-0.5">
                                 <span className="material-symbols-rounded" style={{ fontSize: 11 }}>arrow_upward</span>
-                                {formatCurrency(cat.thisMonth - cat.avgMonthly, "USD", 0)} above avg
+                                {formatCurrency(overAmount, "USD", 0)} over avg
                               </span>
                             )}
                           </div>
-
                           {cat.lastMonth > 0 && (
-                            <span className="text-[9px] text-foreground-muted tabular-nums">
-                              last month {formatCurrency(cat.lastMonth, "USD", 0)}
-                            </span>
+                            <span className="text-[9px] text-foreground-muted tabular-nums">last month {formatCurrency(cat.lastMonth, "USD", 0)}</span>
                           )}
                         </div>
                       </div>
@@ -208,7 +197,6 @@ export function BudgetDataDriven({
         </div>
       </FadeIn>
 
-      {/* CTA — only show if no budgets exist */}
       {!hasBudgets && (
         <FadeIn delay={0.15}>
           <div className="bg-card border border-dashed border-card-border rounded-2xl p-6 text-center">
