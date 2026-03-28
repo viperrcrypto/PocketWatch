@@ -327,7 +327,7 @@ export default function FinanceDashboardPage() {
 
       {/* Cash Flow + AI Insights */}
       {deep && (
-        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>account_balance_wallet</span>
@@ -358,6 +358,8 @@ export default function FinanceDashboardPage() {
                 </p>
               </div>
             </div>
+
+            {/* Savings rate */}
             {deep.savingsRate != null && (
               <div className="mt-3 pt-3 border-t border-card-border/30 flex items-center justify-between">
                 <span className="text-[10px] text-foreground-muted">Savings rate</span>
@@ -367,6 +369,43 @@ export default function FinanceDashboardPage() {
                 )}>
                   {Math.round(deep.savingsRate)}%
                 </span>
+              </div>
+            )}
+
+            {/* Spending pace */}
+            {deep.spendingVelocity && (
+              <div className="mt-2 pt-2 border-t border-card-border/30 flex items-center justify-between">
+                <span className="text-[10px] text-foreground-muted">Daily avg</span>
+                <span className="text-xs font-semibold tabular-nums text-foreground">
+                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.spendingVelocity.dailyAvg, "USD", 0)}</BlurredValue>
+                  <span className="text-foreground-muted font-normal"> / day</span>
+                </span>
+              </div>
+            )}
+            {deep.cashFlowForecast && (
+              <div className="mt-2 pt-2 border-t border-card-border/30 flex items-center justify-between">
+                <span className="text-[10px] text-foreground-muted">Safe to spend</span>
+                <span className={cn("text-xs font-semibold tabular-nums", deep.cashFlowForecast.safeDailySpend > 0 ? "text-success" : "text-error")}>
+                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.cashFlowForecast.safeDailySpend, "USD", 0)}</BlurredValue>
+                  <span className="text-foreground-muted font-normal"> / day · {deep.cashFlowForecast.daysRemaining}d left</span>
+                </span>
+              </div>
+            )}
+
+            {/* Top spending categories */}
+            {deep.topCategories && deep.topCategories.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-card-border/30">
+                <p className="text-[10px] text-foreground-muted mb-2">Top Categories</p>
+                <div className="space-y-1.5">
+                  {deep.topCategories.slice(0, 4).map((cat) => (
+                    <div key={cat.category} className="flex items-center justify-between">
+                      <span className="text-[11px] text-foreground truncate">{cat.category}</span>
+                      <span className="text-[11px] font-semibold tabular-nums text-foreground-muted ml-2">
+                        <BlurredValue isHidden={isHidden}>{formatCurrency(cat.total, "USD", 0)}</BlurredValue>
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
