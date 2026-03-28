@@ -146,6 +146,21 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
           </span>
         )}
       </div>
+
+      {/* Ring legend */}
+      {hasMultiColor && size >= 140 && (
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--success)" }} />On track
+          </span>
+          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--warning)" }} />Near limit
+          </span>
+          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--error)" }} />Over
+          </span>
+        </div>
+      )}
     </div>
   )
 }
