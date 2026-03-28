@@ -327,8 +327,8 @@ export default function FinanceDashboardPage() {
 
       {/* Cash Flow + AI Insights */}
       {deep && (
-        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card rounded-xl p-5 flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
+        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>account_balance_wallet</span>
               <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Cash Flow This Month</span>
@@ -417,7 +417,7 @@ export default function FinanceDashboardPage() {
 
             {/* Top spending categories */}
             {deep.topCategories && deep.topCategories.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-card-border/30 flex-1">
+              <div className="mt-3 pt-3 border-t border-card-border/30">
                 <p className="text-[10px] text-foreground-muted mb-2">Top Categories</p>
                 <div className="space-y-1.5">
                   {deep.topCategories.slice(0, 5).map((cat) => (
