@@ -359,6 +359,29 @@ export default function FinanceDashboardPage() {
               </div>
             </div>
 
+            {/* Income vs Spending visual bar */}
+            {(() => {
+              const maxVal = Math.max(deep.totalIncome, deep.totalSpending, 1)
+              const incomePct = (deep.totalIncome / maxVal) * 100
+              const spendPct = (deep.totalSpending / maxVal) * 100
+              return (
+                <div className="mt-4 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-foreground-muted w-14">Income</span>
+                    <div className="flex-1 h-3 bg-background-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-success rounded-full transition-all duration-700" style={{ width: `${incomePct}%` }} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-foreground-muted w-14">Spending</span>
+                    <div className="flex-1 h-3 bg-background-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-error rounded-full transition-all duration-700" style={{ width: `${spendPct}%` }} />
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Savings rate */}
             {deep.savingsRate != null && (
               <div className="mt-3 pt-3 border-t border-card-border/30 flex items-center justify-between">
