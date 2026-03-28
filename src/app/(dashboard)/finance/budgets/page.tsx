@@ -158,6 +158,7 @@ export default function FinanceBudgetsPage() {
           trendsData={trendsData}
           totalSpending={deep?.totalSpending ?? 0}
           currentMonth={currentMonth}
+          hasBudgets={hasBudgets}
           onCreateBudget={() => setShowModal(true)}
         />
       ) : summary.budgetCount === 0 ? (
