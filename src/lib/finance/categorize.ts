@@ -134,7 +134,7 @@ export function categorizeTransaction(
   // 6. Keyword matching
   const keywordResult = matchKeywords(cleaned)
   if (keywordResult) {
-    return { ...keywordResult, source: "keyword", confidence: 0.6, needsReview: true }
+    return { ...keywordResult, source: "keyword", confidence: 0.7, needsReview: false }
   }
 
   // 7. Fallback
@@ -175,10 +175,7 @@ export function needsReviewWhere(userId: string) {
     isExcluded: false,
     needsReview: true,
     category: { not: null },
-    OR: [
-      { reviewSkippedAt: null },
-      { reviewSkippedAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    ],
+    reviewSkippedAt: null,
   }
 }
 

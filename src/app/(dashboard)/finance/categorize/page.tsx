@@ -20,6 +20,7 @@ export default function CategorizePage() {
 
   const uncategorizedCount = uncatData?.total ?? 0
   const reviewCount = reviewData?.count ?? 0
+  const activeCount = mode === "review" ? reviewCount : uncategorizedCount
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-12">
@@ -31,7 +32,14 @@ export default function CategorizePage() {
         >
           <span className="material-symbols-rounded" style={{ fontSize: 20 }}>arrow_back</span>
         </Link>
-        <h1 className="text-xl font-semibold text-foreground">Categorize</h1>
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Categorize</h1>
+          {activeCount > 0 && (
+            <p className="text-xs text-foreground-muted">
+              {activeCount} {mode === "review" ? "to review" : "uncategorized"}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Tab switcher */}

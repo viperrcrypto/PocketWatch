@@ -10,17 +10,17 @@ import type { CategoryResult } from "./category-types"
 
 export const CONFIDENCE = {
   /** Rules at or above this auto-apply without review */
-  AUTO_APPLY: 0.8,
+  AUTO_APPLY: 0.7,
   /** Rules below this are disabled (don't fire) */
   DISABLED: 0.5,
   /** Initial confidence for user-created rules */
-  INITIAL_USER: 0.7,
+  INITIAL_USER: 0.85,
   /** Initial confidence for AI-created rules */
-  INITIAL_AI: 0.6,
+  INITIAL_AI: 0.75,
   /** Bump on user confirmation */
   CONFIRM_BUMP: 0.1,
   /** Penalty on user override */
-  OVERRIDE_PENALTY: 0.2,
+  OVERRIDE_PENALTY: 0.15,
   /** Maximum confidence */
   MAX: 1.0,
   /** Minimum confidence */

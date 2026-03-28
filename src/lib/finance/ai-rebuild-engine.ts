@@ -357,7 +357,7 @@ async function persistBatchResults(
           category,
           subcategory: result.subcategory,
           isAutoApplied: true,
-          needsReview: result.confidence !== "high",
+          needsReview: result.confidence === "low",
         },
       })
       txCategorized += ids.length

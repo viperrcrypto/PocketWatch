@@ -117,11 +117,14 @@ export default function FinanceTransactionsPage() {
               {uncategorizedCount > 0 && (
                 <> &middot; <span className="text-amber-500 font-semibold">{uncategorizedCount} need categorizing</span></>
               )}
+              {reviewCount > 0 && (
+                <> &middot; <span className="text-amber-500 font-semibold">{reviewCount} to review</span></>
+              )}
             </>
           )}
         />
         <div className="flex items-center gap-2 flex-shrink-0">
-          {uncategorizedCount > 0 && (
+          {(uncategorizedCount > 0 || reviewCount > 0) && (
             <Link
               href="/finance/categorize"
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
