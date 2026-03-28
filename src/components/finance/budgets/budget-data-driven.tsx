@@ -6,6 +6,7 @@ import { BudgetProgressBar } from "@/components/finance/budget-progress-bar"
 import { formatCurrency, cn } from "@/lib/utils"
 import { FadeIn } from "@/components/motion/fade-in"
 import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
+import { BudgetSparkline } from "./budget-sparkline"
 
 interface Suggestion {
   category: string
@@ -177,7 +178,7 @@ export function BudgetDataDriven({
                             {/* Sparkline — same as BudgetCategoryCard */}
                             {cat.trendData.length > 0 && (
                               <div className="hidden sm:flex items-end gap-px" aria-hidden="true">
-                                <Sparkline data={cat.trendData} color={meta.hex} />
+                                <BudgetSparkline data={cat.trendData} color={meta.hex} />
                                 <span className="text-[9px] text-foreground-muted ml-1.5 tabular-nums">
                                   avg {formatCurrency(cat.avgMonthly, "USD", 0)}
                                 </span>
@@ -225,20 +226,5 @@ export function BudgetDataDriven({
         </FadeIn>
       )}
     </div>
-  )
-}
-
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const last6 = data.slice(-6)
-  if (last6.length === 0) return null
-  const max = Math.max(...last6, 1)
-  const barW = 4, gap = 2, h = 20, w = last6.length * (barW + gap) - gap
-  return (
-    <svg width={w} height={h} className="flex-shrink-0">
-      {last6.map((val, i) => {
-        const barH = Math.max((val / max) * h, 1)
-        return <rect key={i} x={i * (barW + gap)} y={h - barH} width={barW} height={barH} rx={1} fill={color} opacity={i === last6.length - 1 ? 1 : 0.4} />
-      })}
-    </svg>
   )
 }
