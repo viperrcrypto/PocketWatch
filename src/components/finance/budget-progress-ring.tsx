@@ -78,13 +78,12 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
         className="w-full h-full -rotate-90"
         viewBox="0 0 100 100"
       >
-        {/* Track */}
+        {/* Track — thicker, more visible */}
         <circle
           cx="50" cy="50" r={r}
           fill="transparent"
-          stroke="var(--card-border)"
-          strokeWidth="5"
-          strokeLinecap="round"
+          stroke="var(--background-secondary)"
+          strokeWidth="8"
         />
 
         {hasMultiColor ? (
@@ -95,7 +94,7 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
               d={arcD(50, 50, r, arc.start, arc.end)}
               fill="none"
               stroke={arc.color}
-              strokeWidth="5"
+              strokeWidth="8"
               strokeLinecap="round"
               className="transition-all duration-700 ease-out"
             />
@@ -106,7 +105,7 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
             cx="50" cy="50" r={r}
             fill="transparent"
             stroke={fallbackColor}
-            strokeWidth="5"
+            strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
