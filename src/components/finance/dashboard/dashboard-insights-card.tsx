@@ -8,9 +8,9 @@ export function DashboardInsightsCard() {
   const generateInsights = useGenerateAIInsights()
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
-      {/* Sticky header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-card-border/30 bg-card sticky top-0 z-[1]">
+    <div className="bg-card rounded-xl overflow-hidden flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-card-border/30 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="material-symbols-rounded text-primary" style={{ fontSize: 18 }}>auto_awesome</span>
           <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">AI Insights</span>
@@ -28,7 +28,7 @@ export function DashboardInsightsCard() {
       </div>
 
       {aiData?.insights ? (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
           <div className="divide-y divide-card-border/30">
             {/* Key Insight */}
             <div className="px-5 py-4">
