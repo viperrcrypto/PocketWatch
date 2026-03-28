@@ -7,6 +7,8 @@ import { formatCurrency, cn } from "@/lib/utils"
 import { FadeIn } from "@/components/motion/fade-in"
 import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-children"
 import { BudgetSparkline } from "./budget-sparkline"
+import { BudgetHeroSummary } from "./budget-hero-summary"
+import { BudgetStatStrip } from "./budget-stat-strip"
 import dynamic from "next/dynamic"
 const BudgetPaceChart = dynamic(
   () => import("./budget-pace-chart").then((m) => m.BudgetPaceChart),
@@ -87,78 +89,70 @@ export function BudgetDataDriven({
   const dayOfMonth = now.getDate()
   const dailyAvg = dayOfMonth > 0 ? totalThisMonth / dayOfMonth : 0
   const projectedTotal = Math.round(dailyAvg * daysInMonth)
+  const remaining = Math.round(totalAvg) - totalThisMonth
+  const percentUsed = totalAvg > 0 ? Math.round((totalThisMonth / totalAvg) * 100) : 0
+  const safeDailySpend = remaining > 0 && (daysInMonth - dayOfMonth) > 0
+    ? Math.round(remaining / (daysInMonth - dayOfMonth))
+    : 0
+  const overAvgCount = categories.filter((c) => c.avgMonthly > 0 && c.thisMonth > c.avgMonthly).length
+  const categoryCount = categories.filter((c) => c.avgMonthly > 0).length
 
-  // Build donut segments from top categories
-  const DONUT_COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"]
-  const donutSegments = categories.slice(0, 7).map((cat, i) => ({
-    name: cat.category,
-    value: cat.thisMonth,
-    color: getCategoryMeta(cat.category).hex || DONUT_COLORS[i % DONUT_COLORS.length],
+  // Segments for ring chart
+  const segments = categories.filter((c) => c.thisMonth > 0).map((c) => ({
+    category: c.category,
+    spent: c.thisMonth,
+    monthlyLimit: c.avgMonthly > 0 ? c.avgMonthly : c.thisMonth,
   }))
+
+  // Find worst category
+  const worstCategory = useMemo(() => {
+    const sorted = [...categories].filter((c) => c.avgMonthly > 0).sort((a, b) => (b.thisMonth - b.avgMonthly) - (a.thisMonth - a.avgMonthly))
+    const worst = sorted[0]
+    if (!worst || worst.thisMonth <= worst.avgMonthly) return null
+    return { category: worst.category, overAmount: worst.thisMonth - worst.avgMonthly }
+  }, [categories])
 
   return (
     <div className="space-y-4">
-      {/* Hero: Donut + Spending Pace Chart */}
+      {/* Hero: Same layout as My Budget — ring chart + pace chart */}
       {totalThisMonth > 0 && (
         <FadeIn>
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Donut summary */}
-            <div className="md:w-[280px] flex-shrink-0 bg-card border border-card-border rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
-              <div className="flex flex-col items-center">
-                <svg viewBox="0 0 120 120" className="w-[160px] h-[160px]">
-                  {(() => {
-                    let cumAngle = -90
-                    return donutSegments.map((seg) => {
-                      const pct = totalThisMonth > 0 ? seg.value / totalThisMonth : 0
-                      const angle = pct * 360
-                      const startAngle = cumAngle
-                      cumAngle += angle
-                      const x1 = 60 + 45 * Math.cos((startAngle * Math.PI) / 180)
-                      const y1 = 60 + 45 * Math.sin((startAngle * Math.PI) / 180)
-                      const x2 = 60 + 45 * Math.cos(((startAngle + angle) * Math.PI) / 180)
-                      const y2 = 60 + 45 * Math.sin(((startAngle + angle) * Math.PI) / 180)
-                      const largeArc = angle > 180 ? 1 : 0
-                      return (
-                        <path
-                          key={seg.name}
-                          d={`M60,60 L${x1},${y1} A45,45 0 ${largeArc},1 ${x2},${y2} Z`}
-                          fill={seg.color}
-                          stroke="var(--card)"
-                          strokeWidth="1.5"
-                        />
-                      )
-                    })
-                  })()}
-                  <circle cx="60" cy="60" r="30" fill="var(--card)" />
-                  <text x="60" y="56" textAnchor="middle" className="text-sm font-bold fill-foreground" style={{ fontFamily: "var(--font-mono)" }}>
-                    {formatCurrency(totalThisMonth, "USD", 0)}
-                  </text>
-                  <text x="60" y="70" textAnchor="middle" className="text-[8px] fill-foreground-muted uppercase tracking-wider">
-                    total spent
-                  </text>
-                </svg>
-                <div className="mt-2 text-center">
-                  <p className="text-[10px] text-foreground-muted">
-                    {isAboveAvg
-                      ? <span className="text-error font-semibold">{formatCurrency(totalThisMonth - totalAvg, "USD", 0)} over avg</span>
-                      : <span className="text-success font-semibold">{formatCurrency(totalAvg - totalThisMonth, "USD", 0)} below avg</span>}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Pace chart */}
-            <div className="flex-1 bg-card border border-card-border rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
-              <BudgetPaceChart
-                dailySpending={dailySpending}
+            <div className="md:w-[280px] flex-shrink-0">
+              <BudgetHeroSummary
                 totalBudgeted={Math.round(totalAvg)}
-                projectedTotal={projectedTotal}
-                daysInMonth={daysInMonth}
-                dayOfMonth={dayOfMonth}
+                totalSpent={totalThisMonth}
+                remaining={remaining}
+                percentUsed={percentUsed}
+                daysRemaining={daysInMonth - dayOfMonth}
+                safeDailySpend={safeDailySpend}
+                isOnTrack={totalThisMonth <= totalAvg}
+                budgetCount={categoryCount}
+                overBudgetCount={overAvgCount}
+                segments={segments}
               />
             </div>
+            <BudgetPaceChart
+              dailySpending={dailySpending}
+              totalBudgeted={Math.round(totalAvg)}
+              projectedTotal={projectedTotal}
+              daysInMonth={daysInMonth}
+              dayOfMonth={dayOfMonth}
+            />
           </div>
         </FadeIn>
+      )}
+
+      {/* Stat strip — same as My Budget */}
+      {totalThisMonth > 0 && (
+        <BudgetStatStrip
+          dailyAvg={Math.round(dailyAvg)}
+          projectedTotal={projectedTotal}
+          totalBudgeted={Math.round(totalAvg)}
+          worstCategory={worstCategory}
+          onTrackCount={categoryCount - overAvgCount}
+          totalCount={categoryCount}
+        />
       )}
 
       {/* Summary strip */}
