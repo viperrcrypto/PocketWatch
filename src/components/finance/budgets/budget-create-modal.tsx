@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { getCategoryMeta, getBudgetableCategories } from "@/lib/finance/categories"
+import { BudgetSparkline } from "./budget-sparkline"
 import { formatCurrency, cn } from "@/lib/utils"
 
 interface BudgetSuggestion { category: string; avgMonthly: number; lastMonth: number; monthsOfData: number; suggested: number }

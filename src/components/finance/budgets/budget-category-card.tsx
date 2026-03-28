@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { BudgetProgressBar } from "@/components/finance/budget-progress-bar"
+import { BudgetSparkline } from "./budget-sparkline"
 import { getCategoryMeta } from "@/lib/finance/categories"
 import { formatCurrency, cn } from "@/lib/utils"
 import type { BudgetCategoryData } from "./budget-types"
@@ -90,7 +91,7 @@ export function BudgetCategoryCard({ budget, isEditing, onStartEdit, onSaveEdit,
             <div className="flex items-center gap-3">
               {budget.trendData.length > 0 && (
                 <div className="hidden sm:flex items-end gap-px" aria-hidden="true">
-                  <TrendSparkline data={budget.trendData} color={meta.hex} />
+                  <BudgetSparkline data={budget.trendData} color={meta.hex} />
                   {budget.sixMonthAvg !== null && (
                     <span className="text-[9px] text-foreground-muted ml-1.5 tabular-nums">avg {formatCurrency(budget.sixMonthAvg, "USD", 0)}</span>
                   )}
@@ -138,25 +139,8 @@ export function BudgetCategoryCard({ budget, isEditing, onStartEdit, onSaveEdit,
   )
 }
 
-function TrendSparkline({ data, color }: { data: number[]; color: string }) {
-  const last6 = data.slice(-6)
-  if (last6.length === 0) return null
-  const max = Math.max(...last6, 1)
-  const barWidth = 4, gap = 2, height = 20
-  const width = last6.length * (barWidth + gap) - gap
-
-  return (
-    <svg width={width} height={height} className="flex-shrink-0">
-      {last6.map((val, i) => {
-        const barH = Math.max((val / max) * height, 1)
-        return <rect key={i} x={i * (barWidth + gap)} y={height - barH} width={barWidth} height={barH} rx={1} fill={color} opacity={i === last6.length - 1 ? 1 : 0.4} />
-      })}
-    </svg>
-  )
-}
-
 function QuickChip({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="text-[9px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors">{label}</button>
+    <button onMouseDown={(e) => e.preventDefault()} onClick={onClick} className="text-[9px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors">{label}</button>
   )
 }

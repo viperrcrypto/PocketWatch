@@ -7,11 +7,14 @@ import type {
   BudgetWithSpending,
   BudgetCategoryData,
   BudgetSummary,
+  BudgetInsight,
   PaceMetrics,
   PaceChartPoint,
   DailySpendingPoint,
   SubImpactItem,
 } from "./budget-types"
+
+export type { BudgetInsight }
 
 // ─── Summary ────────────────────────────────────────────────────
 
@@ -59,10 +62,11 @@ export function buildPaceChartData(
   dayOfMonth: number,
   projectedTotal: number,
 ): PaceChartPoint[] {
-  // Build cumulative spending map
+  // Sort defensively before accumulating
+  const sorted = [...(dailySpending ?? [])].sort((a, b) => a.date.localeCompare(b.date))
   let cumulative = 0
   const cumulativeByDay = new Map<number, number>()
-  for (const d of dailySpending ?? []) {
+  for (const d of sorted) {
     cumulative += d.amount
     const dayNum = new Date(d.date).getDate()
     cumulativeByDay.set(dayNum, cumulative)
@@ -160,13 +164,6 @@ export function sortCategories(categories: BudgetCategoryData[], sortBy: SortMod
 }
 
 // ─── Insights Builder ───────────────────────────────────────────
-
-export interface BudgetInsight {
-  type: "info" | "warning" | "success" | "danger"
-  icon: string
-  message: string
-  action?: { label: string; onClick: () => void }
-}
 
 export function buildInsights(
   categories: BudgetCategoryData[],

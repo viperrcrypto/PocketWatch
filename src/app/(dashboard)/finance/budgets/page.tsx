@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import {
   useFinanceBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget,
   useFinanceDeepInsights, useFinanceTransactions,
@@ -43,9 +43,18 @@ export default function FinanceBudgetsPage() {
   const generateAI = useGenerateBudgetAI()
 
   const hasBudgets = (budgets?.length ?? 0) > 0
-  const [activeTab, setActiveTab] = useState<BudgetTab>(hasBudgets ? "my-budget" : "data-driven")
+  const [activeTab, setActiveTab] = useState<BudgetTab>("data-driven")
   const [showModal, setShowModal] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Default to "my-budget" once budgets load (first load only)
+  const hasInitialized = useRef(false)
+  useEffect(() => {
+    if (!hasInitialized.current && hasBudgets) {
+      setActiveTab("my-budget")
+      hasInitialized.current = true
+    }
+  }, [hasBudgets])
 
   // Switch to "my-budget" tab when user creates their first budget
   const handleCreateBudget = (category: string, monthlyLimit: number) => {
@@ -136,7 +145,7 @@ export default function FinanceBudgetsPage() {
       </div>
 
       {/* ── Tab Bar ── */}
-      <div className="flex items-center gap-1 bg-background-secondary rounded-lg p-1 w-fit">
+      <div role="tablist" className="flex items-center gap-1 bg-background-secondary rounded-lg p-1 w-fit">
         <TabButton active={activeTab === "data-driven"} onClick={() => setActiveTab("data-driven")} icon="auto_graph">
           Data-Driven
         </TabButton>
@@ -156,7 +165,6 @@ export default function FinanceBudgetsPage() {
           suggestions={defaultSuggestions}
           topCategories={deep?.topCategories ?? []}
           trendsData={trendsData}
-          totalSpending={deep?.totalSpending ?? 0}
           currentMonth={currentMonth}
           hasBudgets={hasBudgets}
           onCreateBudget={() => setShowModal(true)}
@@ -216,6 +224,8 @@ export default function FinanceBudgetsPage() {
 function TabButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: string; children: React.ReactNode }) {
   return (
     <button
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all",
