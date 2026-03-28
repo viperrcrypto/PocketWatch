@@ -54,10 +54,7 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
       const end = start + sweep
       cursor = end + GAP_DEG / 2
       const meta = getCategoryMeta(seg.category)
-      const segOver = seg.spent > seg.monthlyLimit
-      const segWarn = seg.spent / seg.monthlyLimit >= 0.8 && !segOver
-      const color = segOver ? "var(--error)" : segWarn ? "var(--warning)" : meta.hex
-      return { start, end, color }
+      return { start, end, color: meta.hex }
     })
   }, [segments, percent])
 
@@ -147,20 +144,6 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
         )}
       </div>
 
-      {/* Ring legend */}
-      {hasMultiColor && size >= 140 && (
-        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--success)" }} />On track
-          </span>
-          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--warning)" }} />Near limit
-          </span>
-          <span className="flex items-center gap-1 text-[8px] text-foreground-muted">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--error)" }} />Over
-          </span>
-        </div>
-      )}
     </div>
   )
 }
