@@ -329,108 +329,94 @@ export default function FinanceDashboardPage() {
       {deep && (
         <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>account_balance_wallet</span>
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-5">
+              <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 16 }}>account_balance_wallet</span>
               <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Cash Flow This Month</span>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-[10px] text-foreground-muted mb-1">Income</p>
-                <p className="text-lg font-bold text-success tabular-nums">
-                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.totalIncome)}</BlurredValue>
-                </p>
+
+            {/* Hero: Net number */}
+            <div className="text-center mb-4">
+              <p className="text-[10px] text-foreground-muted mb-1">Net Cash Flow</p>
+              <p className={cn(
+                "text-3xl font-data font-black tabular-nums leading-none",
+                (deep.totalIncome - deep.totalSpending) >= 0 ? "text-success" : "text-error"
+              )} style={{ letterSpacing: "-0.03em" }}>
+                <BlurredValue isHidden={isHidden}>
+                  {(deep.totalIncome - deep.totalSpending) >= 0 ? "+" : ""}{formatCurrency(deep.totalIncome - deep.totalSpending, "USD", 0)}
+                </BlurredValue>
+              </p>
+            </div>
+
+            {/* Income vs Spending — side by side with stacked bar */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-success" />
+                <span className="text-[10px] text-foreground-muted">Income</span>
+                <span className="text-xs font-semibold tabular-nums text-success">
+                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.totalIncome, "USD", 0)}</BlurredValue>
+                </span>
               </div>
-              <div>
-                <p className="text-[10px] text-foreground-muted mb-1">Spending</p>
-                <p className="text-lg font-bold text-error tabular-nums">
-                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.totalSpending)}</BlurredValue>
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-foreground-muted mb-1">Net</p>
-                <p className={cn(
-                  "text-lg font-bold tabular-nums",
-                  (deep.totalIncome - deep.totalSpending) >= 0 ? "text-success" : "text-error"
-                )}>
-                  <BlurredValue isHidden={isHidden}>
-                    {(deep.totalIncome - deep.totalSpending) >= 0 ? "+" : ""}{formatCurrency(deep.totalIncome - deep.totalSpending)}
-                  </BlurredValue>
-                </p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold tabular-nums text-error">
+                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.totalSpending, "USD", 0)}</BlurredValue>
+                </span>
+                <span className="text-[10px] text-foreground-muted">Spending</span>
+                <span className="w-2 h-2 rounded-full bg-error" />
               </div>
             </div>
 
-            {/* Income vs Spending visual bar */}
+            {/* Stacked bar */}
             {(() => {
-              const maxVal = Math.max(deep.totalIncome, deep.totalSpending, 1)
-              const incomePct = (deep.totalIncome / maxVal) * 100
-              const spendPct = (deep.totalSpending / maxVal) * 100
+              const total = deep.totalIncome + deep.totalSpending || 1
+              const incomePct = Math.max(1, (deep.totalIncome / total) * 100)
+              const spendPct = Math.max(1, (deep.totalSpending / total) * 100)
               return (
-                <div className="mt-4 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-foreground-muted w-14">Income</span>
-                    <div className="flex-1 h-3 bg-background-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-success rounded-full transition-all duration-700" style={{ width: `${incomePct}%` }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-foreground-muted w-14">Spending</span>
-                    <div className="flex-1 h-3 bg-background-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-error rounded-full transition-all duration-700" style={{ width: `${spendPct}%` }} />
-                    </div>
-                  </div>
+                <div className="flex h-3 rounded-full overflow-hidden bg-background-secondary mb-5">
+                  <div className="bg-success transition-all duration-700 rounded-l-full" style={{ width: `${incomePct}%` }} />
+                  <div className="bg-error transition-all duration-700 rounded-r-full" style={{ width: `${spendPct}%` }} />
                 </div>
               )
             })()}
 
-            {/* Savings rate */}
-            {deep.savingsRate != null && (
-              <div className="mt-3 pt-3 border-t border-card-border/30 flex items-center justify-between">
-                <span className="text-[10px] text-foreground-muted">Savings rate</span>
-                <span className={cn(
-                  "text-xs font-semibold",
-                  deep.savingsRate >= 20 ? "text-success" : deep.savingsRate >= 0 ? "text-warning" : "text-error"
-                )}>
-                  {Math.round(deep.savingsRate)}%
-                </span>
-              </div>
-            )}
-
-            {/* Spending pace */}
-            {deep.spendingVelocity && (
-              <div className="mt-2 pt-2 border-t border-card-border/30 flex items-center justify-between">
-                <span className="text-[10px] text-foreground-muted">Daily avg</span>
-                <span className="text-xs font-semibold tabular-nums text-foreground">
-                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.spendingVelocity.dailyAvg, "USD", 0)}</BlurredValue>
-                  <span className="text-foreground-muted font-normal"> / day</span>
-                </span>
-              </div>
-            )}
-            {deep.cashFlowForecast && (
-              <div className="mt-2 pt-2 border-t border-card-border/30 flex items-center justify-between">
-                <span className="text-[10px] text-foreground-muted">Safe to spend</span>
-                <span className={cn("text-xs font-semibold tabular-nums", deep.cashFlowForecast.safeDailySpend > 0 ? "text-success" : "text-error")}>
-                  <BlurredValue isHidden={isHidden}>{formatCurrency(deep.cashFlowForecast.safeDailySpend, "USD", 0)}</BlurredValue>
-                  <span className="text-foreground-muted font-normal"> / day · {deep.cashFlowForecast.daysRemaining}d left</span>
-                </span>
-              </div>
-            )}
-
-            {/* Top spending categories */}
-            {deep.topCategories && deep.topCategories.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-card-border/30">
-                <p className="text-[10px] text-foreground-muted mb-2">Top Categories</p>
-                <div className="space-y-1.5">
-                  {deep.topCategories.slice(0, 5).map((cat) => (
-                    <div key={cat.category} className="flex items-center justify-between">
-                      <span className="text-[11px] text-foreground truncate">{cat.category}</span>
-                      <span className="text-[11px] font-semibold tabular-nums text-foreground-muted ml-2">
-                        <BlurredValue isHidden={isHidden}>{formatCurrency(cat.total, "USD", 0)}</BlurredValue>
-                      </span>
-                    </div>
-                  ))}
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {deep.savingsRate != null && (
+                <div className="bg-background-secondary/50 rounded-lg px-3 py-2.5">
+                  <p className="text-[9px] text-foreground-muted uppercase tracking-wider mb-0.5">Savings Rate</p>
+                  <p className={cn("text-sm font-bold tabular-nums", deep.savingsRate >= 20 ? "text-success" : deep.savingsRate >= 0 ? "text-warning" : "text-error")}>
+                    {Math.round(deep.savingsRate)}%
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
+              {deep.spendingVelocity && (
+                <div className="bg-background-secondary/50 rounded-lg px-3 py-2.5">
+                  <p className="text-[9px] text-foreground-muted uppercase tracking-wider mb-0.5">Daily Avg</p>
+                  <p className="text-sm font-bold tabular-nums text-foreground">
+                    <BlurredValue isHidden={isHidden}>{formatCurrency(deep.spendingVelocity.dailyAvg, "USD", 0)}</BlurredValue>
+                    <span className="text-[9px] text-foreground-muted font-normal"> /day</span>
+                  </p>
+                </div>
+              )}
+              {deep.cashFlowForecast && (
+                <div className="bg-background-secondary/50 rounded-lg px-3 py-2.5">
+                  <p className="text-[9px] text-foreground-muted uppercase tracking-wider mb-0.5">Safe to Spend</p>
+                  <p className={cn("text-sm font-bold tabular-nums", deep.cashFlowForecast.safeDailySpend > 0 ? "text-success" : "text-error")}>
+                    <BlurredValue isHidden={isHidden}>{formatCurrency(deep.cashFlowForecast.safeDailySpend, "USD", 0)}</BlurredValue>
+                    <span className="text-[9px] text-foreground-muted font-normal"> /day</span>
+                  </p>
+                </div>
+              )}
+              {deep.cashFlowForecast && (
+                <div className="bg-background-secondary/50 rounded-lg px-3 py-2.5">
+                  <p className="text-[9px] text-foreground-muted uppercase tracking-wider mb-0.5">Days Left</p>
+                  <p className="text-sm font-bold tabular-nums text-foreground">
+                    {deep.cashFlowForecast.daysRemaining}
+                    <span className="text-[9px] text-foreground-muted font-normal"> days</span>
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           <DashboardInsightsCard />
         </FadeIn>
