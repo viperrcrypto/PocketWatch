@@ -141,13 +141,13 @@ export function useAIRebuild() {
 
         const data = await res.json()
         if (data.summary) {
-          // Server has a completed rebuild — show it
-          const stored = loadFromStorage()
+          // Server has a completed rebuild — show it, discard stale localStorage
+          clearStorage()
           setState({
             status: "complete",
             preview: null,
             progress: null,
-            processedMerchants: stored?.processedMerchants ?? [],
+            processedMerchants: [],
             summary: data.summary,
             error: null,
           })
@@ -178,6 +178,9 @@ export function useAIRebuild() {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
+
+    // Clear stale state from previous rebuild
+    if (!dryRun) clearStorage()
 
     setState((prev) => ({
       ...prev,

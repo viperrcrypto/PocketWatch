@@ -13,10 +13,25 @@ export const maxDuration = 300
 
 const AI_SERVICES = ["ai_claude_cli", "ai_claude_api", "ai_openai", "ai_gemini"]
 
-// Cancel signal store
-const g = globalThis as unknown as { __rebuildSignals?: Map<string, { cancelled: boolean }> }
-if (!g.__rebuildSignals) g.__rebuildSignals = new Map()
-const rebuildSignals = g.__rebuildSignals
+// DB-backed cancel signal — survives HMR reloads and multi-worker deployments
+const SIGNAL_KEY = (userId: string) => `rebuild_signal:${userId}`
+
+async function getSignalStatus(userId: string): Promise<"running" | "cancelled" | null> {
+  const row = await db.settings.findUnique({ where: { key: SIGNAL_KEY(userId) } })
+  return (row?.value as string | null) as "running" | "cancelled" | null
+}
+
+async function setSignalStatus(userId: string, status: "running" | "cancelled") {
+  await db.settings.upsert({
+    where: { key: SIGNAL_KEY(userId) },
+    create: { key: SIGNAL_KEY(userId), value: status },
+    update: { value: status },
+  })
+}
+
+async function clearSignal(userId: string) {
+  await db.settings.delete({ where: { key: SIGNAL_KEY(userId) } }).catch(() => {})
+}
 
 const bodySchema = z.object({
   mode: z.enum(["uncategorized", "full"]),
@@ -47,14 +62,16 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const encoder = new TextEncoder()
 
-  // Block concurrent rebuilds — if one is already running, reject
-  const existingSignal = rebuildSignals.get(user.id)
-  if (existingSignal && !existingSignal.cancelled) {
+  // Block concurrent rebuilds
+  const existingStatus = await getSignalStatus(user.id)
+  if (existingStatus === "running") {
     return apiError("AIR04", "A rebuild is already in progress. Cancel it first or wait for it to finish.", 409)
   }
 
+  await setSignalStatus(user.id, "running")
+
+  // In-memory signal for this request's cancel checks (faster than DB polling per batch)
   const cancelSignal = { cancelled: false }
-  rebuildSignals.set(user.id, cancelSignal)
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -88,7 +105,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       } catch (err) {
         send("error", { message: err instanceof Error ? err.message : "Rebuild failed" })
       } finally {
-        rebuildSignals.delete(user.id)
+        await clearSignal(user.id)
         try { controller.close() } catch { /* already closed */ }
       }
     },
@@ -110,13 +127,9 @@ export async function DELETE() {
   const user = await getCurrentUser()
   if (!user) return apiError("F9310", "Authentication required", 401)
 
-  const signal = rebuildSignals.get(user.id)
-  if (signal) {
-    signal.cancelled = true
-    return NextResponse.json({ cancelled: true })
-  }
-
-  return NextResponse.json({ cancelled: false, message: "No rebuild in progress" })
+  // Set DB signal to cancelled — the engine checks this per batch
+  await setSignalStatus(user.id, "cancelled")
+  return NextResponse.json({ cancelled: true })
 }
 
 /**

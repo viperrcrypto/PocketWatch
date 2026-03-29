@@ -180,9 +180,14 @@ export async function runRebuildBatches(
     }
   }
 
-  // Run batches with concurrency limit
+  // Run batches with concurrency limit — check DB cancel signal every 3 batches
   for (let i = 0; i < totalBatches; i += CONCURRENCY) {
     if (cancelSignal.cancelled) break
+    // Check DB cancel signal periodically (every 3rd iteration to avoid DB spam)
+    if (i > 0 && i % (CONCURRENCY * 3) === 0) {
+      const dbSignal = await db.settings.findUnique({ where: { key: `rebuild_signal:${userId}` }, select: { value: true } })
+      if (dbSignal?.value === "cancelled") { cancelSignal.cancelled = true; break }
+    }
     const chunk = Array.from({ length: Math.min(CONCURRENCY, totalBatches - i) }, (_, k) => i + k)
     await Promise.allSettled(chunk.map((idx) => processBatch(idx)))
   }
