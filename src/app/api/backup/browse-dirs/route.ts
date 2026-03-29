@@ -6,11 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { resolve, sep, join } from "node:path"
+import { resolve, sep, dirname } from "node:path"
 import { homedir } from "node:os"
-import { mkdir, lstat, readdir, unlink } from "node:fs/promises"
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
+import { mkdir, lstat, unlink } from "node:fs/promises"
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
+
+const execFileAsync = promisify(execFile)
 
 function toDisplay(absPath: string, home: string): string {
   return absPath.startsWith(home) ? "~" + absPath.slice(home.length) : absPath
@@ -32,13 +36,17 @@ export async function POST(req: NextRequest) {
   // Mode 1: Find marker file to resolve native picker path
   if (body.action === "resolve" && typeof body.marker === "string") {
     const markerName = `.pwmarker-${body.marker}`
-    const found = await findMarker(home, markerName, 8)
-    if (found) {
-      await unlink(join(found, markerName)).catch(() => {})
-      if (!checkHome(found, home)) return apiError("B5002", "Path must be within home directory", 403)
-      return NextResponse.json({ path: toDisplay(found, home) })
-    }
-    return apiError("B5004", "Could not resolve selected folder. Try pasting the path manually.", 404)
+    try {
+      const { stdout } = await execFileAsync("find", [home, "-name", markerName, "-maxdepth", "10", "-print", "-quit"], { timeout: 10_000 })
+      const markerPath = stdout.trim()
+      if (markerPath) {
+        await unlink(markerPath).catch(() => {})
+        const folderPath = dirname(markerPath)
+        if (!checkHome(folderPath, home)) return apiError("B5002", "Path must be within home directory", 403)
+        return NextResponse.json({ path: toDisplay(folderPath, home) })
+      }
+    } catch {}
+    return apiError("B5004", "Could not resolve selected folder.", 404)
   }
 
   // Mode 2: Validate / create path
@@ -62,21 +70,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ path: toDisplay(resolvedDir, home), exists })
 }
 
-/** Recursively search for a marker file, limited depth to avoid scanning entire disk */
-async function findMarker(dir: string, markerName: string, maxDepth: number): Promise<string | null> {
-  if (maxDepth <= 0) return null
-  try {
-    const entries = await readdir(dir, { withFileTypes: true })
-    for (const e of entries) {
-      if (e.name === markerName && !e.isDirectory()) return dir
-    }
-    for (const e of entries) {
-      const skip = new Set(["node_modules", "Library", ".Trash", ".git", ".cache"])
-      if (e.isDirectory() && !e.isSymbolicLink() && !skip.has(e.name)) {
-        const found = await findMarker(join(dir, e.name), markerName, maxDepth - 1)
-        if (found) return found
-      }
-    }
-  } catch {}
-  return null
-}
