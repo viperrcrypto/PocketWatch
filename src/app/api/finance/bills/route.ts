@@ -79,6 +79,33 @@ export async function GET(req: NextRequest) {
       bill.logoUrl = logoMap.get(bill.merchantName) ?? null
     }
 
+    // Link paid bills to their actual transaction
+    const paidBills = [...subBills, ...ccBills].filter((b) => b.isPaid && !b.lastTransactionId)
+    if (paidBills.length > 0) {
+      const [tYear, tMon] = targetMonth.split("-").map(Number)
+      const mStart = new Date(tYear, tMon - 1, 1)
+      const mEnd = new Date(tYear, tMon, 1)
+      for (const bill of paidBills) {
+        const keyword = bill.merchantName.split(" ")[0]
+        if (keyword.length < 3) continue
+        const tx = await db.financeTransaction.findFirst({
+          where: {
+            userId: user.id,
+            date: { gte: mStart, lt: mEnd },
+            amount: { gte: bill.amount * 0.8, lte: bill.amount * 1.2 },
+            OR: [
+              { merchantName: { contains: keyword, mode: "insensitive" } },
+              { name: { contains: keyword, mode: "insensitive" } },
+            ],
+            isDuplicate: false, isExcluded: false,
+          },
+          orderBy: { date: "desc" },
+          select: { id: true },
+        })
+        if (tx) bill.lastTransactionId = tx.id
+      }
+    }
+
     const allBills = [...subBills, ...ccBills].sort((a, b) => {
       if (a.isPaid && !b.isPaid) return 1
       if (!a.isPaid && b.isPaid) return -1
