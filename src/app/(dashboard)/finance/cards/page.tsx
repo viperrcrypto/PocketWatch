@@ -167,19 +167,25 @@ export default function FinanceCardsPage() {
 
   // Bills stats
   const allSubs = subs?.subscriptions ?? []
-  const monthlyBillsTotal = allSubs.filter((s: { status: string }) => s.status === "active")
-    .reduce((sum: number, s: { frequency: string; amount: number }) => {
-      switch (s.frequency) {
-        case "weekly": return sum + s.amount * 4.33
-        case "biweekly": return sum + s.amount * 2.17
-        case "semi_monthly": return sum + s.amount * 2
-        case "monthly": return sum + s.amount
-        case "quarterly": return sum + s.amount / 3
-        case "semi_annual": return sum + s.amount / 6
-        case "yearly": return sum + s.amount / 12
-        default: return sum + s.amount
-      }
-    }, 0)
+  const activeSubs = allSubs.filter((s: { status: string }) => s.status === "active")
+  const toMonthly = (s: { frequency: string; amount: number }) => {
+    switch (s.frequency) {
+      case "weekly": return s.amount * 4.33
+      case "biweekly": return s.amount * 2.17
+      case "semi_monthly": return s.amount * 2
+      case "monthly": return s.amount
+      case "quarterly": return s.amount / 3
+      case "semi_annual": return s.amount / 6
+      case "yearly": return s.amount / 12
+      default: return s.amount
+    }
+  }
+  const monthlyBillsTotal = activeSubs.reduce((sum: number, s: { frequency: string; amount: number }) => sum + toMonthly(s), 0)
+  // Split: obligations (bills + subs) vs card payments
+  const obligationsTotal = activeSubs
+    .filter((s: { billType?: string | null }) => s.billType !== "cc_payment")
+    .reduce((sum: number, s: { frequency: string; amount: number }) => sum + toMonthly(s), 0)
+  const cardPaymentsMonthly = monthlyBillsTotal - obligationsTotal
 
   const allBills = billsData?.bills ?? []
   const thisMonthUpcoming = allBills.filter((b) => !b.isPaid)
@@ -303,7 +309,8 @@ export default function FinanceCardsPage() {
           <CardsBillsSection
             upcomingCount={upcomingCount}
             upcomingTotal={upcomingTotal}
-            monthlyBillsTotal={monthlyBillsTotal}
+            obligationsTotal={obligationsTotal}
+            cardPaymentsTotal={cardPaymentsMonthly}
             totalBalance={totalBalance}
             nextDue={nextDue}
             bills={allBills}

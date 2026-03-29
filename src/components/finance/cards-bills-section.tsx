@@ -33,7 +33,8 @@ interface Bill {
 interface CardsBillsSectionProps {
   upcomingCount: number
   upcomingTotal: number
-  monthlyBillsTotal: number
+  obligationsTotal: number
+  cardPaymentsTotal: number
   totalBalance: number
   nextDue: Bill | undefined
   bills: Bill[]
@@ -41,8 +42,8 @@ interface CardsBillsSectionProps {
 }
 
 export function CardsBillsSection({
-  upcomingCount, upcomingTotal, monthlyBillsTotal,
-  totalBalance, nextDue, bills, paidCount = 0,
+  upcomingCount, upcomingTotal, obligationsTotal,
+  cardPaymentsTotal, totalBalance, nextDue, bills, paidCount = 0,
 }: CardsBillsSectionProps) {
   return (
     <>
@@ -55,8 +56,8 @@ export function CardsBillsSection({
           label="Coming Up"
           value={`${upcomingCount} upcoming · ${formatCurrency(upcomingTotal)}`}
           footerStats={[
-            { label: "Monthly Bills", value: formatCurrency(monthlyBillsTotal) },
-            { label: "Paid", value: `${paidCount} bill${paidCount !== 1 ? "s" : ""}`, color: paidCount > 0 ? "success" : undefined },
+            { label: "Monthly Obligations", value: formatCurrency(obligationsTotal) },
+            { label: "Card Payments", value: formatCurrency(cardPaymentsTotal) },
             {
               label: "Next Due",
               value: nextDue
@@ -177,6 +178,15 @@ function BillsGrid({ bills: defaultBills }: { bills: Bill[] }) {
   )
 }
 
+const BILL_GROUPS: { type: string; label: string; icon: string; color: string }[] = [
+  { type: "cc_payment", label: "Card Payments", icon: "credit_card", color: "text-amber-500" },
+  { type: "subscription", label: "Subscriptions", icon: "subscriptions", color: "text-violet-500" },
+  { type: "insurance", label: "Insurance", icon: "health_and_safety", color: "text-blue-500" },
+  { type: "cc_annual_fee", label: "Annual Fees", icon: "calendar_month", color: "text-rose-500" },
+  { type: "membership", label: "Memberships", icon: "card_membership", color: "text-emerald-500" },
+  { type: "bill", label: "Bills & Utilities", icon: "receipt_long", color: "text-sky-500" },
+]
+
 function BillListPanel({
   bills,
   maxHeight,
@@ -188,6 +198,15 @@ function BillListPanel({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(false)
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  const toggleCollapse = useCallback((type: string) => {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(type) ? next.delete(type) : next.add(type)
+      return next
+    })
+  }, [])
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current
@@ -199,6 +218,14 @@ function BillListPanel({
     checkScroll()
   }, [bills, checkScroll])
 
+  const grouped = BILL_GROUPS
+    .map(g => ({
+      ...g,
+      items: bills.filter(b => (b.billType ?? "bill") === g.type),
+      total: bills.filter(b => (b.billType ?? "bill") === g.type).reduce((s, b) => s + b.amount, 0),
+    }))
+    .filter(g => g.items.length > 0)
+
   return (
     <div
       className="bg-card border border-card-border rounded-xl overflow-hidden flex flex-col"
@@ -206,7 +233,7 @@ function BillListPanel({
     >
       <div className="px-4 py-3 border-b border-card-border/50 flex items-center justify-between flex-shrink-0">
         <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">
-          {bills.length} Bill{bills.length !== 1 ? "s" : ""} This Month
+          {bills.length} Payment{bills.length !== 1 ? "s" : ""} This Month
         </span>
       </div>
 
@@ -214,12 +241,39 @@ function BillListPanel({
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="divide-y divide-card-border/30 overflow-y-auto flex-1 min-h-0"
+          className="overflow-y-auto flex-1 min-h-0"
         >
           {bills.length === 0 ? (
             <p className="text-sm text-foreground-muted text-center py-8">No bills match your filters</p>
-          ) : bills.map((bill) => (
-            <BillRow key={bill.id} bill={bill} onClick={() => onSelectBill(bill)} />
+          ) : grouped.map(group => (
+            <div key={group.type}>
+              <button
+                type="button"
+                onClick={() => toggleCollapse(group.type)}
+                className="w-full flex items-center justify-between px-4 py-2 hover:bg-background-secondary/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 14 }}>
+                    {collapsed.has(group.type) ? "chevron_right" : "expand_more"}
+                  </span>
+                  <span className={cn("material-symbols-rounded", group.color)} style={{ fontSize: 14 }}>
+                    {group.icon}
+                  </span>
+                  <span className="text-xs font-semibold text-foreground">{group.label}</span>
+                  <span className="text-[10px] text-foreground-muted">({group.items.length})</span>
+                </div>
+                <span className="text-xs font-semibold tabular-nums text-foreground-muted">
+                  {formatCurrency(group.total)}
+                </span>
+              </button>
+              {!collapsed.has(group.type) && (
+                <div className="divide-y divide-card-border/30">
+                  {group.items.map(bill => (
+                    <BillRow key={bill.id} bill={bill} onClick={() => onSelectBill(bill)} />
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
         {!isAtBottom && bills.length > 0 && (
