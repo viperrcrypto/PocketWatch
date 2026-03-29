@@ -138,14 +138,14 @@ export async function parsePDFFromFile(
   file: File,
   userId: string
 ): Promise<{ rows: ParsedRow[]; errors: string[] }> {
-  // 1. Extract text from PDF
+  // 1. Extract text from PDF (pdf-parse v2 uses PDFParse class)
   let text: string
   try {
-    const pdfModule = await import("pdf-parse")
-    const pdfParse = typeof pdfModule.default === "function" ? pdfModule.default : pdfModule
+    const { PDFParse } = await import("pdf-parse")
+    const parser = new PDFParse({})
     const buffer = Buffer.from(await file.arrayBuffer())
-    const result = await (pdfParse as (buf: Buffer) => Promise<{ text: string }>)(buffer)
-    text = result.text
+    await parser.load(buffer)
+    text = await parser.getText()
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown PDF error"
     if (msg.includes("password")) {
