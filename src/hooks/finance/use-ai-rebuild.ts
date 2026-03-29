@@ -204,12 +204,14 @@ export function useAIRebuild() {
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ""
+      const MAX_BUFFER = 64 * 1024 // 64KB safety cap
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
+        if (buffer.length > MAX_BUFFER) buffer = buffer.slice(-MAX_BUFFER) // prevent memory leak
         const lines = buffer.split("\n\n")
         buffer = lines.pop() ?? ""
 
@@ -219,7 +221,14 @@ export function useAIRebuild() {
           if (!eventMatch || !dataMatch) continue
 
           const event = eventMatch[1]
-          const data = JSON.parse(dataMatch[1])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let data: any
+          try {
+            data = JSON.parse(dataMatch[1])
+          } catch {
+            console.warn("[ai-rebuild] Malformed SSE data, skipping:", dataMatch[1]?.slice(0, 100))
+            continue
+          }
 
           switch (event) {
             case "preview":

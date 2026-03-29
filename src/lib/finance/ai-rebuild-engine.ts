@@ -173,6 +173,7 @@ export async function runRebuildBatches(
           batchesFailed++
           merchantsProcessed += batch.length
           failedMerchants.push(...batch.map((m) => m.name))
+          console.error(`[ai-rebuild] Batch ${i} failed:`, err instanceof Error ? err.message : err)
           send("error", { batchIndex: i, message: err instanceof Error ? err.message : "Batch failed" })
         }
       }

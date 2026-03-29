@@ -46,9 +46,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   const useCLI = !providerKey
 
   const encoder = new TextEncoder()
-  // Cancel any existing rebuild for this user before starting a new one
+
+  // Block concurrent rebuilds — if one is already running, reject
   const existingSignal = rebuildSignals.get(user.id)
-  if (existingSignal) existingSignal.cancelled = true
+  if (existingSignal && !existingSignal.cancelled) {
+    return apiError("AIR04", "A rebuild is already in progress. Cancel it first or wait for it to finish.", 409)
+  }
 
   const cancelSignal = { cancelled: false }
   rebuildSignals.set(user.id, cancelSignal)
