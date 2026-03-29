@@ -30,6 +30,9 @@ export function BudgetCategoryCard({ budget, transactions, isEditing, onStartEdi
   const [editValue, setEditValue] = useState(String(budget.monthlyLimit))
   const [expanded, setExpanded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rolloverPending = useRef(false)
+
+  useEffect(() => { rolloverPending.current = false }, [budget.rollover])
 
   useEffect(() => {
     if (isEditing) {
@@ -79,9 +82,7 @@ export function BudgetCategoryCard({ budget, transactions, isEditing, onStartEdi
                 <span className="text-xs text-foreground-muted tabular-nums">
                   {formatCurrency(displaySpent, "USD", 0)} {displayLabel}
                   <span className="mx-0.5">/</span>
-                  <span className="cursor-pointer hover:text-foreground hover:underline decoration-dotted underline-offset-2 transition-colors" onClick={onStartEdit} title="Click to edit">
-                    {formatCurrency(budget.monthlyLimit, "USD", 0)}
-                  </span>
+                  <span>{formatCurrency(budget.monthlyLimit, "USD", 0)}</span>
                 </span>
               )}
               <span className={cn("text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md", isOver ? "bg-error/12 text-error" : isWarn ? "bg-warning/12 text-warning" : "bg-success/12 text-success")}>
@@ -125,7 +126,7 @@ export function BudgetCategoryCard({ budget, transactions, isEditing, onStartEdi
                 <>
                   {budget.sixMonthAvg !== null && <QuickChip label={`Avg ${formatCurrency(budget.sixMonthAvg, "USD", 0)}`} onClick={() => setEditValue(String(Math.round(budget.sixMonthAvg!)))} />}
                   <QuickChip label="+10%" onClick={() => setEditValue(String(Math.round(budget.monthlyLimit * 1.1)))} />
-                  <button onClick={() => onToggleRollover(budget.id, !budget.rollover)} className={cn("text-[9px] px-1.5 py-0.5 rounded-md font-medium transition-colors", budget.rollover ? "bg-success/15 text-success" : "bg-foreground/5 text-foreground-muted hover:text-foreground")} title="Carry unused budget to next month">
+                  <button onClick={() => { if (rolloverPending.current) return; rolloverPending.current = true; onToggleRollover(budget.id, !budget.rollover) }} className={cn("text-[9px] px-1.5 py-0.5 rounded-md font-medium transition-colors", budget.rollover ? "bg-success/15 text-success" : "bg-foreground/5 text-foreground-muted hover:text-foreground")} title="Carry unused budget to next month">
                     Rollover {budget.rollover ? "on" : "off"}
                   </button>
                 </>
@@ -160,7 +161,7 @@ export function BudgetCategoryCard({ budget, transactions, isEditing, onStartEdi
       {/* Expandable transaction list */}
       {expanded && transactions && transactions.length > 0 && (
         <div className="mt-3 pt-3 border-t border-card-border/30 space-y-1.5">
-          {transactions.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 15).map((tx, i) => (
+          {[...transactions].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 15).map((tx, i) => (
             <div key={i} className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="text-foreground truncate">{tx.merchantName ?? tx.name}</span>

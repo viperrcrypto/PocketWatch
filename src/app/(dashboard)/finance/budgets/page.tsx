@@ -82,7 +82,7 @@ export default function FinanceBudgetsPage() {
   }, [categoryData])
 
   const activeSubs = useMemo(
-    () => (subsData?.subscriptions ?? []).filter((s) => s.status === "active").slice(0, 8).map((s) => ({ merchantName: s.merchantName, amount: s.amount, logoUrl: s.logoUrl ?? null, category: s.category ?? null })),
+    () => (subsData?.subscriptions ?? []).filter((s) => s.status === "active").slice(0, 6).map((s) => ({ merchantName: s.merchantName, amount: s.amount, logoUrl: s.logoUrl ?? null, category: s.category ?? null })),
     [subsData],
   )
 
@@ -152,7 +152,7 @@ export default function FinanceBudgetsPage() {
         <TabButton active={activeTab === "my-budget"} onClick={() => setActiveTab("my-budget")} icon="tune">
           My Budget
           {hasBudgets && (
-            <span className={cn("ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full tabular-nums", activeTab === "my-budget" ? "bg-white/20 text-white" : "bg-primary/15 text-primary")}>
+            <span className={cn("ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full tabular-nums", activeTab === "my-budget" ? "bg-white/30 text-white" : "bg-primary/15 text-primary")}>
               {budgets!.length}
             </span>
           )}
