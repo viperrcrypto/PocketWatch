@@ -172,7 +172,7 @@ export function BudgetSmartInsights({
         </button>
       ) : (
         <Link
-          href="/finance/settings#ai"
+          href="/settings?tab=finance#ai-intelligence"
           className="text-xs text-foreground-muted hover:text-foreground transition-colors"
         >
           Enable AI for smarter insights →

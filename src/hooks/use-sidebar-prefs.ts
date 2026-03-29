@@ -27,7 +27,6 @@ export const PORTFOLIO_NAV_ITEMS: NavItem[] = [
   { id: "history",      label: "Activity",      href: "/portfolio/history",      icon: "history" },
   { id: "accounts",     label: "Wallets",       href: "/portfolio/accounts",     icon: "wallet" },
   { id: "staking",      label: "Staking",       href: "/portfolio/staking",      icon: "layers" },
-  { id: "settings",     label: "Settings",      href: "/portfolio/settings",     icon: "settings" },
 ]
 
 export const FINANCE_NAV_ITEMS: NavItem[] = [
@@ -38,7 +37,6 @@ export const FINANCE_NAV_ITEMS: NavItem[] = [
   { id: "fin-budgets",       label: "Budgets",        href: "/finance/budgets",        icon: "savings" },
   { id: "fin-investments",   label: "Investments",    href: "/finance/investments",    icon: "show_chart" },
   { id: "fin-cards",         label: "Cards & Bills",  href: "/finance/cards",          icon: "credit_card" },
-  { id: "fin-settings",      label: "Settings",       href: "/finance/settings",       icon: "settings" },
 ]
 
 export const NET_WORTH_NAV_ITEMS: NavItem[] = [
@@ -48,7 +46,6 @@ export const NET_WORTH_NAV_ITEMS: NavItem[] = [
 export const TRAVEL_NAV_ITEMS: NavItem[] = [
   { id: "travel-flights", label: "Flight Search", href: "/travel", icon: "flight" },
   { id: "travel-hotels", label: "Hotel Search", href: "/travel/hotels", icon: "hotel" },
-  { id: "travel-settings", label: "Settings", href: "/travel/settings", icon: "settings" },
 ]
 
 export const AI_NAV_ITEMS: NavItem[] = [
@@ -111,6 +108,19 @@ function migratePrefs(prefs: SidebarPrefs): SidebarPrefs {
     delete prefs.categories.ai
     savePrefs(prefs)
   }
+  // Remove domain settings items (consolidated to /settings)
+  const staleSettingsIds = ["settings", "fin-settings", "travel-settings"]
+  let settingsRemoved = false
+  for (const catKey of ["portfolio", "finance", "travel"]) {
+    const cat = prefs.categories[catKey]
+    if (!cat) continue
+    if (cat.order.some((id) => staleSettingsIds.includes(id))) {
+      cat.order = cat.order.filter((id) => !staleSettingsIds.includes(id))
+      cat.hidden = cat.hidden.filter((id) => !staleSettingsIds.includes(id))
+      settingsRemoved = true
+    }
+  }
+  if (settingsRemoved) savePrefs(prefs)
   return prefs
 }
 

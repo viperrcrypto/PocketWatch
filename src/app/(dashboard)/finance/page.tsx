@@ -110,7 +110,7 @@ export default function FinanceDashboardPage() {
             { icon: "link", text: "Connect your bank accounts" },
             { icon: "sync", text: "Sync to import transactions automatically" },
           ]}
-          linkTo={{ label: "Go to Settings", href: "/finance/settings" }}
+          linkTo={{ label: "Go to Settings", href: "/settings?tab=finance" }}
         />
       </div>
     )

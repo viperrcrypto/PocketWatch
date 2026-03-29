@@ -274,7 +274,7 @@ export function CardAIRefreshSection({
         </div>
         {noProvider ? (
           <Link
-            href="/finance/settings"
+            href="/settings?tab=finance#ai-intelligence"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-hover active:scale-95 transition-all"
           >
             <span className="material-symbols-rounded" style={{ fontSize: 18 }}>settings</span>

@@ -35,7 +35,7 @@ export function ApiKeysBanner() {
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
         <Link
-          href="/portfolio/settings"
+          href="/settings?tab=digital-assets#api-keys"
           className="btn-secondary text-xs tracking-wide"
           style={{ height: 32, padding: "0 14px", borderColor: "var(--warning)", color: "var(--warning)" }}
         >

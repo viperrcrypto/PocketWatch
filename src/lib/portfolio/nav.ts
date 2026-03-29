@@ -6,7 +6,6 @@ export const PORTFOLIO_NAV_TABS = [
   { label: "Wallets", href: "/portfolio/accounts", icon: "wallet" },
   { label: "Balances", href: "/portfolio/balances", icon: "account_balance" },
   { label: "Activity", href: "/portfolio/history", icon: "history" },
-  { label: "Settings", href: "/portfolio/settings", icon: "tune" },
 ]
 
 export const BALANCE_SUB_TABS = [
@@ -35,7 +34,6 @@ export const ACCOUNT_SUB_TABS = [
 export const TRAVEL_NAV_TABS = [
   { label: "Flight Search", href: "/travel", icon: "flight" },
   { label: "Hotel Search", href: "/travel/hotels", icon: "hotel" },
-  { label: "Settings", href: "/travel/settings", icon: "settings" },
 ]
 
 export const FINANCE_NAV_TABS = [
@@ -46,5 +44,4 @@ export const FINANCE_NAV_TABS = [
   { label: "Cards & Bills", href: "/finance/cards",         icon: "credit_card" },
   { label: "Income",        href: "/finance/income",        icon: "payments" },
   { label: "Investments",   href: "/finance/investments",   icon: "show_chart" },
-  { label: "Settings",      href: "/finance/settings",      icon: "settings" },
 ]

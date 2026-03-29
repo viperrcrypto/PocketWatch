@@ -216,7 +216,7 @@ export function PortfolioDashboard() {
           <p className="text-sm text-foreground-muted">
             Add your <strong className="text-foreground">Zerion API key</strong> in Settings to load wallet balances, portfolio history, and staking data.
           </p>
-          <a href="/portfolio/settings" className="ml-auto flex-shrink-0 btn-primary text-xs" style={{ height: 32, padding: "0 14px" }}>Add API Key</a>
+          <a href="/settings?tab=digital-assets#api-keys" className="ml-auto flex-shrink-0 btn-primary text-xs" style={{ height: 32, padding: "0 14px" }}>Add API Key</a>
         </div>
       )}
 

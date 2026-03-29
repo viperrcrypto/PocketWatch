@@ -115,7 +115,7 @@ export function StakingView() {
         icon="error"
         title="Failed to Load"
         description="Unable to fetch staking positions. Check your Zerion API key in Settings and try again."
-        action={{ label: "Go to Settings", href: "/portfolio/settings" }}
+        action={{ label: "Go to Settings", href: "/settings?tab=digital-assets#api-keys" }}
         variant="error"
       />
     )
@@ -128,7 +128,7 @@ export function StakingView() {
         icon="key"
         title="Zerion API Key Required"
         description="Add your Zerion API key in Settings to view staking positions across all chains."
-        action={{ label: "Add API Key", href: "/portfolio/settings" }}
+        action={{ label: "Add API Key", href: "/settings?tab=digital-assets#api-keys" }}
         variant="info"
       />
     )

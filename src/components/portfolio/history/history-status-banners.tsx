@@ -94,7 +94,7 @@ export function HardErrorBanner({ error }: { error: Error }) {
         <span className="material-symbols-rounded text-warning text-lg">key</span>
         <p className="text-sm text-foreground-muted">
           Add your <strong className="text-foreground">Zerion API key</strong> in{" "}
-          <a href="/portfolio/settings" className="text-primary hover:underline">Settings</a> to view transaction history.
+          <a href="/settings?tab=digital-assets#api-keys" className="text-primary hover:underline">Settings</a> to view transaction history.
         </p>
       </div>
     )

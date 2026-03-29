@@ -297,7 +297,7 @@ export default function ExchangeBalancesPage() {
           description="Connect an exchange in Settings to view your exchange balances here."
           action={{
             label: "Go to Settings",
-            onClick: () => router.push("/portfolio/settings"),
+            onClick: () => router.push("/settings?tab=digital-assets#exchange-connections"),
           }}
         />
       ) : (

@@ -23,7 +23,7 @@ export function AccountsEmptyState({ onAddWallet }: AccountsEmptyStateProps) {
           Add Wallet
         </button>
         <Link
-          href="/portfolio/settings"
+          href="/settings?tab=digital-assets#exchange-connections"
           className="px-4 py-2 border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors text-sm rounded-xl"
         >
           Connect Exchange

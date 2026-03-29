@@ -249,7 +249,7 @@ export default function AccountsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/portfolio/settings#exchanges"
+            href="/settings?tab=digital-assets#exchange-connections"
             className="flex items-center gap-2 px-4 py-2 border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors text-sm font-medium rounded-lg"
           >
             <span className="material-symbols-rounded text-sm">swap_horiz</span>
@@ -317,7 +317,7 @@ export default function AccountsPage() {
             <span className="material-symbols-rounded text-warning">key</span>
             <span className="text-foreground-muted text-xs">Zerion API key not configured — wallet balances cannot be fetched.</span>
           </div>
-          <Link href="/portfolio/settings" className="flex-shrink-0 px-3 py-1.5 border border-warning/60 text-warning hover:bg-warning/10 transition-colors text-xs">
+          <Link href="/settings?tab=digital-assets#api-keys" className="flex-shrink-0 px-3 py-1.5 border border-warning/60 text-warning hover:bg-warning/10 transition-colors text-xs">
             Configure
           </Link>
         </div>

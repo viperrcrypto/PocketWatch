@@ -47,7 +47,7 @@ export function SetupRequiredState({ service, feature }: SetupRequiredStateProps
 
       <div className="flex items-center justify-center gap-3">
         <Link
-          href="/portfolio/settings"
+          href="/settings?tab=digital-assets#api-keys"
           className="btn-primary inline-flex items-center gap-2"
         >
           <span className="material-symbols-rounded" style={{ fontSize: 16 }}>settings</span>

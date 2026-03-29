@@ -138,7 +138,7 @@ export function SyncButton({
         </div>
       </div>
       <Link
-        href="/portfolio/settings"
+        href="/settings?tab=digital-assets#api-keys"
         className="flex-shrink-0 text-foreground-muted hover:text-foreground transition-colors"
         title="View diagnostics"
       >

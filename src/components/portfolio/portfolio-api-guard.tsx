@@ -74,7 +74,7 @@ export function PortfolioApiGuard({
       </div>
 
       <Link
-        href="/portfolio/settings"
+        href="/settings?tab=digital-assets#api-keys"
         className="btn-primary px-6 py-2.5 inline-block"
       >
         Configure API Keys

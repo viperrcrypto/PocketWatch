@@ -48,7 +48,7 @@ export function AssetTableEmptyState({
           </p>
         </div>
         <Link
-          href="/portfolio/settings"
+          href="/settings?tab=digital-assets#api-keys"
           className="btn-secondary text-xs tracking-wide"
           style={{ borderColor: "var(--warning)", color: "var(--warning)" }}
         >
@@ -69,7 +69,7 @@ export function AssetTableEmptyState({
           </p>
         </div>
         <Link
-          href="/portfolio/settings"
+          href="/settings?tab=digital-assets#api-keys"
           className="btn-secondary text-xs tracking-wide"
           style={{ borderColor: "var(--error)", color: "var(--error)" }}
         >

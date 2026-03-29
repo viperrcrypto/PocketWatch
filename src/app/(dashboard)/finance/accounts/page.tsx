@@ -168,7 +168,7 @@ export default function FinanceAccountsPage() {
             { icon: "add_link", text: "Connect via Plaid or SimpleFIN" },
             { icon: "sync", text: "Accounts and transactions sync automatically" },
           ]}
-          linkTo={{ label: "Go to Settings", href: "/finance/settings" }}
+          linkTo={{ label: "Go to Settings", href: "/settings?tab=finance" }}
         />
       </div>
     )

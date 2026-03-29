@@ -165,7 +165,7 @@ export function InsightsAIAnalysis({
             The AI compares your spending patterns with your budget limits and identifies gaps.
           </p>
           <Link
-            href="/finance/settings#ai"
+            href="/settings?tab=finance#ai-intelligence"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-hover transition-colors"
           >
             <span className="material-symbols-rounded" style={{ fontSize: 14 }}>settings</span>
