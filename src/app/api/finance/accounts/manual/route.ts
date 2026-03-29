@@ -29,21 +29,15 @@ export async function POST(req: NextRequest) {
   const { name, mask, type } = parsed.data
 
   try {
-    // Find or create the shared "Manual" institution for this user
-    let institution = await db.financeInstitution.findFirst({
-      where: { userId: user.id, provider: "manual", institutionName: "Manual" },
+    // Each manual account gets its own institution (named after the account)
+    const institution = await db.financeInstitution.create({
+      data: {
+        userId: user.id,
+        provider: "manual",
+        institutionName: name,
+        status: "active",
+      },
     })
-
-    if (!institution) {
-      institution = await db.financeInstitution.create({
-        data: {
-          userId: user.id,
-          provider: "manual",
-          institutionName: "Manual",
-          status: "active",
-        },
-      })
-    }
 
     const externalId = `manual_${Date.now()}_${randomBytes(6).toString("hex")}`
 
@@ -65,7 +59,7 @@ export async function POST(req: NextRequest) {
       type: account.type,
       mask: account.mask,
       institutionId: institution.id,
-      institutionName: "Manual",
+      institutionName: institution.institutionName,
     })
   } catch (err) {
     return apiError("F3042", "Failed to create manual account", 500, err)

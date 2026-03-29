@@ -39,6 +39,7 @@ export function InstitutionAccordion({
   onSync,
   onDisconnect,
   onRenameAccount,
+  onRenameInstitution,
   onChangeAccountType,
   onToggleHidden,
   onReconnect,
@@ -51,7 +52,8 @@ export function InstitutionAccordion({
   onSelectAccount: (id: string | null) => void
   onSync: () => void
   onDisconnect: () => void
-  onRenameAccount: (accountId: string, name: string) => void
+  onRenameAccount: (accountId: string, newName: string) => void
+  onRenameInstitution?: (institutionId: string, newName: string) => void
   onChangeAccountType: (accountId: string, type: string) => void
   onToggleHidden: (accountId: string, isHidden: boolean) => void
   onReconnect?: () => void
@@ -75,12 +77,24 @@ export function InstitutionAccordion({
         <InstitutionLogo src={inst.institutionLogo} size={8} />
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-foreground truncate">{inst.institutionName}</span>
-            <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", inst.status === "active" ? "bg-success" : "bg-error")} />
+            {inst.provider === "manual" && onRenameInstitution ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <EditableName
+                  value={inst.institutionName}
+                  onSave={(newName) => onRenameInstitution(inst.id, newName)}
+                />
+              </div>
+            ) : (
+              <span className="text-sm font-semibold text-foreground truncate">{inst.institutionName}</span>
+            )}
+            {inst.provider === "manual" && (
+              <span className="text-[9px] font-medium text-foreground-muted bg-foreground/5 px-1.5 py-0.5 rounded">Manual</span>
+            )}
+            <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", inst.provider === "manual" ? "bg-foreground-muted/40" : inst.status === "active" ? "bg-success" : "bg-error")} />
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-[10px] text-foreground-muted">{inst.accounts.length} account{inst.accounts.length !== 1 ? "s" : ""}</span>
-            {inst.lastSyncedAt && (
+            {inst.lastSyncedAt && inst.provider !== "manual" && (
               <span className="text-[10px] text-foreground-muted">
                 · synced {new Date(inst.lastSyncedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </span>
@@ -89,31 +103,33 @@ export function InstitutionAccordion({
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className="text-sm font-semibold text-foreground tabular-nums font-data">{formatCurrency(instTotal)}</span>
-          <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={onSync}
-              disabled={syncPending}
-              className="p-1.5 rounded-md text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors"
-              title="Sync"
-            >
-              <span className={cn("material-symbols-rounded", syncPending && "animate-spin")} style={{ fontSize: 16 }}>sync</span>
-            </button>
-            <button
-              onClick={onDisconnect}
-              className="p-1.5 rounded-md text-foreground-muted hover:text-error hover:bg-error/10 transition-colors"
-              title="Disconnect"
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>link_off</span>
-            </button>
-          </div>
+          {inst.provider !== "manual" && (
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={onSync}
+                disabled={syncPending}
+                className="p-1.5 rounded-md text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors"
+                title="Sync"
+              >
+                <span className={cn("material-symbols-rounded", syncPending && "animate-spin")} style={{ fontSize: 16 }}>sync</span>
+              </button>
+              <button
+                onClick={onDisconnect}
+                className="p-1.5 rounded-md text-foreground-muted hover:text-error hover:bg-error/10 transition-colors"
+                title="Disconnect"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 16 }}>link_off</span>
+              </button>
+            </div>
+          )}
           <span className={cn("material-symbols-rounded text-foreground-muted transition-transform duration-200", isOpen && "rotate-180")} style={{ fontSize: 18 }}>
             expand_more
           </span>
         </div>
       </div>
 
-      {/* Error Banner */}
-      {inst.status === "error" && inst.errorMessage && (
+      {/* Error Banner — skip for manual institutions (they have no sync) */}
+      {inst.status === "error" && inst.errorMessage && inst.provider !== "manual" && (
         <div className="flex items-center gap-2 px-5 py-2.5 bg-error/5 border-t border-error/20">
           <span className="material-symbols-rounded text-error" style={{ fontSize: 16 }}>warning</span>
           <span className="text-xs text-error flex-1">{inst.errorMessage}</span>

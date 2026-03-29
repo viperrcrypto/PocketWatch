@@ -244,6 +244,11 @@ export default function FinanceAccountsPage() {
               onSync={() => syncMutation.mutate(inst.id)}
               onDisconnect={() => setDisconnecting({ id: inst.id, name: inst.institutionName })}
               onRenameAccount={(accountId, name) => updateAccount.mutate({ accountId, name })}
+              onRenameInstitution={(institutionId, instName) => {
+                // Use any account under this institution to send the rename
+                const acct = inst.accounts[0]
+                if (acct) updateAccount.mutate({ accountId: acct.id, institutionName: instName }, { onSuccess: () => toast.success(`Renamed to ${instName}`) })
+              }}
               onChangeAccountType={(accountId, type) =>
                 updateAccount.mutate({ accountId, type }, { onSuccess: () => toast.success(`Account type changed to ${type}`) })
               }

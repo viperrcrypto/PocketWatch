@@ -104,6 +104,7 @@ const accountPatchSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   isHidden: z.boolean().optional(),
   type: z.enum(VALID_ACCOUNT_TYPES).optional(),
+  institutionName: z.string().min(1).max(200).optional(),
 })
 
 export async function PATCH(req: NextRequest) {
@@ -116,14 +117,22 @@ export async function PATCH(req: NextRequest) {
     return apiError("F3011", parsed.error.issues[0]?.message ?? "Invalid request", 400)
   }
 
-  const { accountId, name, isHidden, type } = parsed.data
+  const { accountId, name, isHidden, type, institutionName } = parsed.data
 
   try {
     const account = await db.financeAccount.findFirst({
       where: { id: accountId, userId: user.id },
-      include: { institution: { select: { institutionName: true } } },
+      include: { institution: { select: { id: true, institutionName: true, provider: true } } },
     })
     if (!account) return apiError("F3012", "Account not found", 404)
+
+    // Rename institution (only for manual institutions)
+    if (institutionName !== undefined && account.institution.provider === "manual") {
+      await db.financeInstitution.update({
+        where: { id: account.institution.id },
+        data: { institutionName },
+      })
+    }
 
     const updated = await db.financeAccount.update({
       where: { id: accountId },
