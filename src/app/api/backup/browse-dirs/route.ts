@@ -1,75 +1,60 @@
 /**
- * GET /api/backup/browse-dirs?path=~/.pocketwatch/backups
- * List directories at a given path for the backup folder picker.
+ * POST /api/backup/browse-dirs
+ * Opens the native OS folder picker dialog and returns the selected path.
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { readdir, mkdir, lstat } from "node:fs/promises"
-import { resolve, dirname, sep } from "node:path"
+import { execFile } from "node:child_process"
+import { resolve, sep } from "node:path"
 import { homedir } from "node:os"
+import { promisify } from "node:util"
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 
-const MAX_ENTRIES = 200
+const execFileAsync = promisify(execFile)
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return apiError("B5001", "Authentication required", 401)
 
-  const rawPath = req.nextUrl.searchParams.get("path") || "~"
-  const showHidden = req.nextUrl.searchParams.get("showHidden") === "true"
-  const createDir = req.nextUrl.searchParams.get("create") === "true"
+  let defaultPath: string
+  try {
+    const body = await req.json()
+    defaultPath = typeof body.defaultPath === "string" ? body.defaultPath : "~"
+  } catch {
+    defaultPath = "~"
+  }
 
   const home = homedir()
-  const expanded = rawPath.replace(/^~/, home)
-  const resolvedDir = resolve(expanded)
-
-  // Security: must be within home directory
-  if (!resolvedDir.startsWith(home + sep) && resolvedDir !== home) {
-    return apiError("B5002", "Path must be within home directory", 403)
-  }
-
-  // Optionally create the directory
-  if (createDir) {
-    try {
-      await mkdir(resolvedDir, { recursive: true })
-      const stat = await lstat(resolvedDir)
-      if (!stat.isDirectory() || stat.isSymbolicLink()) {
-        return apiError("B5006", "Invalid directory target", 400)
-      }
-    } catch {
-      return apiError("B5003", "Failed to create directory", 500)
-    }
-  }
-
-  // Compact the path for display (replace home with ~)
-  const displayPath = resolvedDir.startsWith(home)
-    ? "~" + resolvedDir.slice(home.length)
-    : resolvedDir
-
-  const parentDir = resolvedDir === home
-    ? null
-    : dirname(resolvedDir).startsWith(home)
-      ? "~" + dirname(resolvedDir).slice(home.length) || "~"
-      : null
+  const expanded = defaultPath.replace(/^~/, home)
+  const resolvedDefault = resolve(expanded)
 
   try {
-    const entries = await readdir(resolvedDir, { withFileTypes: true })
-    const dirs = entries
-      .filter((e) => e.isDirectory() && (showHidden || !e.name.startsWith(".")))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, MAX_ENTRIES)
-      .map((e) => ({ name: e.name }))
+    const script = `set theFolder to POSIX path of (choose folder with prompt "Select backup folder" default location POSIX file "${resolvedDefault}")`
+    const { stdout } = await execFileAsync("osascript", ["-e", script], { timeout: 120_000 })
 
-    return NextResponse.json({ current: displayPath, parent: parentDir, dirs })
+    const selected = stdout.trim().replace(/\/$/, "")
+    if (!selected) {
+      return NextResponse.json({ cancelled: true })
+    }
+
+    // Security: must be within home directory
+    const resolvedSelected = resolve(selected)
+    if (!resolvedSelected.startsWith(home + sep) && resolvedSelected !== home) {
+      return apiError("B5002", "Selected folder must be within your home directory", 403)
+    }
+
+    const displayPath = resolvedSelected.startsWith(home)
+      ? "~" + resolvedSelected.slice(home.length)
+      : resolvedSelected
+
+    return NextResponse.json({ path: displayPath, cancelled: false })
   } catch (err: unknown) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === "ENOENT") {
-      return NextResponse.json({ current: displayPath, parent: parentDir, dirs: [], notFound: true })
+    // User pressed Cancel — osascript exits with code 1
+    const code = (err as { code?: number }).code
+    if (code === 1) {
+      return NextResponse.json({ cancelled: true })
     }
-    if (code === "EACCES") {
-      return apiError("B5004", "Permission denied", 403)
-    }
-    return apiError("B5005", "Failed to list directory", 500, err)
+    return apiError("B5005", "Failed to open folder picker", 500, err)
   }
 }

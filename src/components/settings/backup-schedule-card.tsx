@@ -4,14 +4,13 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { cn, formatRelativeTime } from "@/lib/utils"
 import { useBackupSchedule, useUpdateBackupSchedule } from "@/hooks/use-backup"
-import { BackupDirectoryPicker } from "./backup-directory-picker"
 
 export function BackupScheduleCard() {
   const { data: schedule } = useBackupSchedule()
   const updateSchedule = useUpdateBackupSchedule()
   const [password, setPassword] = useState("")
   const [showPasswordInput, setShowPasswordInput] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
+  const [isBrowsing, setIsBrowsing] = useState(false)
 
   const handleToggle = () => {
     if (!schedule?.enabled && !showPasswordInput) {
@@ -32,12 +31,27 @@ export function BackupScheduleCard() {
     })
   }
 
-  const handleDirectorySelect = (path: string) => {
-    setShowPicker(false)
-    updateSchedule.mutate({ directory: path }, {
-      onSuccess: () => toast.success("Backup directory updated"),
-      onError: (err) => toast.error(err.message),
-    })
+  const handleBrowse = async () => {
+    if (isBrowsing) return
+    setIsBrowsing(true)
+    try {
+      const res = await fetch("/api/backup/browse-dirs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultPath: schedule?.directory ?? "~" }),
+      })
+      if (!res.ok) { toast.error("Failed to open folder picker"); return }
+      const data = await res.json()
+      if (data.cancelled) return
+      updateSchedule.mutate({ directory: data.path }, {
+        onSuccess: () => toast.success("Backup directory updated"),
+        onError: (err) => toast.error(err.message),
+      })
+    } catch {
+      toast.error("Failed to open folder picker")
+    } finally {
+      setIsBrowsing(false)
+    }
   }
 
   if (!schedule) return null
@@ -117,10 +131,11 @@ export function BackupScheduleCard() {
               {schedule.directory}
             </span>
             <button
-              onClick={() => setShowPicker(true)}
-              className="px-2 py-1 text-[11px] border border-card-border rounded-lg text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors flex-shrink-0"
+              onClick={handleBrowse}
+              disabled={isBrowsing}
+              className="px-2 py-1 text-[11px] border border-card-border rounded-lg text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors flex-shrink-0 disabled:opacity-50"
             >
-              Browse
+              {isBrowsing ? "Opening..." : "Browse"}
             </button>
           </div>
 
@@ -142,14 +157,6 @@ export function BackupScheduleCard() {
             </div>
           )}
         </div>
-      )}
-
-      {showPicker && (
-        <BackupDirectoryPicker
-          initialPath={schedule.directory}
-          onSelect={handleDirectorySelect}
-          onClose={() => setShowPicker(false)}
-        />
       )}
     </div>
   )
