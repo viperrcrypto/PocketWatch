@@ -17,6 +17,7 @@ export interface RebuildParams {
   userId: string
   mode: "uncategorized" | "full"
   providerConfig: { provider: AIProviderType; apiKey: string; model: string | undefined }
+  retryMerchants?: string[]
 }
 
 export interface RebuildBatchResult {
@@ -91,6 +92,40 @@ export async function fetchMerchantsForRebuild(
 }
 
 /**
+ * Fetch merchants by specific names (for retrying failed batches).
+ * Queries regardless of current category — failed merchants may have been
+ * partially categorized by rules from successful batches.
+ */
+export async function fetchMerchantsByNames(
+  userId: string,
+  merchantNames: string[]
+): Promise<{ merchants: RebuildMerchant[]; txsByMerchant: Map<string, string[]> }> {
+  const namesLower = new Set(merchantNames.map((n) => n.toLowerCase()))
+
+  const txRows = await db.financeTransaction.findMany({
+    where: { userId, isDuplicate: false, isExcluded: false },
+    select: { id: true, merchantName: true, name: true, amount: true, category: true },
+    orderBy: { date: "desc" },
+    take: 5000,
+  })
+
+  const txsByMerchant = new Map<string, string[]>()
+  const cleanedRows: Array<{ merchantName: string | null; name: string; amount: number; category: string | null }> = []
+
+  for (const tx of txRows) {
+    const cleaned = cleanMerchantName(tx.merchantName ?? tx.name)
+    if (!namesLower.has(cleaned.toLowerCase())) continue
+    const ids = txsByMerchant.get(cleaned) ?? []
+    ids.push(tx.id)
+    txsByMerchant.set(cleaned, ids)
+    cleanedRows.push({ merchantName: cleaned, name: tx.name, amount: tx.amount, category: tx.category })
+  }
+
+  const merchants = buildRebuildMerchants(cleanedRows)
+  return { merchants, txsByMerchant }
+}
+
+/**
  * Run the full rebuild in batches, calling send() for SSE progress events.
  */
 export async function runRebuildBatches(
@@ -99,9 +134,11 @@ export async function runRebuildBatches(
   cancelSignal: { cancelled: boolean }
 ): Promise<RebuildSummary> {
   const start = Date.now()
-  const { userId, mode, providerConfig } = params
+  const { userId, mode, providerConfig, retryMerchants } = params
 
-  const { merchants, txsByMerchant } = await fetchMerchantsForRebuild(userId, mode)
+  const { merchants, txsByMerchant } = retryMerchants?.length
+    ? await fetchMerchantsByNames(userId, retryMerchants)
+    : await fetchMerchantsForRebuild(userId, mode)
   const totalBatches = Math.ceil(merchants.length / BATCH_SIZE)
 
   send("preview", { merchantCount: merchants.length, txCount: sumTxCount(txsByMerchant), batchCount: totalBatches })

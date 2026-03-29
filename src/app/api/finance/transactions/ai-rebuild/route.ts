@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { decryptCredential } from "@/lib/finance/crypto"
-import { runRebuildBatches, fetchMerchantsForRebuild } from "@/lib/finance/ai-rebuild-engine"
+import { runRebuildBatches, fetchMerchantsForRebuild, fetchMerchantsByNames } from "@/lib/finance/ai-rebuild-engine"
 import { callAIProviderRaw, getProviderLabel, type AIProviderType } from "@/lib/finance/ai-providers"
 import { setCache, getCached } from "@/lib/cache"
 import { NextRequest, NextResponse } from "next/server"
@@ -36,6 +36,7 @@ async function clearSignal(userId: string) {
 const bodySchema = z.object({
   mode: z.enum(["uncategorized", "full"]),
   dryRun: z.boolean().optional().default(false),
+  retryMerchants: z.array(z.string()).optional(),
 })
 
 /**
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     return apiError("F9301", parsed.error.issues[0]?.message ?? "Invalid request", 400) as unknown as Response
   }
 
-  const { mode, dryRun } = parsed.data
+  const { mode, dryRun, retryMerchants } = parsed.data
 
   // Resolve AI provider
   const providerKey = await db.externalApiKey.findFirst({
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest): Promise<Response> {
           : { provider: providerKey.serviceName as AIProviderType, apiKey: await decryptCredential(providerKey.apiKeyEnc), model: providerKey.model ?? undefined }
 
         const summary = await runRebuildBatches(
-          { userId: user.id, mode, providerConfig },
+          { userId: user.id, mode, providerConfig, retryMerchants },
           send,
           cancelSignal
         )

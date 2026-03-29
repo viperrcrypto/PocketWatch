@@ -174,19 +174,22 @@ export function useAIRebuild() {
     saveToStorage(state)
   }, [state])
 
-  const start = useCallback(async (mode: "uncategorized" | "full", dryRun = false) => {
+  const start = useCallback(async (mode: "uncategorized" | "full", dryRun = false, retryMerchants?: string[]) => {
+    const isRetry = !!retryMerchants?.length
+    const prevSummary = isRetry ? state.summary : null
+
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
-    // Clear stale state from previous rebuild
-    if (!dryRun) clearStorage()
+    // Clear stale state from previous rebuild (but not for retries — keep previous summary visible)
+    if (!dryRun && !isRetry) clearStorage()
 
     setState((prev) => ({
       ...prev,
       status: dryRun ? "counting" : "running",
       error: null,
-      ...(dryRun ? {} : { processedMerchants: [], summary: null }),
+      ...(dryRun ? {} : isRetry ? {} : { processedMerchants: [], summary: null }),
     }))
 
     try {
@@ -194,7 +197,7 @@ export function useAIRebuild() {
         method: "POST",
         headers: { "Content-Type": "application/json", ...csrfHeaders() },
         credentials: "include",
-        body: JSON.stringify({ mode, dryRun }),
+        body: JSON.stringify({ mode, dryRun, retryMerchants }),
         signal: controller.signal,
       })
 
@@ -257,11 +260,24 @@ export function useAIRebuild() {
                 summary: prev.summary ? { ...prev.summary, qualityCheck: data.qualityCheck } : prev.summary,
               }))
               break
-            case "complete":
+            case "complete": {
+              const retrySummary = data.summary as RebuildSummary
+              const merged = prevSummary
+                ? {
+                    ...retrySummary,
+                    totalMerchants: prevSummary.totalMerchants,
+                    totalTxCategorized: prevSummary.totalTxCategorized + retrySummary.totalTxCategorized,
+                    rulesCreated: prevSummary.rulesCreated + retrySummary.rulesCreated,
+                    rulesUpdated: prevSummary.rulesUpdated + retrySummary.rulesUpdated,
+                    customCategoriesCreated: prevSummary.customCategoriesCreated + retrySummary.customCategoriesCreated,
+                    batchesCompleted: prevSummary.batchesCompleted + retrySummary.batchesCompleted,
+                    durationMs: prevSummary.durationMs + retrySummary.durationMs,
+                  }
+                : retrySummary
               setState((prev) => ({
                 ...prev,
                 status: "complete",
-                summary: data.summary as RebuildSummary,
+                summary: merged,
               }))
               // Refresh everything the rebuild touched
               qc.invalidateQueries({ queryKey: [...financeKeys.all, "transactions"] })
@@ -275,6 +291,7 @@ export function useAIRebuild() {
               qc.invalidateQueries({ queryKey: financeKeys.reviewQueue() })
               qc.invalidateQueries({ queryKey: financeKeys.reviewCount() })
               break
+            }
             case "error":
               if (data.batchIndex !== undefined) break // batch-level, continue
               setState((prev) => ({ ...prev, status: "error", error: data.message }))
@@ -303,11 +320,18 @@ export function useAIRebuild() {
     clearStorage()
   }, [])
 
+  const retryFailed = useCallback(() => {
+    const failed = state.summary?.failedMerchants
+    if (!failed?.length) return
+    start("uncategorized", false, failed)
+  }, [state.summary, start])
+
   return {
     state,
     start,
     cancel,
     reset,
+    retryFailed,
     isRunning: state.status === "running",
     isCounting: state.status === "counting",
     isComplete: state.status === "complete",

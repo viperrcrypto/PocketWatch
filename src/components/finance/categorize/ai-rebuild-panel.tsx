@@ -14,7 +14,7 @@ interface AIRebuildPanelProps {
 }
 
 export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
-  const { state, start, cancel, reset, isRunning, isCounting, isComplete } = useAIRebuild()
+  const { state, start, cancel, reset, retryFailed, isRunning, isCounting, isComplete } = useAIRebuild()
   const { data: reviewData } = useReviewCount()
   const reviewCount = reviewData?.count ?? 0
   const [previewedMode, setPreviewedMode] = useState<"uncategorized" | "full">("uncategorized")
@@ -187,14 +187,23 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
             <StatBox label="Custom Categories" value={s.customCategoriesCreated} />
           </div>
           {s.batchesFailed > 0 && (
-            <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
-              <span className="text-xs text-amber-500">{s.batchesFailed} batch{s.batchesFailed > 1 ? "es" : ""} failed after retries — partial results applied.</span>
-              <button
-                onClick={() => { reset(); start("uncategorized") }}
-                className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex-shrink-0 ml-3"
-              >
-                Retry failed
-              </button>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-amber-500">{s.batchesFailed} batch{s.batchesFailed > 1 ? "es" : ""} failed after retries — partial results applied.</span>
+                <button
+                  onClick={retryFailed}
+                  disabled={isRunning}
+                  className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex-shrink-0 ml-3 disabled:opacity-50"
+                >
+                  {isRunning ? "Retrying..." : "Retry failed"}
+                </button>
+              </div>
+              {s.failedMerchants && s.failedMerchants.length > 0 && (
+                <p className="text-[10px] text-foreground-muted leading-relaxed">
+                  Failed: {s.failedMerchants.slice(0, 8).join(", ")}
+                  {s.failedMerchants.length > 8 && ` +${s.failedMerchants.length - 8} more`}
+                </p>
+              )}
             </div>
           )}
           {reviewCount > 0 && (
