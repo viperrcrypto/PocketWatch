@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // Keep googleapis (500KB+) out of the client bundle — only used in API routes
-  serverExternalPackages: ["googleapis", "ccxt", "node-cron"],
+  serverExternalPackages: ["googleapis", "ccxt", "node-cron", "pdfjs-dist"],
   turbopack: {
     root: __dirname,
   },

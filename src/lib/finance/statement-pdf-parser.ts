@@ -138,14 +138,11 @@ export async function parsePDFFromFile(
   file: File,
   userId: string
 ): Promise<{ rows: ParsedRow[]; errors: string[] }> {
-  // 1. Extract text from PDF (pdf-parse v2 uses PDFParse class)
+  // 1. Extract text from PDF using pdfjs-dist directly (pdf-parse v2 has worker issues in Next.js)
   let text: string
   try {
-    const { PDFParse } = await import("pdf-parse")
-    const parser = new PDFParse({})
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await parser.load(buffer)
-    text = await parser.getText()
+    const { extractTextFromPDF } = await import("./pdf-text-extract")
+    text = await extractTextFromPDF(new Uint8Array(await file.arrayBuffer()))
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown PDF error"
     if (msg.includes("password")) {
