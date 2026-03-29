@@ -119,7 +119,7 @@ export function FinanceSettingsTab() {
   return (
     <div className="space-y-4">
       <div id="bank-connections">
-        <CollapsibleSection title="Bank Connections" icon="account_balance" defaultOpen className="rounded-xl">
+        <CollapsibleSection title="Bank Connections" icon="account_balance" className="rounded-xl">
           <div className="pt-4">
             <SettingsProviderCards
               isPlaidConfigured={plaid.isConfigured}
@@ -165,7 +165,7 @@ export function FinanceSettingsTab() {
       </div>
 
       <div id="upload-statements">
-        <CollapsibleSection title="Upload Statements" icon="upload_file" defaultOpen className="rounded-xl">
+        <CollapsibleSection title="Upload Statements" icon="upload_file" className="rounded-xl">
           <div className="pt-4">
             <StatementUploadFlow />
           </div>
@@ -183,7 +183,7 @@ export function FinanceSettingsTab() {
       )}
 
       <div id="data-coverage">
-        <CollapsibleSection title={`Data Coverage — ${new Date().getUTCFullYear()}`} icon="insert_chart" defaultOpen className="rounded-xl">
+        <CollapsibleSection title={`Data Coverage — ${new Date().getUTCFullYear()}`} icon="insert_chart" className="rounded-xl">
           <div className="pt-4">
             <StatementCoverageContent />
           </div>

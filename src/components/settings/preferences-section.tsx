@@ -38,7 +38,6 @@ export function PreferencesSection() {
     <CollapsibleSection
       title="Preferences"
       subtitle="Display currency, theme, and sync settings"
-      defaultOpen
     >
       {settingsLoading ? (
         <div className="p-5 space-y-4">

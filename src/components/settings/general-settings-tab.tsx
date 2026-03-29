@@ -21,7 +21,6 @@ export function GeneralSettingsTab() {
         <CollapsibleSection
           title="Auto-Lock"
           subtitle="Lock the app after inactivity"
-          defaultOpen
         >
           <AutoLockSetting />
         </CollapsibleSection>
@@ -39,7 +38,6 @@ export function GeneralSettingsTab() {
         <CollapsibleSection
           title="Notification Channels"
           subtitle="Configure how you receive push notifications"
-          defaultOpen
         >
           <NotificationSettings />
         </CollapsibleSection>
