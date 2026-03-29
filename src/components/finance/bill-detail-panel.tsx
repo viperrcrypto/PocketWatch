@@ -45,15 +45,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function BillDetailPanel({ bill, onClose }: Props) {
-  if (!bill) return null
-
-  const cancelInfo = bill.billType !== "cc_payment" ? getCancelUrl(bill.merchantName) : null
-  const typeInfo = BILL_TYPE_LABELS[bill.billType ?? "bill"] ?? BILL_TYPE_LABELS.bill
-  const hasAccount = bill.institutionName || bill.accountName || bill.accountMask
-  const dueDate = new Date(bill.nextDueDate + "T00:00")
+  const cancelInfo = bill && bill.billType !== "cc_payment" ? getCancelUrl(bill.merchantName) : null
+  const typeInfo = bill ? (BILL_TYPE_LABELS[bill.billType ?? "bill"] ?? BILL_TYPE_LABELS.bill) : BILL_TYPE_LABELS.bill
+  const hasAccount = bill && (bill.institutionName || bill.accountName || bill.accountMask)
+  const dueDate = bill ? new Date(bill.nextDueDate + "T00:00") : new Date()
 
   return (
     <AnimatedOverlay open={!!bill} onClose={onClose} maxWidth="max-w-md" labelledBy="bill-detail-title">
+      {bill && (
+        <>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <BillAvatar merchantName={bill.merchantName} logoUrl={bill.logoUrl} size="lg" />
@@ -133,6 +133,8 @@ export function BillDetailPanel({ bill, onClose }: Props) {
             <p className="text-[10px] text-foreground-muted text-center mt-1.5">{cancelInfo.note}</p>
           )}
         </div>
+      )}
+        </>
       )}
     </AnimatedOverlay>
   )
