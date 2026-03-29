@@ -23,16 +23,12 @@ function formatCurrency(amount: number): string {
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  })
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
 }
 
 export function StatementUploadModal({ accountId, accountName, onClose }: Props) {
   const [file, setFile] = useState<File | null>(null)
+  const [isPDF, setIsPDF] = useState(false)
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [result, setResult] = useState<StatementUploadResult | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -40,20 +36,26 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
   const upload = useUploadStatement()
 
   const processFile = useCallback((f: File) => {
-    if (!f.name.toLowerCase().endsWith(".csv")) {
-      toast.error("Please select a CSV file")
+    const name = f.name.toLowerCase()
+    const pdf = name.endsWith(".pdf")
+    const csv = name.endsWith(".csv")
+    if (!pdf && !csv) {
+      toast.error("Please select a CSV or PDF file")
       return
     }
     setFile(f)
+    setIsPDF(pdf)
     setResult(null)
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const text = e.target?.result as string
-      const p = previewStatement(text, 5)
-      setPreview({ format: p.format, rows: p.rows, totalLines: p.totalLines })
+    setPreview(null)
+    if (csv) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const text = e.target?.result as string
+        const p = previewStatement(text, 5)
+        setPreview({ format: p.format, rows: p.rows, totalLines: p.totalLines })
+      }
+      reader.readAsText(f)
     }
-    reader.readAsText(f)
   }, [])
 
   const handleDrop = useCallback(
@@ -73,11 +75,8 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
       {
         onSuccess: (res) => {
           setResult(res)
-          if (res.inserted > 0) {
-            toast.success(`Imported ${res.inserted} transactions`)
-          } else {
-            toast.info("No new transactions to import — all rows already exist")
-          }
+          if (res.inserted > 0) toast.success(`Imported ${res.inserted} transactions`)
+          else toast.info("No new transactions to import — all rows already exist")
         },
         onError: (err) => toast.error(err.message),
       }
@@ -87,7 +86,6 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-card border border-card-border rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-card-border">
           <div>
             <h3 className="font-semibold text-sm">Upload Statement</h3>
@@ -99,60 +97,49 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
         </div>
 
         <div className="px-5 py-4 space-y-4">
-          {/* Drop zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-              dragOver
-                ? "border-primary bg-primary/5"
-                : "border-card-border hover:border-foreground-muted"
+              dragOver ? "border-primary bg-primary/5" : "border-card-border hover:border-foreground-muted"
             }`}
           >
-            <span className="material-symbols-rounded text-3xl text-foreground-muted mb-2 block">
-              upload_file
-            </span>
+            <span className="material-symbols-rounded text-3xl text-foreground-muted mb-2 block">upload_file</span>
             {file ? (
               <p className="text-sm">
                 <span className="font-medium">{file.name}</span>
-                <span className="text-foreground-muted ml-1">
-                  ({(file.size / 1024).toFixed(0)} KB)
-                </span>
+                <span className="text-foreground-muted ml-1">({(file.size / 1024).toFixed(0)} KB)</span>
               </p>
             ) : (
-              <p className="text-sm text-foreground-muted">
-                Drop CSV file here or click to browse
-              </p>
+              <p className="text-sm text-foreground-muted">Drop CSV or PDF file here or click to browse</p>
             )}
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,.pdf"
               className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) processFile(f)
-              }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f) }}
             />
           </div>
 
-          {/* Format detection */}
-          {preview && (
+          {file && isPDF && (
             <div className="flex items-center gap-2 text-xs">
-              <span className="material-symbols-rounded text-success text-sm">check_circle</span>
-              <span>
-                Detected: <strong>{FORMAT_LABELS[preview.format]}</strong>
-              </span>
-              <span className="text-foreground-muted">
-                &middot; {preview.totalLines} rows
-              </span>
+              <span className="material-symbols-rounded text-primary text-sm">auto_awesome</span>
+              <span>PDF detected — will be parsed by <strong>AI</strong></span>
             </div>
           )}
 
-          {/* Preview table */}
-          {preview && preview.rows.length > 0 && (
+          {preview && !isPDF && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="material-symbols-rounded text-success text-sm">check_circle</span>
+              <span>Detected: <strong>{FORMAT_LABELS[preview.format]}</strong></span>
+              <span className="text-foreground-muted">&middot; {preview.totalLines} rows</span>
+            </div>
+          )}
+
+          {preview && preview.rows.length > 0 && !isPDF && (
             <div className="border border-card-border rounded-lg overflow-hidden">
               <table className="w-full text-xs">
                 <thead className="bg-card-border/20">
@@ -165,13 +152,9 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
                 <tbody>
                   {preview.rows.map((row, i) => (
                     <tr key={i} className="border-t border-card-border/50">
-                      <td className="px-3 py-1.5 text-foreground-muted whitespace-nowrap">
-                        {formatDate(row.date)}
-                      </td>
+                      <td className="px-3 py-1.5 text-foreground-muted whitespace-nowrap">{formatDate(row.date)}</td>
                       <td className="px-3 py-1.5 truncate max-w-[200px]">{row.name}</td>
-                      <td className={`px-3 py-1.5 text-right whitespace-nowrap ${
-                        row.amount < 0 ? "text-success" : ""
-                      }`}>
+                      <td className={`px-3 py-1.5 text-right whitespace-nowrap ${row.amount < 0 ? "text-success" : ""}`}>
                         {formatCurrency(row.amount)}
                       </td>
                     </tr>
@@ -186,7 +169,6 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
             </div>
           )}
 
-          {/* Upload result */}
           {result && (
             <div className="bg-success/5 border border-success/20 rounded-lg p-4 space-y-1">
               <div className="flex items-center gap-2 text-sm font-medium text-success">
@@ -196,17 +178,12 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
               <div className="text-xs text-foreground-muted space-y-0.5 ml-7">
                 <p>{result.inserted} transactions imported</p>
                 {result.skipped > 0 && <p>{result.skipped} already existed (skipped)</p>}
-                {result.duplicates > 0 && (
-                  <p>{result.duplicates} matched existing synced transactions (marked as duplicates)</p>
-                )}
-                {result.errors.length > 0 && (
-                  <p className="text-warning">{result.errors.length} rows could not be parsed</p>
-                )}
+                {result.duplicates > 0 && <p>{result.duplicates} matched existing synced transactions</p>}
+                {result.errors.length > 0 && <p className="text-warning">{result.errors.length} rows could not be parsed</p>}
               </div>
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={onClose} className="btn-ghost text-sm px-4 py-2">
               {result ? "Done" : "Cancel"}
@@ -214,13 +191,13 @@ export function StatementUploadModal({ accountId, accountName, onClose }: Props)
             {!result && (
               <button
                 onClick={handleUpload}
-                disabled={!file || !preview || upload.isPending}
+                disabled={!file || (!preview && !isPDF) || upload.isPending}
                 className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 disabled:opacity-50"
               >
                 {upload.isPending ? (
                   <>
                     <span className="material-symbols-rounded animate-spin text-sm">progress_activity</span>
-                    Uploading...
+                    {isPDF ? "AI parsing..." : "Uploading..."}
                   </>
                 ) : (
                   <>

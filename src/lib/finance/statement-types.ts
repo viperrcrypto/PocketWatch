@@ -10,6 +10,7 @@ export type BankFormat =
   | "capital_one"
   | "discover"
   | "generic"
+  | "ai_pdf"
 
 export interface ParsedRow {
   date: Date

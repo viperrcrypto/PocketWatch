@@ -25,6 +25,7 @@ export function StatementImportSection() {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState("")
   const [file, setFile] = useState<File | null>(null)
+  const [isPDF, setIsPDF] = useState(false)
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [result, setResult] = useState<StatementUploadResult | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -36,19 +37,26 @@ export function StatementImportSection() {
   const selectedAccount = accounts.find((a) => a.accountId === selectedAccountId)
 
   const processFile = useCallback((f: File) => {
-    if (!f.name.toLowerCase().endsWith(".csv")) {
-      toast.error("Please select a CSV file")
+    const name = f.name.toLowerCase()
+    const pdf = name.endsWith(".pdf")
+    const csv = name.endsWith(".csv")
+    if (!pdf && !csv) {
+      toast.error("Please select a CSV or PDF file")
       return
     }
     setFile(f)
+    setIsPDF(pdf)
     setResult(null)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const text = e.target?.result as string
-      const p = previewStatement(text, 5)
-      setPreview({ format: p.format, rows: p.rows, totalLines: p.totalLines })
+    setPreview(null)
+    if (csv) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const text = e.target?.result as string
+        const p = previewStatement(text, 5)
+        setPreview({ format: p.format, rows: p.rows, totalLines: p.totalLines })
+      }
+      reader.readAsText(f)
     }
-    reader.readAsText(f)
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -73,16 +81,14 @@ export function StatementImportSection() {
     )
   }
 
-  const handleReset = () => { setFile(null); setPreview(null); setResult(null) }
+  const handleReset = () => { setFile(null); setIsPDF(false); setPreview(null); setResult(null) }
 
-  // Coverage info for selected account
   const coverage = selectedAccount
     ? { earliest: selectedAccount.earliestTransaction, latest: selectedAccount.latestTransaction, months: selectedAccount.monthsWithData.length, gaps: selectedAccount.monthsMissing.length, percent: selectedAccount.coveragePercent }
     : null
 
   return (
     <div className="bg-card border border-card-border rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
-      {/* Header — always visible */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-5 py-4 flex items-center justify-between hover:bg-foreground/[0.02] transition-colors"
@@ -94,7 +100,7 @@ export function StatementImportSection() {
           <div className="text-left">
             <p className="text-sm font-bold text-foreground">Import Bank Statements</p>
             <p className="text-[11px] text-foreground-muted mt-0.5">
-              Upload CSV statements to fill gaps in your transaction history
+              Upload CSV or PDF statements to fill gaps in your transaction history
             </p>
           </div>
         </div>
@@ -106,10 +112,8 @@ export function StatementImportSection() {
         </span>
       </button>
 
-      {/* Expanded content */}
       {isOpen && (
         <div className="px-5 pb-5 border-t border-card-border/50 pt-4 space-y-4">
-          {/* Step 1: Drop zone — always visible */}
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
@@ -132,36 +136,40 @@ export function StatementImportSection() {
               </div>
             ) : (
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  Click to upload or drag and drop
-                </p>
+                <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
                 <p className="text-[11px] text-foreground-muted mt-1">
-                  CSV files from Chase, Amex, Bank of America, Wells Fargo, Capital One, Discover, or any bank
+                  CSV or PDF files from Chase, Amex, Bank of America, Wells Fargo, Capital One, Discover, or any bank
                 </p>
               </div>
             )}
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,.pdf"
               className="hidden"
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f) }}
             />
           </div>
 
-          {/* Step 2: After file selected — format detection + account selector */}
-          {preview && (
+          {(preview || isPDF) && (
             <>
-              {/* Format detection badge */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className="material-symbols-rounded text-success" style={{ fontSize: 14 }}>check_circle</span>
-                <span>Detected: <strong>{FORMAT_LABELS[preview.format]}</strong></span>
-                <span className="text-foreground-muted">{preview.totalLines} rows</span>
-              </div>
+              {isPDF && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="material-symbols-rounded text-primary" style={{ fontSize: 14 }}>auto_awesome</span>
+                  <span>PDF detected — will be parsed by <strong>AI</strong></span>
+                </div>
+              )}
 
-              {/* Preview table */}
-              {preview.rows.length > 0 && (
+              {preview && !isPDF && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="material-symbols-rounded text-success" style={{ fontSize: 14 }}>check_circle</span>
+                  <span>Detected: <strong>{FORMAT_LABELS[preview.format]}</strong></span>
+                  <span className="text-foreground-muted">{preview.totalLines} rows</span>
+                </div>
+              )}
+
+              {preview && !isPDF && preview.rows.length > 0 && (
                 <div className="border border-card-border rounded-xl overflow-hidden">
                   <table className="w-full text-xs">
                     <thead className="bg-background-secondary/50">
@@ -191,7 +199,6 @@ export function StatementImportSection() {
                 </div>
               )}
 
-              {/* Account selector — "Which account is this from?" */}
               <div>
                 <label className="block mb-1.5 text-foreground-muted text-[11px] font-semibold">
                   Which account is this from?
@@ -211,43 +218,28 @@ export function StatementImportSection() {
                 </select>
               </div>
 
-              {/* Coverage indicator for selected account */}
               {coverage && (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-background-secondary/50">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider">
-                        Data Coverage
-                      </span>
-                      <span className="text-[10px] font-data font-bold tabular-nums text-foreground">
-                        {coverage.percent}%
-                      </span>
+                      <span className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider">Data Coverage</span>
+                      <span className="text-[10px] font-data font-bold tabular-nums text-foreground">{coverage.percent}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-background-secondary overflow-hidden">
                       <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500",
-                          coverage.percent >= 80 ? "bg-success" : coverage.percent >= 50 ? "bg-amber-500" : "bg-primary"
-                        )}
+                        className={cn("h-full rounded-full transition-all duration-500", coverage.percent >= 80 ? "bg-success" : coverage.percent >= 50 ? "bg-amber-500" : "bg-primary")}
                         style={{ width: `${Math.min(coverage.percent, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center gap-3 mt-1.5 text-[10px] text-foreground-muted">
-                      {coverage.earliest && (
-                        <span>From {coverage.earliest.slice(0, 7)}</span>
-                      )}
-                      {coverage.gaps > 0 && (
-                        <span className="text-amber-500 font-medium">{coverage.gaps} month{coverage.gaps !== 1 ? "s" : ""} missing</span>
-                      )}
-                      {coverage.gaps === 0 && coverage.months > 0 && (
-                        <span className="text-success font-medium">No gaps</span>
-                      )}
+                      {coverage.earliest && <span>From {coverage.earliest.slice(0, 7)}</span>}
+                      {coverage.gaps > 0 && <span className="text-amber-500 font-medium">{coverage.gaps} month{coverage.gaps !== 1 ? "s" : ""} missing</span>}
+                      {coverage.gaps === 0 && coverage.months > 0 && <span className="text-success font-medium">No gaps</span>}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Upload result */}
               {result && (
                 <div className="bg-success/5 border border-success/20 rounded-xl p-4 space-y-1">
                   <div className="flex items-center gap-2 text-sm font-medium text-success">
@@ -263,7 +255,6 @@ export function StatementImportSection() {
                 </div>
               )}
 
-              {/* Action buttons */}
               {selectedAccountId && !result && (
                 <div className="flex items-center gap-3">
                   <button
@@ -274,12 +265,12 @@ export function StatementImportSection() {
                     {upload.isPending ? (
                       <>
                         <span className="material-symbols-rounded animate-spin text-sm">progress_activity</span>
-                        Uploading...
+                        {isPDF ? "AI parsing..." : "Uploading..."}
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-rounded text-sm">upload</span>
-                        Import {preview.totalLines} transactions
+                        {isPDF ? "Upload & Parse with AI" : `Import ${preview?.totalLines ?? 0} transactions`}
                       </>
                     )}
                   </button>

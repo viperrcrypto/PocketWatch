@@ -371,4 +371,5 @@ export const FORMAT_LABELS: Record<BankFormat, string> = {
   capital_one: "Capital One",
   discover: "Discover",
   generic: "Generic CSV",
+  ai_pdf: "AI-Parsed PDF",
 }

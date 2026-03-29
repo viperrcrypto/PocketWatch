@@ -28,6 +28,7 @@ import { SettingsProviderCards } from "@/components/finance/settings/settings-pr
 import { SettingsPlaidKeys } from "@/components/finance/settings/settings-plaid-keys"
 import { StatementCoverageContent } from "@/components/finance/settings/statement-coverage-card"
 import { StatementUploadInline } from "@/components/finance/settings/statement-upload-inline"
+import { ManualAccountsSection } from "@/components/finance/settings/manual-accounts-section"
 
 function deriveVerificationState(payload?: Partial<FinanceCredentialVerificationResponse> | null): {
   verificationState: FinanceVerificationState
@@ -326,6 +327,8 @@ export default function FinanceSettingsPage() {
           <StatementUploadInline />
         </div>
       </CollapsibleSection>
+
+      <ManualAccountsSection />
 
       {syncStatus?.institutions && syncStatus.institutions.length > 0 && (
         <CollapsibleSection

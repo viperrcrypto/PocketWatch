@@ -132,6 +132,9 @@ export {
 export {
   useAccountCoverage,
   useUploadStatement,
+  useManualAccounts,
+  useCreateManualAccount,
+  useDeleteManualAccount,
 } from "./use-statements"
 
 export type { ReviewTransaction } from "./use-review"

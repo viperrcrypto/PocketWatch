@@ -3,11 +3,17 @@ import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { NextResponse, type NextRequest } from "next/server"
 import { parseStatement } from "@/lib/finance/statement-parser"
+import { parsePDFStatement } from "@/lib/finance/statement-pdf-parser"
 import { categorizeTransaction, cleanMerchantName } from "@/lib/finance/categorize"
 import { generateExternalId, assignSequences, findFuzzyDuplicates } from "@/lib/finance/statement-dedup"
-import type { StatementUploadResult } from "@/lib/finance/statement-types"
+import { decryptCredential } from "@/lib/finance/crypto"
+import type { AIProviderType } from "@/lib/finance/ai-providers"
+import type { StatementUploadResult, BankFormat, ParsedRow } from "@/lib/finance/statement-types"
+
+export const maxDuration = 120
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const AI_SERVICES = ["ai_claude_cli", "ai_claude_api", "ai_openai", "ai_gemini"]
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
@@ -27,25 +33,47 @@ export async function POST(req: NextRequest) {
     })
     if (!account) return apiError("F8014", "Account not found", 404)
 
-    const buffer = await file.arrayBuffer()
-    let csvText: string
-    try {
-      csvText = new TextDecoder("utf-8", { fatal: true }).decode(buffer)
-    } catch {
-      csvText = new TextDecoder("latin1").decode(buffer)
+    const fileName = file.name.toLowerCase()
+    const isPDF = fileName.endsWith(".pdf")
+    const isCSV = fileName.endsWith(".csv")
+
+    if (!isPDF && !isCSV) {
+      return apiError("F8016", "File must be .csv or .pdf", 400)
     }
 
-    const parsed = parseStatement(csvText)
-    if (parsed.rows.length === 0) {
-      return apiError("F8015", "No transactions found in file", 400)
+    let rows: ParsedRow[]
+    let format: BankFormat
+    let parseErrors: string[]
+
+    if (isPDF) {
+      const pdfResult = await parsePDFFromFile(file, user.id)
+      rows = pdfResult.rows
+      format = "ai_pdf"
+      parseErrors = pdfResult.errors
+    } else {
+      const buffer = await file.arrayBuffer()
+      let csvText: string
+      try {
+        csvText = new TextDecoder("utf-8", { fatal: true }).decode(buffer)
+      } catch {
+        csvText = new TextDecoder("latin1").decode(buffer)
+      }
+      const parsed = parseStatement(csvText)
+      rows = parsed.rows
+      format = parsed.format
+      parseErrors = parsed.errors
     }
 
-    const sequences = assignSequences(parsed.rows)
-    const externalIds = parsed.rows.map((row, i) =>
+    if (rows.length === 0) {
+      const msg = parseErrors.length > 0 ? parseErrors[0] : "No transactions found in file"
+      return apiError("F8015", msg, 400)
+    }
+
+    const sequences = assignSequences(rows)
+    const externalIds = rows.map((row, i) =>
       generateExternalId(accountId, row, sequences[i])
     )
 
-    // Level 1: exact dedup — check which externalIds already exist
     const existingIds = new Set(
       (await db.financeTransaction.findMany({
         where: { userId: user.id, externalId: { in: externalIds } },
@@ -53,11 +81,10 @@ export async function POST(req: NextRequest) {
       })).map((t) => t.externalId)
     )
 
-    // Level 2: fuzzy dedup against provider transactions
-    const newIndices = parsed.rows
+    const newIndices = rows
       .map((_, i) => i)
       .filter((i) => !existingIds.has(externalIds[i]))
-    const newRows = newIndices.map((i) => parsed.rows[i])
+    const newRows = newIndices.map((i) => rows[i])
     const fuzzyDupes = await findFuzzyDuplicates(user.id, accountId, newRows)
 
     const userRules = await db.financeCategoryRule.findMany({
@@ -68,15 +95,13 @@ export async function POST(req: NextRequest) {
     let inserted = 0
     let duplicates = 0
     const skipped = externalIds.filter((id) => existingIds.has(id)).length
-
-    // Precompute index lookup (avoid O(n²) indexOf)
     const origToLocalIdx = new Map(newIndices.map((origIdx, localIdx) => [origIdx, localIdx]))
 
     const batchSize = 200
     for (let b = 0; b < newIndices.length; b += batchSize) {
       const batch = newIndices.slice(b, b + batchSize)
       const createData = batch.map((origIdx) => {
-        const row = parsed.rows[origIdx]
+        const row = rows[origIdx]
         const localIdx = origToLocalIdx.get(origIdx)!
         const isFuzzyDupe = fuzzyDupes.has(localIdx)
         const cleaned = cleanMerchantName(row.name)
@@ -117,16 +142,48 @@ export async function POST(req: NextRequest) {
     }
 
     const result: StatementUploadResult = {
-      format: parsed.format,
-      totalRows: parsed.rows.length,
+      format,
+      totalRows: rows.length,
       inserted,
       skipped,
       duplicates,
-      errors: parsed.errors.slice(0, 10),
+      errors: parseErrors.slice(0, 10),
     }
 
     return NextResponse.json(result)
   } catch (err) {
     return apiError("F8019", "Failed to process statement", 500, err)
   }
+}
+
+async function parsePDFFromFile(
+  file: File,
+  userId: string
+): Promise<{ rows: ParsedRow[]; errors: string[] }> {
+  const pdfParse = (await import("pdf-parse")).default
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const { text } = await pdfParse(buffer)
+
+  if (!text || text.trim().length < 20) {
+    return { rows: [], errors: ["Could not extract text from PDF — the file may be image-only or corrupt"] }
+  }
+
+  const providerKey = await db.externalApiKey.findFirst({
+    where: { userId, serviceName: { in: AI_SERVICES }, verified: true },
+    orderBy: { updatedAt: "desc" },
+  })
+
+  const providerConfig = providerKey
+    ? {
+        provider: providerKey.serviceName as AIProviderType,
+        apiKey: await decryptCredential(providerKey.apiKeyEnc),
+        model: providerKey.model ?? undefined,
+      }
+    : {
+        provider: "ai_claude_cli" as AIProviderType,
+        apiKey: "enabled",
+        model: undefined,
+      }
+
+  return parsePDFStatement(text, providerConfig)
 }
