@@ -141,9 +141,10 @@ export async function parsePDFFromFile(
   // 1. Extract text from PDF
   let text: string
   try {
-    const pdfParse = (await import("pdf-parse")).default
+    const pdfModule = await import("pdf-parse")
+    const pdfParse = typeof pdfModule.default === "function" ? pdfModule.default : pdfModule
     const buffer = Buffer.from(await file.arrayBuffer())
-    const result = await pdfParse(buffer)
+    const result = await (pdfParse as (buf: Buffer) => Promise<{ text: string }>)(buffer)
     text = result.text
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown PDF error"
