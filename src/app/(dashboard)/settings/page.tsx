@@ -24,12 +24,19 @@ function SettingsPageContent() {
 
   const handleSearchNavigate = useCallback((tab: SettingsTabId, sectionId: string) => {
     router.replace(`/settings?tab=${tab}`, { scroll: false })
-    // Wait for tab content to render, then scroll to section
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })
-      }, 50)
-    })
+    // Poll for the section element after tab switch (tab content may not be mounted yet)
+    let attempts = 0
+    const tryScroll = () => {
+      const el = document.getElementById(sectionId)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        return
+      }
+      if (++attempts < 10) {
+        requestAnimationFrame(tryScroll)
+      }
+    }
+    requestAnimationFrame(tryScroll)
   }, [router])
 
   return (

@@ -33,6 +33,8 @@ export function FinanceSettingsTab() {
   const disconnectInstitution = useDisconnectInstitution()
   const deleteAccount = useDeleteAccount()
   const [isSyncingSF, setIsSyncingSF] = useState(false)
+  const [isDisconnectingPlaid, setIsDisconnectingPlaid] = useState(false)
+  const [isDisconnectingSF, setIsDisconnectingSF] = useState(false)
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; name: string } | null>(null)
   const [showSFDisconnect, setShowSFDisconnect] = useState(false)
   const [showPlaidDisconnect, setShowPlaidDisconnect] = useState(false)
@@ -70,6 +72,7 @@ export function FinanceSettingsTab() {
   }
 
   const handleDisconnectAllPlaid = async () => {
+    setIsDisconnectingPlaid(true)
     try {
       for (const inst of plaidInstitutions) {
         await financeFetch(`/accounts?institutionId=${inst.id}`, { method: "DELETE" })
@@ -81,10 +84,13 @@ export function FinanceSettingsTab() {
       setShowPlaidDisconnect(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to disconnect Plaid")
+    } finally {
+      setIsDisconnectingPlaid(false)
     }
   }
 
   const handleDisconnectAllSimplefin = async () => {
+    setIsDisconnectingSF(true)
     try {
       for (const inst of simplefinInstitutions) {
         await financeFetch(`/accounts?institutionId=${inst.id}`, { method: "DELETE" })
@@ -94,6 +100,8 @@ export function FinanceSettingsTab() {
       setShowSFDisconnect(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to disconnect SimpleFIN")
+    } finally {
+      setIsDisconnectingSF(false)
     }
   }
 
@@ -202,11 +210,11 @@ export function FinanceSettingsTab() {
         showPlaidDisconnect={showPlaidDisconnect}
         onClosePlaidDisconnect={() => setShowPlaidDisconnect(false)}
         onConfirmPlaidDisconnect={handleDisconnectAllPlaid}
-        plaidDisconnectLoading={disconnectInstitution.isPending || plaid.deleteCred.isPending}
+        plaidDisconnectLoading={isDisconnectingPlaid}
         showSFDisconnect={showSFDisconnect}
         onCloseSFDisconnect={() => setShowSFDisconnect(false)}
         onConfirmSFDisconnect={handleDisconnectAllSimplefin}
-        sfDisconnectLoading={disconnectInstitution.isPending}
+        sfDisconnectLoading={isDisconnectingSF}
         removeAccountTarget={removeAccountTarget}
         onCloseRemoveAccount={() => setRemoveAccountTarget(null)}
         onConfirmRemoveAccount={handleRemoveAccount}

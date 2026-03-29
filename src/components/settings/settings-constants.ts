@@ -18,7 +18,7 @@ export const SETTINGS_SECTIONS = [
   { tab: "general", id: "data-management", title: "Data Management", keywords: ["clear", "reset", "delete", "data"] },
   { tab: "finance", id: "bank-connections", title: "Bank Connections", keywords: ["plaid", "simplefin", "bank", "institution", "connect"] },
   { tab: "finance", id: "upload-statements", title: "Upload Statements", keywords: ["csv", "ofx", "bank statement", "import", "upload"] },
-  { tab: "finance", id: "sync-status", title: "Sync Status", keywords: ["plaid", "refresh", "sync", "institution"] },
+
   { tab: "finance", id: "data-coverage", title: "Data Coverage", keywords: ["coverage", "year", "months", "chart"] },
   { tab: "finance", id: "ai-intelligence", title: "AI Intelligence", keywords: ["ai", "provider", "model", "openai", "anthropic", "intelligence"] },
   { tab: "digital-assets", id: "sync-diagnostics", title: "Sync Diagnostics", keywords: ["sync", "history", "transactions", "diagnostics"] },
