@@ -14,7 +14,7 @@ type AccountMap = Map<string, { type: string; subtype: string | null; name: stri
 
 /** Project a materialized subscription into the target month */
 export function projectSubBill(
-  s: { id: string; merchantName: string; nickname: string | null; category: string | null; frequency: string; amount: number; billType: string | null; accountId: string | null; nextChargeDate: Date | null; lastChargeDate: Date | null },
+  s: { id: string; merchantName: string; nickname: string | null; category: string | null; frequency: string; amount: number; billType: string | null; accountId: string | null; nextChargeDate: Date | null; lastChargeDate: Date | null; lastTransactionId?: string | null },
   accountMap: AccountMap,
   targetMonth: string, monthEnd: Date, now: Date,
 ): BillItem | null {
@@ -59,6 +59,7 @@ export function projectSubBill(
     nextDueDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`,
     daysUntil: isPaid ? -1 : Math.max(0, daysUntil),
     category: s.category, billType, isPaid,
+    lastTransactionId: isPaid ? (s.lastTransactionId ?? null) : null,
     accountName: acct?.name ?? null,
     accountMask: acct?.mask ?? null,
     institutionName: acct?.institution?.institutionName ?? null,

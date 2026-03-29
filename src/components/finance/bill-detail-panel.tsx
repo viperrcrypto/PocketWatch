@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { formatCurrency, cn } from "@/lib/utils"
 import { BillAvatar } from "./bill-avatar"
 import { getCancelUrl } from "@/lib/finance/cancel-links"
@@ -15,6 +16,7 @@ interface BillDetailItem {
   category: string | null
   billType?: string | null
   isPaid?: boolean
+  lastTransactionId?: string | null
   logoUrl?: string | null
   accountName?: string | null
   accountMask?: string | null
@@ -115,6 +117,20 @@ export function BillDetailPanel({ bill, onClose }: Props) {
         <Section title="Category">
           <p className="text-sm text-foreground">{bill.category}</p>
         </Section>
+      )}
+
+      {/* View Transaction — link to transactions page with highlight */}
+      {bill.isPaid && bill.lastTransactionId && (
+        <div className="pt-4">
+          <Link
+            href={`/finance/transactions?highlight=${bill.lastTransactionId}&search=${encodeURIComponent(bill.merchantName)}`}
+            onClick={onClose}
+            className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-foreground bg-background-secondary rounded-lg hover:bg-background-secondary/80 transition-colors"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: 16 }}>receipt_long</span>
+            View Transaction
+          </Link>
+        </div>
       )}
 
       {/* Cancel */}

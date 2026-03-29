@@ -23,6 +23,7 @@ interface Bill {
   category: string | null
   billType?: string | null
   isPaid?: boolean
+  lastTransactionId?: string | null
   logoUrl?: string | null
   accountName?: string | null
   accountMask?: string | null

@@ -89,6 +89,7 @@ export interface BillItem {
   category: string | null
   billType: BillType | "cc_payment"
   isPaid?: boolean
+  lastTransactionId?: string | null
   logoUrl?: string | null
   accountName?: string | null
   accountMask?: string | null
