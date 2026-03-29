@@ -260,7 +260,7 @@ export function useAIRebuild() {
                 status: "complete",
                 summary: data.summary as RebuildSummary,
               }))
-              // Targeted invalidation — don't wipe review queue/count
+              // Refresh everything the rebuild touched
               qc.invalidateQueries({ queryKey: [...financeKeys.all, "transactions"] })
               qc.invalidateQueries({ queryKey: financeKeys.insights() })
               qc.invalidateQueries({ queryKey: financeKeys.deepInsights() })
@@ -268,6 +268,9 @@ export function useAIRebuild() {
               qc.invalidateQueries({ queryKey: [...financeKeys.all, "spending-by-month"] })
               qc.invalidateQueries({ queryKey: financeKeys.budgets() })
               qc.invalidateQueries({ queryKey: [...financeKeys.all, "ai-categorize"] })
+              // Review queue + count must update — rebuild categorized items that were pending review
+              qc.invalidateQueries({ queryKey: financeKeys.reviewQueue() })
+              qc.invalidateQueries({ queryKey: financeKeys.reviewCount() })
               break
             case "error":
               if (data.batchIndex !== undefined) break // batch-level, continue
