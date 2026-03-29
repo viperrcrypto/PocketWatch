@@ -10,9 +10,7 @@ export function BackupScheduleCard() {
   const updateSchedule = useUpdateBackupSchedule()
   const [password, setPassword] = useState("")
   const [showPasswordInput, setShowPasswordInput] = useState(false)
-  const [editingDir, setEditingDir] = useState(false)
-  const [dirInput, setDirInput] = useState("")
-  const [dirStatus, setDirStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle")
+  const [isBrowsing, setIsBrowsing] = useState(false)
 
   const handleToggle = () => {
     if (!schedule?.enabled && !showPasswordInput) {
@@ -33,40 +31,44 @@ export function BackupScheduleCard() {
     })
   }
 
-  const handleStartEdit = () => {
-    setDirInput(schedule?.directory ?? "~/.pocketwatch/backups")
-    setEditingDir(true)
-    setDirStatus("idle")
-  }
-
-  const handleSaveDir = async () => {
-    const path = dirInput.trim()
-    if (!path) return
-    setDirStatus("checking")
+  const handleBrowse = async () => {
+    if (isBrowsing) return
+    setIsBrowsing(true)
     try {
+      // Open native OS folder picker via File System Access API
+      const handle = await (window as any).showDirectoryPicker({ mode: "readwrite" })
+
+      // Write a temporary marker file so the server can find the absolute path
+      const marker = crypto.randomUUID()
+      const markerFile = await handle.getFileHandle(`.pwmarker-${marker}`, { create: true })
+      const writable = await markerFile.createWritable()
+      await writable.write("marker")
+      await writable.close()
+
+      // Ask server to find the marker and resolve the path
       const res = await fetch("/api/backup/browse-dirs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, create: true }),
+        body: JSON.stringify({ action: "resolve", marker }),
       })
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        toast.error(data.message ?? "Invalid directory path")
-        setDirStatus("invalid")
+        toast.error(data.message ?? "Could not resolve folder path")
         return
       }
+
       const data = await res.json()
       updateSchedule.mutate({ directory: data.path }, {
-        onSuccess: () => {
-          toast.success("Backup directory updated")
-          setEditingDir(false)
-          setDirStatus("idle")
-        },
-        onError: (err) => { toast.error(err.message); setDirStatus("invalid") },
+        onSuccess: () => toast.success(`Backup directory set to ${data.path}`),
+        onError: (err) => toast.error(err.message),
       })
-    } catch {
-      toast.error("Failed to validate directory")
-      setDirStatus("invalid")
+    } catch (err: unknown) {
+      // User cancelled the picker — AbortError is expected
+      if (err instanceof DOMException && err.name === "AbortError") return
+      toast.error("Failed to select folder")
+    } finally {
+      setIsBrowsing(false)
     }
   }
 
@@ -141,49 +143,19 @@ export function BackupScheduleCard() {
           </div>
 
           {/* Directory */}
-          {editingDir ? (
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-foreground-muted flex-shrink-0" style={{ fontSize: 16 }}>folder</span>
-              <input
-                type="text"
-                value={dirInput}
-                onChange={(e) => { setDirInput(e.target.value); setDirStatus("idle") }}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveDir()}
-                placeholder="~/path/to/backups"
-                autoFocus
-                className={cn(
-                  "flex-1 px-2 py-1 text-xs font-mono bg-background border rounded-lg outline-none",
-                  dirStatus === "invalid" ? "border-error" : "border-card-border focus:border-primary",
-                )}
-              />
-              <button
-                onClick={handleSaveDir}
-                disabled={dirStatus === "checking" || !dirInput.trim()}
-                className="px-2 py-1 text-[11px] font-medium bg-primary text-white rounded-lg disabled:opacity-50"
-              >
-                {dirStatus === "checking" ? "..." : "Save"}
-              </button>
-              <button
-                onClick={() => { setEditingDir(false); setDirStatus("idle") }}
-                className="px-2 py-1 text-[11px] text-foreground-muted hover:text-foreground"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 16 }}>folder</span>
-              <span className="text-xs text-foreground-muted font-mono truncate flex-1" title={schedule.directory}>
-                {schedule.directory}
-              </span>
-              <button
-                onClick={handleStartEdit}
-                className="px-2 py-1 text-[11px] border border-card-border rounded-lg text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors flex-shrink-0"
-              >
-                Change
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 16 }}>folder</span>
+            <span className="text-xs text-foreground-muted font-mono truncate flex-1" title={schedule.directory}>
+              {schedule.directory}
+            </span>
+            <button
+              onClick={handleBrowse}
+              disabled={isBrowsing}
+              className="px-2 py-1 text-[11px] border border-card-border rounded-lg text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors flex-shrink-0 disabled:opacity-50"
+            >
+              {isBrowsing ? "Opening..." : "Browse"}
+            </button>
+          </div>
 
           {/* Status */}
           {schedule.lastBackupAt && !schedule.lastBackupError && (
