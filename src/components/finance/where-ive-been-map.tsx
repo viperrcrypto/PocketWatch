@@ -8,13 +8,17 @@ import "leaflet/dist/leaflet.css"
 import { formatCurrency } from "@/lib/utils"
 import type { LocationPin } from "./where-ive-been-types"
 
-// Custom pin icon — primary color dot
+// Custom pin icon — glowing dot with pulse ring
 const pinIcon = L.divIcon({
   className: "",
-  html: `<div style="width:14px;height:14px;border-radius:50%;background:var(--primary, #3b82f6);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-  popupAnchor: [0, -10],
+  html: `<div style="position:relative;width:22px;height:22px">
+    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(59,130,246,0.2);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
+    <div style="position:absolute;inset:4px;border-radius:50%;background:#3b82f6;border:2.5px solid white;box-shadow:0 2px 8px rgba(59,130,246,0.5)"></div>
+  </div>
+  <style>@keyframes ping{75%,100%{transform:scale(1.8);opacity:0}}</style>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -14],
 })
 
 interface Props {

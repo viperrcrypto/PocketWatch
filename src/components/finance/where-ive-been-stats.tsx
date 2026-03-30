@@ -57,7 +57,7 @@ export function WhereIveBeenStats({ locations }: Props) {
               <span className="text-xs font-data font-semibold tabular-nums text-foreground">{formatCurrency(group.totalSpent)}</span>
             </div>
             <div className="space-y-1 ml-8">
-              {group.cities.map((city) => (
+              {group.cities.slice(0, 5).map((city) => (
                 <div key={`${city.city}-${city.country}`} className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs text-foreground truncate">{city.city}</span>
@@ -69,6 +69,9 @@ export function WhereIveBeenStats({ locations }: Props) {
                   </div>
                 </div>
               ))}
+              {group.cities.length > 5 && (
+                <p className="text-[10px] text-foreground-muted/60 italic">+ {group.cities.length - 5} more cities</p>
+              )}
             </div>
           </div>
         ))}
