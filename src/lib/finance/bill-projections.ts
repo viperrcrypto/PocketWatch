@@ -153,6 +153,9 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     },
   })
 
+  // Track ALL Plaid-linked accounts so Source 2 only picks up non-Plaid cards
+  for (const cc of liabilities) source1AccountIds.add(cc.accountId)
+
   for (const cc of liabilities) {
     if (!cc.nextPaymentDueDate) continue
     // FIX Bug 2: Parse date as local to avoid timezone off-by-one
@@ -163,8 +166,6 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     const stmtBal = cc.lastStatementBalance ?? 0
     const minPay = cc.minimumPaymentAmount ?? 0
     if (stmtBal <= 0 && minPay <= 0) continue
-
-    source1AccountIds.add(cc.accountId)
 
     const daysUntil = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     // FIX Bug 1: Set isPaid based on whether due date has passed
