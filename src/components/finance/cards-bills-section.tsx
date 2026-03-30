@@ -56,7 +56,7 @@ export function CardsBillsSection({
           label="Coming Up"
           value={`${upcomingCount} upcoming · ${formatCurrency(upcomingTotal)}`}
           footerStats={[
-            { label: "Monthly Obligations", value: formatCurrency(obligationsTotal) },
+            { label: "Bills & Subscriptions", value: formatCurrency(obligationsTotal) },
             { label: "Card Payments", value: formatCurrency(cardPaymentsTotal) },
             {
               label: "Next Due",
