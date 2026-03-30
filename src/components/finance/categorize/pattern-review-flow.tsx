@@ -155,7 +155,7 @@ export function PatternReviewFlow() {
       )}
 
       {/* Card with enter animation */}
-      {currentTx && (
+      {currentTx ? (
         <div key={currentTx.id} className="animate-fade-up">
           <PatternReviewCard
             transaction={currentTx}
@@ -165,7 +165,12 @@ export function PatternReviewFlow() {
             isSubmitting={confirmReview.isPending}
           />
         </div>
-      )}
+      ) : total > 0 ? (
+        <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
+          <div className="h-8 w-8 mx-auto mb-3 border-2 border-foreground-muted/20 border-t-foreground rounded-full animate-spin" />
+          <p className="text-sm text-foreground-muted">Loading next transaction...</p>
+        </div>
+      ) : null}
 
       {/* Keyboard hint */}
       <p className="text-center text-[10px] text-foreground-muted/60">
