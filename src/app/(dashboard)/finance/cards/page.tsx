@@ -184,7 +184,7 @@ export default function FinanceCardsPage() {
   const obligationsTotal = activeSubs.reduce((sum: number, s: { frequency: string; amount: number }) => sum + toMonthly(s), 0)
   // Card payments come from the bills API (where getCCBills() generates them)
   const cardPaymentsMonthly = (billsData?.bills ?? [])
-    .filter((b) => b.billType === "cc_payment" && !b.isPaid)
+    .filter((b) => b.billType === "cc_payment")
     .reduce((sum, b) => sum + b.amount, 0)
 
   const allBills = billsData?.bills ?? []
