@@ -107,4 +107,5 @@ export const financeKeys = {
   reviewQueue: (offset?: number) => [...financeKeys.all, "review-queue", offset] as const,
   reviewCount: () => [...financeKeys.all, "review-count"] as const,
   aiRebuild: () => [...financeKeys.all, "ai-rebuild"] as const,
+  locations: () => [...financeKeys.all, "locations"] as const,
 }

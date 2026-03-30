@@ -14,6 +14,7 @@ import { FinancePageHeader } from "@/components/finance/finance-page-header"
 import { usePrivacyMode } from "@/hooks/use-privacy-mode"
 import { PrivacyToggle } from "@/components/portfolio/privacy-toggle"
 import { FlexButton } from "@/components/finance/flex-button"
+import { WhereIveBeenButton } from "@/components/finance/where-ive-been-button"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
 import { FinanceHeroCard } from "@/components/finance/finance-hero-card"
 import { FinanceStatCard } from "@/components/finance/stat-card"
@@ -141,6 +142,7 @@ export default function FinanceDashboardPage() {
               {syncAll.isPending ? "Syncing..." : "Refresh"}
             </button>
             {deep && <FlexButton deep={deep} />}
+            <WhereIveBeenButton />
             <PrivacyToggle isHidden={isHidden} onToggle={togglePrivacy} />
           </>
         }

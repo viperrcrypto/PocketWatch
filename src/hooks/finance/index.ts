@@ -148,3 +148,5 @@ export type { ProcessedMerchant, RebuildSummary } from "./use-ai-rebuild"
 export {
   useAIRebuild,
 } from "./use-ai-rebuild"
+
+export { useTransactionLocations } from "./use-locations"
