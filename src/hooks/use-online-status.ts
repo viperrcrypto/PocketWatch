@@ -1,26 +1,42 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 /**
  * Tracks browser online/offline state reactively.
- * Fires a callback on reconnect so pollers can recover.
+ * Falls back to a server ping when navigator.onLine is unreliable (common on macOS).
  */
 export function useOnlineStatus(onReconnect?: () => void) {
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  )
+  const [isOnline, setIsOnline] = useState(true)
+  const wasOffline = useRef(false)
 
   const handleOnline = useCallback(() => {
     setIsOnline(true)
-    onReconnect?.()
+    if (wasOffline.current) {
+      wasOffline.current = false
+      onReconnect?.()
+    }
   }, [onReconnect])
 
   const handleOffline = useCallback(() => {
-    setIsOnline(false)
+    // Don't trust navigator.onLine immediately — verify with a fetch
+    fetch("/api/auth/me", { method: "HEAD", cache: "no-store" })
+      .then(() => {
+        // Server is reachable — navigator.onLine lied
+        setIsOnline(true)
+      })
+      .catch(() => {
+        // Actually offline
+        wasOffline.current = true
+        setIsOnline(false)
+      })
   }, [])
 
   useEffect(() => {
+    // Initial check — navigator.onLine can be wrong on mount
+    if (!navigator.onLine) {
+      handleOffline()
+    }
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
     return () => {
