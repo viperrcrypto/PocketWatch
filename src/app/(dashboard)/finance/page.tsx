@@ -324,7 +324,7 @@ export default function FinanceDashboardPage() {
 
       {/* Cash Flow + AI Insights */}
       {deep && (
-        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
             {/* Header */}
             <div className="flex items-center gap-2 mb-5">
