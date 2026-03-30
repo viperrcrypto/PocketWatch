@@ -1,3 +1,4 @@
+import { createHash } from "crypto"
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
@@ -59,14 +60,25 @@ export async function POST(req: NextRequest) {
       where: { userId: user.id },
     })
 
-    const createData = unique.map((txn, i) => {
+    // Build deterministic sequence counters for same date+amount+description combos
+    const seqCounts = new Map<string, number>()
+    const createData = unique.map((txn) => {
       const cleaned = cleanMerchantName(txn.description)
       const cat = categorizeTransaction({ merchantName: cleaned, rawName: txn.description }, userRules)
+
+      // Deterministic externalId: hash of content, not row index
+      const seqKey = `${txn.date}|${txn.amount}|${txn.description}`
+      const seq = (seqCounts.get(seqKey) ?? 0) + 1
+      seqCounts.set(seqKey, seq)
+      const hash = createHash("sha256")
+        .update(`${accountId}|${txn.date}|${txn.amount}|${txn.description}|${seq}`)
+        .digest("hex")
+        .slice(0, 32)
 
       return {
         userId: user.id,
         accountId,
-        externalId: `csv_${accountId}_${txn.date}_${i}`,
+        externalId: `csv_${hash}`,
         provider: "csv" as const,
         date: new Date(txn.date),
         name: txn.description,
