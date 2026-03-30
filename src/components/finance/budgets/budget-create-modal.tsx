@@ -59,22 +59,22 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={handleClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="budget-modal-title" className="bg-card border border-card-border w-full max-w-md rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-lg)" }} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-card-border">
+      <div role="dialog" aria-modal="true" aria-labelledby="budget-modal-title" className="bg-card border border-card-border w-full max-w-md rounded-2xl overflow-hidden max-h-[90dvh] flex flex-col" style={{ boxShadow: "var(--shadow-lg)" }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-card-border flex-shrink-0">
           <div className="flex items-center gap-2">
             {step === 2 && (
-              <button onClick={() => setStep(1)} className="p-0.5 rounded-md hover:bg-foreground/5 transition-colors">
+              <button onClick={() => setStep(1)} className="touch-target rounded-md hover:bg-foreground/5 transition-colors">
                 <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>arrow_back</span>
               </button>
             )}
             <h2 id="budget-modal-title" className="text-base font-semibold text-foreground">{step === 1 ? "Create Budget" : "Set Amount"}</h2>
           </div>
-          <button onClick={handleClose} className="p-1 rounded-md hover:bg-foreground/5 transition-colors">
+          <button onClick={handleClose} className="touch-target rounded-md hover:bg-foreground/5 transition-colors" aria-label="Close">
             <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 18 }}>close</span>
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: "touch" }}>
           {step === 1 ? (
             <div className="space-y-4">
               <p className="text-xs text-foreground-muted">Choose a spending category to budget</p>
@@ -147,7 +147,7 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
                 </p>
               )}
 
-              <button onClick={handleCreate} disabled={isPending || numAmount <= 0} className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button onClick={handleCreate} disabled={isPending || numAmount <= 0} className="w-full py-2.5 min-h-[44px] bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 {isPending ? "Creating..." : "Create Budget"}
               </button>
             </div>

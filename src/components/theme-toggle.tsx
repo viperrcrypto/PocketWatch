@@ -33,7 +33,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <button
-        className="flex items-center justify-center w-9 h-9 rounded-lg text-foreground-muted"
+        className="flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg text-foreground-muted"
         aria-label="Toggle theme"
       >
         <span className="material-symbols-rounded" style={{ fontSize: 20 }}>contrast</span>
@@ -44,7 +44,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center justify-center w-9 h-9 rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors"
+      className="flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors"
       aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
       title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
     >

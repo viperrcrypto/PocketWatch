@@ -53,7 +53,7 @@ export function FinanceChartWrapper({
         <div className="flex items-center gap-3">
           {headerActions}
           {onTimeframeChange && (
-            <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg">
+            <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg mobile-pill-group">
               {timeframes.map((tf) => {
                 const isActive = activeTimeframe === tf
                 return (
@@ -62,7 +62,7 @@ export function FinanceChartWrapper({
                     type="button"
                     onClick={() => onTimeframeChange(tf)}
                     className={cn(
-                      "px-3 py-1 text-[10px] font-medium rounded-md transition-all duration-150",
+                      "px-3 py-1.5 text-[11px] font-medium rounded-md transition-all duration-150",
                       isActive
                         ? "bg-primary text-white shadow-sm"
                         : "bg-transparent text-foreground-muted hover:text-foreground"

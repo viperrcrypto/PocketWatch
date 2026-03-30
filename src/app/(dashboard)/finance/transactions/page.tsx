@@ -147,14 +147,14 @@ export default function FinanceTransactionsPage() {
       <div className="bg-card border border-card-border rounded-xl p-4">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Timeframe pills */}
-          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg overflow-x-auto flex-shrink-0">
+          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg overflow-x-auto flex-shrink-0 mobile-pill-group">
             {DATE_PRESETS.map((preset) => (
               <button
                 key={preset.key}
                 type="button"
                 onClick={() => { setDateRange(preset.key); setPage(1) }}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150",
+                  "px-3 py-2 text-xs font-medium rounded-md transition-all duration-150",
                   dateRange === preset.key
                     ? "bg-primary text-white shadow-sm"
                     : "bg-transparent text-foreground-muted hover:text-foreground"
@@ -166,7 +166,7 @@ export default function FinanceTransactionsPage() {
           </div>
 
           {/* Transaction type filter */}
-          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg overflow-x-auto flex-shrink-0">
+          <div className="flex items-center gap-0.5 bg-background-secondary border border-card-border p-0.5 rounded-lg overflow-x-auto flex-shrink-0 mobile-pill-group">
             {([
               { key: "", label: "All" },
               { key: "charges", label: "Charges" },
@@ -178,7 +178,7 @@ export default function FinanceTransactionsPage() {
                 type="button"
                 onClick={() => { setTxType(opt.key); setPage(1) }}
                 className={cn(
-                  "px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-150",
+                  "px-3 py-2 text-xs font-medium rounded-md transition-all duration-150",
                   txType === opt.key
                     ? "bg-primary text-white shadow-sm"
                     : "bg-transparent text-foreground-muted hover:text-foreground"
@@ -263,21 +263,21 @@ export default function FinanceTransactionsPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-1 min-w-0 sm:min-w-[180px] px-3 py-1.5 rounded-lg bg-background-secondary border border-card-border">
+          <div className="flex items-center gap-2 flex-1 min-w-0 sm:min-w-[180px] px-3 py-2 min-h-[44px] rounded-lg bg-background-secondary border border-card-border">
             <span className="material-symbols-rounded text-foreground-muted flex-shrink-0" style={{ fontSize: 16 }}>search</span>
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               placeholder="Search merchants, descriptions..."
-              className="flex-1 min-w-0 bg-transparent border-0 text-xs text-foreground placeholder:text-foreground-muted/50 outline-none"
+              className="flex-1 min-w-0 bg-transparent border-0 text-sm text-foreground placeholder:text-foreground-muted/50 outline-none"
             />
             {search && (
               <button
                 onClick={() => { setSearch(""); setPage(1) }}
-                className="text-foreground-muted hover:text-foreground transition-colors flex-shrink-0"
+                className="touch-target text-foreground-muted hover:text-foreground transition-colors flex-shrink-0"
               >
-                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>close</span>
+                <span className="material-symbols-rounded" style={{ fontSize: 16 }}>close</span>
               </button>
             )}
           </div>
@@ -300,7 +300,7 @@ export default function FinanceTransactionsPage() {
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 border-b border-card-border bg-card-elevated text-[10px] text-foreground-muted font-semibold uppercase tracking-widest">
             <input
               type="checkbox"
-              className="w-3.5 h-3.5 rounded accent-primary flex-shrink-0"
+              className="w-4 h-4 rounded accent-primary flex-shrink-0"
               checked={data.transactions.length > 0 && data.transactions.every((tx) => selectedIds.has(tx.id))}
               onChange={(e) => {
                 const next = new Set(selectedIds)
@@ -321,7 +321,7 @@ export default function FinanceTransactionsPage() {
             <div key={tx.id} className="flex items-center">
               <input
                 type="checkbox"
-                className="w-3.5 h-3.5 rounded accent-primary flex-shrink-0 ml-3 sm:ml-4"
+                className="w-4 h-4 rounded accent-primary flex-shrink-0 ml-3 sm:ml-4"
                 checked={selectedIds.has(tx.id)}
                 onChange={(e) => {
                   const next = new Set(selectedIds)
@@ -386,20 +386,20 @@ export default function FinanceTransactionsPage() {
             Showing {from}–{to} of {total.toLocaleString()}
           </p>
           <div className="flex items-center gap-1">
-            <button onClick={() => setPage(1)} disabled={page === 1} className="hidden sm:inline-flex px-2 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30" title="First page">
-              <span className="material-symbols-rounded" style={{ fontSize: 14 }}>first_page</span>
+            <button onClick={() => setPage(1)} disabled={page === 1} className="hidden sm:inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30" title="First page">
+              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>first_page</span>
             </button>
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-2 sm:px-3 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30">
-              <span className="material-symbols-rounded sm:hidden" style={{ fontSize: 14 }}>chevron_left</span>
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="min-h-[44px] px-3 sm:px-4 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30 inline-flex items-center justify-center">
+              <span className="material-symbols-rounded sm:hidden" style={{ fontSize: 16 }}>chevron_left</span>
               <span className="hidden sm:inline">Previous</span>
             </button>
-            <span className="px-3 py-1.5 text-xs font-data tabular-nums text-foreground-muted">{page} / {totalPages}</span>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2 sm:px-3 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30">
-              <span className="material-symbols-rounded sm:hidden" style={{ fontSize: 14 }}>chevron_right</span>
+            <span className="px-3 py-2 text-xs font-data tabular-nums text-foreground-muted">{page} / {totalPages}</span>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="min-h-[44px] px-3 sm:px-4 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30 inline-flex items-center justify-center">
+              <span className="material-symbols-rounded sm:hidden" style={{ fontSize: 16 }}>chevron_right</span>
               <span className="hidden sm:inline">Next</span>
             </button>
-            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="hidden sm:inline-flex px-2 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30" title="Last page">
-              <span className="material-symbols-rounded" style={{ fontSize: 14 }}>last_page</span>
+            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="hidden sm:inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-xs font-medium text-foreground-muted hover:text-foreground bg-card border border-card-border rounded-lg transition-colors disabled:opacity-30" title="Last page">
+              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>last_page</span>
             </button>
           </div>
         </div>

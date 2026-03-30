@@ -1,37 +1,21 @@
 "use client"
 
-import * as Tooltip from "@radix-ui/react-tooltip"
+import { HybridTooltip } from "./hybrid-tooltip"
 
 interface InfoTooltipProps {
   content: string
   children?: React.ReactNode
+  side?: "top" | "bottom" | "left" | "right"
 }
 
-export function InfoTooltip({ content, children }: InfoTooltipProps) {
+/**
+ * Info tooltip that works on both desktop (hover) and mobile (tap-to-toggle).
+ * Wraps HybridTooltip for backward compatibility.
+ */
+export function InfoTooltip({ content, children, side = "top" }: InfoTooltipProps) {
   return (
-    <Tooltip.Provider delayDuration={200}>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          {children || (
-            <button
-              type="button"
-              className="inline-flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors"
-            >
-              <span className="material-symbols-rounded text-base">info</span>
-            </button>
-          )}
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            side="top"
-            className="max-w-xs px-3 py-2 bg-card border border-card-border text-sm text-foreground shadow-lg z-50"
-            sideOffset={5}
-          >
-            {content}
-            <Tooltip.Arrow className="fill-card-border" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
+    <HybridTooltip content={content} side={side}>
+      {children}
+    </HybridTooltip>
   )
 }

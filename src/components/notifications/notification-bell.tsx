@@ -39,16 +39,20 @@ export const NotificationBell = memo(function NotificationBell() {
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Close on outside click
+  // Close on outside click/touch
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
     document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
+    document.addEventListener("touchstart", handler, { passive: true })
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("touchstart", handler)
+    }
   }, [open])
 
   // Close on Escape
@@ -65,7 +69,7 @@ export const NotificationBell = memo(function NotificationBell() {
   // Suppress SSR to avoid hydration mismatch
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center w-9 h-9 rounded-lg text-foreground-muted">
+      <div className="flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg text-foreground-muted">
         <span className="material-symbols-rounded text-lg">notifications</span>
       </div>
     )
@@ -77,7 +81,7 @@ export const NotificationBell = memo(function NotificationBell() {
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "relative flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+          "relative flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg transition-colors",
           open
             ? "text-primary bg-primary-muted"
             : "text-foreground-muted hover:text-foreground hover:bg-background-secondary",
@@ -95,7 +99,7 @@ export const NotificationBell = memo(function NotificationBell() {
 
       {/* Dropdown Panel */}
       {open && (
-        <div className="absolute bottom-full mb-2 left-0 w-[320px] sm:w-[360px] max-h-[min(480px,70vh)] bg-card border border-card-border rounded-xl shadow-lg overflow-hidden flex flex-col z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+        <div className="absolute bottom-full mb-2 left-0 w-[min(320px,calc(100vw-2rem))] sm:w-[360px] max-h-[min(480px,70vh)] bg-card border border-card-border rounded-xl shadow-lg overflow-hidden flex flex-col z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-card-border">
             <h3 className="text-sm font-semibold text-foreground">
@@ -110,7 +114,7 @@ export const NotificationBell = memo(function NotificationBell() {
               <button
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
-                className="text-xs text-primary hover:underline flex items-center gap-1"
+                className="text-xs text-primary hover:underline flex items-center gap-1 min-h-[44px] px-2"
               >
                 <span className="material-symbols-rounded text-xs">done_all</span>
                 Mark all read

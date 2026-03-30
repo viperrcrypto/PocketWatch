@@ -183,7 +183,7 @@ export default function FinanceDashboardPage() {
                   onError: (err) => toast.error(err.message),
                 })}
                 disabled={fetchHistory.isPending}
-                className="px-2.5 py-1 rounded-full text-[10px] font-medium text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors disabled:opacity-50 flex items-center gap-1"
+                className="px-3 py-2 min-h-[36px] rounded-full text-xs font-medium text-foreground-muted hover:text-foreground hover:bg-background-secondary transition-colors disabled:opacity-50 flex items-center gap-1"
                 title="Fetch full transaction history from your bank"
               >
                 <span className={cn("material-symbols-rounded", fetchHistory.isPending && "animate-spin")} style={{ fontSize: 12 }}>
@@ -192,13 +192,13 @@ export default function FinanceDashboardPage() {
                 {fetchHistory.isPending ? "Fetching..." : "Refresh History"}
               </button>
             <div className="ml-auto">
-              <div className="inline-flex rounded-lg p-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--background-secondary) 80%, transparent)" }}>
+              <div className="inline-flex rounded-lg p-0.5 mobile-pill-group" style={{ backgroundColor: "color-mix(in srgb, var(--background-secondary) 80%, transparent)" }}>
                 {NW_RANGES.map((r) => (
                   <button
                     key={r}
                     onClick={() => setNwRange(r)}
                     className={cn(
-                      "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
+                      "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all",
                       nwRange === r
                         ? "bg-primary text-white shadow-sm"
                         : "text-foreground-muted hover:text-foreground"

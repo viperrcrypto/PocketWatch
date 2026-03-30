@@ -1510,7 +1510,7 @@ html {
   transform: translateY(0);
 }
 
-/* Subtle shine sweep — always running */
+/* Subtle shine sweep — hover-only on desktop, disabled on touch */
 .flex-btn::after {
   content: "";
   position: absolute;
@@ -1524,19 +1524,34 @@ html {
     rgba(99, 102, 241, 0.12),
     transparent
   );
-  animation: flex-shine 3s ease-in-out infinite;
   pointer-events: none;
+  animation: none;
 }
 
-/* Touch targets — WCAG 2.5.8 requires 44px minimum */
+.flex-btn:hover::after {
+  animation: flex-shine 3s ease-in-out infinite;
+}
+
+/* Prevent animation firing on mobile tap pseudo-hover */
+@media (hover: none) {
+  .flex-btn:hover::after {
+    animation: none;
+  }
+}
+
+/* ─── Touch target base layout (all viewports) ─── */
+.touch-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Touch targets — WCAG 2.5.5 (AAA) requires 44px minimum */
 @media (max-width: 767px) {
   .btn-primary,
-  .btn-secondary {
-    min-height: 44px;
-  }
-
+  .btn-secondary,
   .btn-ghost {
-    min-height: 40px;
+    min-height: 44px;
   }
 
   /* 16px font-size prevents iOS Safari auto-zoom on input focus */
@@ -1550,28 +1565,99 @@ html {
   textarea,
   select {
     min-height: 44px;
-    font-size: 16px;
+    font-size: 16px !important;
+  }
+
+  /* ─── Dialog / modal buttons → 44px touch targets ─── */
+  /* Close buttons inside fixed overlays */
+  .mobile-dialog button[aria-label="Close"],
+  .mobile-dialog button[aria-label="close"],
+  .mobile-sheet-close {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* All buttons inside fixed dialogs/drawers */
+  .mobile-dialog button,
+  .mobile-dialog a[role="button"] {
+    min-height: 44px;
+  }
+
+  /* ─── Pill / chip / segmented control buttons ─── */
+  .mobile-pill-group button {
+    min-height: 36px;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 12px;
+  }
+
+  /* ─── Checkbox touch area expansion ─── */
+  .mobile-checkbox-wrap {
+    position: relative;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ─── Utility: guarantee 44px touch target on mobile ─── */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ─── Toggle switch minimum size ─── */
+  .mobile-toggle {
+    min-width: 51px;
+    min-height: 31px;
+  }
+
+  /* ─── Icon-only buttons (sidebar, chat, notifications) ─── */
+  .touch-icon-btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
   }
 }
 
 /* Safe area insets for notched devices (iPhone X+) */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
-/* Bottom nav spacer — prevents content from hiding behind fixed bottom nav */
-.has-bottom-nav {
-  padding-bottom: 72px;
-}
-
-/* Tablet: rail sidebar replaces bottom nav */
-@media (min-width: 768px) {
-  .has-bottom-nav {
-    padding-bottom: 0;
+/* ─── Landscape safe area insets (side notches on iPhone) ─── */
+@supports (padding-left: env(safe-area-inset-left)) {
+  .safe-area-horizontal {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
+
+@media (orientation: landscape) {
+  @supports (padding-left: env(safe-area-inset-left)) {
+    .safe-area-landscape {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+  }
+}
+
+/* Bottom nav spacer — now handled by Tailwind pb-[72px] md:pb-0 in dashboard-layout-inner.tsx */
 
 /* ─── Pull-to-refresh prevention ─── */
 html, body {

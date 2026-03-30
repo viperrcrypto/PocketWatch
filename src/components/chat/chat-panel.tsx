@@ -68,7 +68,7 @@ export function ChatPanel() {
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => setShowThreads(!showThreads)}
-              className="p-1 rounded hover:bg-card-hover transition-colors"
+              className="touch-target rounded-lg hover:bg-card-hover transition-colors"
               aria-label="Thread history"
             >
               <span className="material-symbols-rounded text-lg">history</span>
@@ -80,14 +80,14 @@ export function ChatPanel() {
           <div className="flex items-center gap-1">
             <button
               onClick={newThread}
-              className="p-1.5 rounded hover:bg-card-hover transition-colors"
+              className="touch-target rounded-lg hover:bg-card-hover transition-colors"
               aria-label="New chat"
             >
               <span className="material-symbols-rounded text-lg">add</span>
             </button>
             <button
               onClick={closePanel}
-              className="p-1.5 rounded hover:bg-card-hover transition-colors"
+              className="touch-target rounded-lg hover:bg-card-hover transition-colors"
               aria-label="Close chat"
             >
               <span className="material-symbols-rounded text-lg">close</span>
@@ -145,13 +145,13 @@ export function ChatPanel() {
               onKeyDown={handleKeyDown}
               placeholder="Ask about your finances..."
               rows={1}
-              className="flex-1 resize-none bg-card border border-card-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary transition-colors placeholder:text-foreground-muted max-h-32"
+              className="flex-1 resize-none bg-card border border-card-border rounded-xl px-3 py-2.5 text-base md:text-sm outline-none focus:border-primary transition-colors placeholder:text-foreground-muted max-h-32"
               disabled={isStreaming}
             />
             {isStreaming ? (
               <button
                 onClick={abortStream}
-                className="shrink-0 w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors"
+                className="shrink-0 w-11 h-11 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors"
                 aria-label="Stop"
               >
                 <span className="material-symbols-rounded text-lg">stop</span>
@@ -160,7 +160,7 @@ export function ChatPanel() {
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className="shrink-0 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all"
+                className="shrink-0 w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all"
                 aria-label="Send"
               >
                 <span className="material-symbols-rounded text-lg">send</span>

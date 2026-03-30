@@ -43,7 +43,7 @@ export function DashboardLayoutInner({
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main
           id="main-content"
-          className="px-4 py-4 md:py-6 md:px-4 max-w-[1400px] overflow-x-hidden has-bottom-nav"
+          className="px-4 py-4 md:py-6 md:px-4 max-w-[1400px] mx-auto overflow-x-hidden pb-[72px] md:pb-0 safe-area-landscape"
           style={{ contain: "layout style" }}
         >
           <PageErrorBoundary>

@@ -92,7 +92,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                "flex items-center justify-center w-9 h-9 lg:w-8 lg:h-8 rounded-lg transition-colors",
                 isEditing
                   ? "text-primary bg-primary-muted"
                   : "text-foreground-muted hover:text-foreground hover:bg-background-secondary"
@@ -180,7 +180,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
           <div className="flex items-center gap-1">
             <button
               onClick={handleLock}
-              className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-foreground-muted hover:text-foreground hover:bg-background-secondary"
+              className="flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg transition-colors text-foreground-muted hover:text-foreground hover:bg-background-secondary"
               aria-label="Lock"
               title="Lock"
             >
@@ -192,7 +192,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
             <button
               onClick={() => { router.push("/settings"); onClose?.() }}
               className={cn(
-                "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+                "flex items-center justify-center w-11 h-11 lg:w-9 lg:h-9 rounded-lg transition-colors",
                 pathname === "/settings"
                   ? "text-primary bg-primary-muted"
                   : "text-foreground-muted hover:text-foreground hover:bg-background-secondary"

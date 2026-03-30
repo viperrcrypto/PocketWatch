@@ -69,20 +69,21 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-card border border-card-border rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 bg-card border border-card-border rounded-2xl shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-card-border/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-card-border/50 flex-shrink-0">
           <h2 className="text-lg font-bold text-foreground">Edit Card</h2>
           <button
             onClick={onClose}
-            className="size-8 rounded-lg flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-card-elevated transition-colors"
+            className="touch-target rounded-lg flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-card-elevated transition-colors"
+            aria-label="Close"
           >
             <span className="material-symbols-rounded" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: "touch" }}>
           {/* Card Name */}
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-widest text-foreground-muted block mb-1.5">
@@ -189,10 +190,10 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-card-border/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-card-border/50 flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+            className="px-5 py-2.5 min-h-[44px] text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
           >
             Cancel
           </button>
@@ -200,7 +201,7 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
             onClick={handleSave}
             disabled={!cardName.trim() || saveCreditCard.isPending}
             className={cn(
-              "px-5 py-2 rounded-lg text-sm font-semibold transition-all",
+              "px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-all",
               saveCreditCard.isPending
                 ? "bg-card-elevated text-foreground-muted cursor-not-allowed"
                 : "bg-primary text-white hover:bg-primary-hover active:scale-95",

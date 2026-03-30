@@ -2,6 +2,7 @@
 
 import { ChainIcon } from "@/components/portfolio/chain-icon"
 import { SUPPORTED_CHAINS, EVM_CHAIN_IDS, getChainColor, hexToRgba } from "@/lib/portfolio/chains"
+import { MobileSheet } from "@/components/ui/mobile-sheet"
 
 interface AddWalletDialogProps {
   newAddress: string
@@ -36,20 +37,8 @@ export function AddWalletDialog({
   const isSolana = !isEvm && !isBtc && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-card-border w-full max-w-lg rounded-xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-card-border">
-          <h2 className="text-foreground text-base font-semibold">
-            Add Wallet
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-foreground-muted hover:text-foreground transition-colors"
-          >
-            <span className="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
+    <MobileSheet open onClose={onClose} title="Add Wallet">
+      <div className="p-6 space-y-4">
           {/* Address input */}
           <div>
             <label className="block mb-2 text-foreground-muted text-xs font-semibold">
@@ -116,7 +105,7 @@ export function AddWalletDialog({
                     key={chain.id}
                     onClick={() => onToggleChain(chain.id)}
                     disabled={dimmed}
-                    className={`flex items-center gap-2 px-3 py-2 border transition-colors rounded-lg text-xs font-medium ${
+                    className={`flex items-center gap-2 px-3 py-2.5 border transition-colors rounded-lg text-xs font-medium min-h-[44px] ${
                       isSelected
                         ? "text-foreground"
                         : dimmed
@@ -141,17 +130,17 @@ export function AddWalletDialog({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors text-sm"
+              className="px-5 py-2.5 min-h-[44px] border border-card-border rounded-lg text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors text-sm"
             >
               Cancel
             </button>
             <button
               onClick={onAdd}
               disabled={isPending}
-              className="px-4 py-2 btn-primary transition-colors disabled:opacity-50 text-sm font-semibold"
+              className="px-5 py-2.5 min-h-[44px] btn-primary rounded-lg transition-colors disabled:opacity-50 text-sm font-semibold"
             >
               {isPending
                 ? `Adding to ${selectedChains.size} chain${selectedChains.size !== 1 ? "s" : ""}...`
@@ -159,7 +148,6 @@ export function AddWalletDialog({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </MobileSheet>
   )
 }

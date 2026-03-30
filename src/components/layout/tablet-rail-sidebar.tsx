@@ -24,7 +24,7 @@ export function TabletRailSidebar({ onOpenSidebar }: TabletRailSidebarProps) {
               key={tab.key}
               onClick={() => router.push(tab.root)}
               className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                "w-11 h-11 rounded-xl flex items-center justify-center transition-colors",
                 isActive
                   ? "bg-primary-muted text-primary"
                   : "text-foreground-muted hover:bg-background-secondary hover:text-foreground",
@@ -49,7 +49,7 @@ export function TabletRailSidebar({ onOpenSidebar }: TabletRailSidebarProps) {
       {/* Open full sidebar */}
       <button
         onClick={onOpenSidebar}
-        className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground-muted hover:bg-background-secondary hover:text-foreground transition-colors"
+        className="w-11 h-11 rounded-xl flex items-center justify-center text-foreground-muted hover:bg-background-secondary hover:text-foreground transition-colors"
         aria-label="Open full menu"
         title="Menu"
       >

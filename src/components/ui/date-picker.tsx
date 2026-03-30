@@ -69,14 +69,18 @@ export function DatePicker({ value, onChange, min, placeholder = "Select date", 
     setOpen(false)
   }, [viewYear, viewMonth, onChange])
 
-  // Close on outside click
+  // Close on outside click/touch
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
+    document.addEventListener("touchstart", handler, { passive: true })
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("touchstart", handler)
+    }
   }, [open])
 
   // Sync view when value changes externally
@@ -97,7 +101,7 @@ export function DatePicker({ value, onChange, min, placeholder = "Select date", 
         type="button"
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "w-full bg-background border border-card-border rounded-lg px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors",
+          "w-full bg-background border border-card-border rounded-lg px-3 py-2.5 min-h-[44px] text-sm text-left flex items-center gap-2 transition-colors",
           "focus:outline-none focus:border-primary hover:border-foreground-muted/40",
           open && "border-primary",
           displayValue ? "text-foreground" : "text-foreground-muted/50",
@@ -112,34 +116,34 @@ export function DatePicker({ value, onChange, min, placeholder = "Select date", 
       {required && <input type="text" value={value} required tabIndex={-1} className="sr-only" onChange={() => {}} />}
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 bg-card border border-card-border rounded-xl shadow-xl p-3 w-[280px] animate-in fade-in slide-in-from-top-1 duration-150">
-          {/* Month nav */}
+        <div className="absolute top-full mt-1.5 z-50 bg-card border border-card-border rounded-xl shadow-xl p-3 w-[300px] sm:w-[280px] right-0 sm:left-0 sm:right-auto animate-in fade-in slide-in-from-top-1 duration-150">
+          {/* Month nav — 44px touch targets */}
           <div className="flex items-center justify-between mb-2">
-            <button type="button" onClick={goToPrev} className="p-1 rounded-lg text-foreground-muted hover:text-foreground hover:bg-background transition-colors">
-              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>chevron_left</span>
+            <button type="button" onClick={goToPrev} className="touch-target rounded-lg text-foreground-muted hover:text-foreground hover:bg-background transition-colors">
+              <span className="material-symbols-rounded" style={{ fontSize: 18 }}>chevron_left</span>
             </button>
             <span className="text-xs font-bold text-foreground">{monthLabel}</span>
-            <button type="button" onClick={goToNext} className="p-1 rounded-lg text-foreground-muted hover:text-foreground hover:bg-background transition-colors">
-              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>chevron_right</span>
+            <button type="button" onClick={goToNext} className="touch-target rounded-lg text-foreground-muted hover:text-foreground hover:bg-background transition-colors">
+              <span className="material-symbols-rounded" style={{ fontSize: 18 }}>chevron_right</span>
             </button>
           </div>
 
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-0.5">
             {DAY_LABELS.map(d => (
-              <div key={d} className="text-center text-[9px] font-semibold text-foreground-muted/60 uppercase tracking-wider py-1">
+              <div key={d} className="text-center text-[10px] font-semibold text-foreground-muted/60 uppercase tracking-wider py-1">
                 {d}
               </div>
             ))}
           </div>
 
-          {/* Day grid */}
-          <div className="grid grid-cols-7">
+          {/* Day grid — min 44px cells on mobile */}
+          <div className="grid grid-cols-7 gap-0.5">
             {cells.map((cell, i) => {
               if (cell.trailing) {
                 return (
-                  <div key={i} className="aspect-square flex items-center justify-center">
-                    <span className="text-[11px] text-foreground-muted/25">{cell.day}</span>
+                  <div key={i} className="aspect-square flex items-center justify-center min-h-[40px]">
+                    <span className="text-xs text-foreground-muted/25">{cell.day}</span>
                   </div>
                 )
               }
@@ -156,7 +160,7 @@ export function DatePicker({ value, onChange, min, placeholder = "Select date", 
                   disabled={isPast}
                   onClick={() => selectDate(cell.day)}
                   className={cn(
-                    "aspect-square flex items-center justify-center rounded-lg text-[11px] font-medium transition-colors",
+                    "aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors min-h-[40px]",
                     isPast && "text-foreground-muted/20 cursor-not-allowed",
                     !isPast && !isSelected && "text-foreground hover:bg-primary/10",
                     isToday && !isSelected && "ring-1 ring-inset ring-primary/40 text-primary font-bold",

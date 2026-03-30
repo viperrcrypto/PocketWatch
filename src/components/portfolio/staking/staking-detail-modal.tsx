@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { PortfolioAssetIcon } from "@/components/portfolio/portfolio-asset-icon"
@@ -8,6 +8,7 @@ import { ChainBadge } from "@/components/portfolio/chain-badge"
 import { formatFiatValue, formatCryptoAmount } from "@/lib/portfolio/utils"
 import { getChainMeta } from "@/lib/portfolio/chains"
 import { portfolioFetch } from "@/hooks/portfolio/shared"
+import { MobileSheet } from "@/components/ui/mobile-sheet"
 import type { StakingPosition } from "./staking-types"
 import { ApySourceBadge, ConfidenceBadge, MaturityBadge, metricStatusLabel } from "./staking-badges"
 
@@ -22,14 +23,6 @@ export function PositionDetailModal({
   const queryClient = useQueryClient()
   const [excluded, setExcluded] = useState(!!position.excludeFromYield)
   const [toggling, setToggling] = useState(false)
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
-    window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
-  }, [onClose])
 
   const toggleExclude = async () => {
     setToggling(true)
@@ -48,41 +41,27 @@ export function PositionDetailModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="position-detail-title"
+    <MobileSheet
+      open
+      onClose={onClose}
+      title={position.underlying ?? position.symbol}
     >
-      <div
-        className="bg-card border border-card-border rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <PortfolioAssetIcon
-              asset={position.underlying ?? position.symbol}
-              chain={position.chain}
-              iconUrl={position.iconUrl}
-              size={36}
-            />
-            <div>
-              <p id="position-detail-title" className="text-base font-semibold text-foreground">
-                {position.underlying ?? position.symbol}
-              </p>
-              {position.protocol && (
-                <span className="text-xs text-foreground-muted">{position.protocol}</span>
-              )}
-            </div>
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <PortfolioAssetIcon
+            asset={position.underlying ?? position.symbol}
+            chain={position.chain}
+            iconUrl={position.iconUrl}
+            size={36}
+          />
+          <div>
+            <p className="text-base font-semibold text-foreground">
+              {position.underlying ?? position.symbol}
+            </p>
+            {position.protocol && (
+              <span className="text-xs text-foreground-muted">{position.protocol}</span>
+            )}
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-foreground-muted hover:text-foreground text-lg leading-none"
-          >
-            &times;
-          </button>
         </div>
 
         <div className="space-y-3">
@@ -242,20 +221,20 @@ export function PositionDetailModal({
             <button
               onClick={toggleExclude}
               disabled={toggling}
-              className={`relative w-9 h-5 rounded-full transition-colors ${
+              className={`relative w-[51px] h-[31px] rounded-full transition-colors ${
                 excluded ? "bg-warning" : "bg-card-border"
               } ${toggling ? "opacity-50" : ""}`}
               aria-label={excluded ? "Include in yield totals" : "Exclude from yield totals"}
             >
               <span
-                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                  excluded ? "translate-x-4" : "translate-x-0.5"
+                className={`absolute top-[3px] w-[25px] h-[25px] rounded-full bg-white shadow transition-transform ${
+                  excluded ? "translate-x-[23px]" : "translate-x-[3px]"
                 }`}
               />
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </MobileSheet>
   )
 }
