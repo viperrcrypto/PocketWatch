@@ -105,10 +105,8 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
           </div>
         </div>
 
-        {/* Navigation or Edit Mode — deferred until client prefs hydrate to prevent mismatch */}
-        {!hydrated ? (
-          <nav className="flex-1 py-4 px-3" />
-        ) : isEditing ? (
+        {/* Navigation or Edit Mode */}
+        {isEditing && hydrated ? (
           <SidebarEditControls
             prefs={prefs}
             moveItem={moveItem}
@@ -118,8 +116,8 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
             onDone={() => setIsEditing(false)}
           />
         ) : (
-          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto overflow-x-visible">
-            {prefs.categoryOrder.map((catKey, idx) => {
+          <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto overflow-x-visible" suppressHydrationWarning>
+            {hydrated && prefs.categoryOrder.map((catKey, idx) => {
               const category = NAV_CATEGORIES[catKey]
               if (!category) return null
               const items = getOrderedItems(catKey, prefs)
