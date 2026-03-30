@@ -38,7 +38,7 @@ interface Institution {
   institutionName: string
   institutionLogo: string | null
   lastSyncedAt: string | null
-  accounts: Array<{ currentBalance: number | null }>
+  accounts: Array<{ currentBalance: number | null; type: string }>
 }
 
 interface Props {
@@ -312,7 +312,7 @@ function ConnectedAccountsSection({ connected }: { connected: Institution[] }) {
               </div>
             </div>
             <span className="font-data text-xs font-semibold text-foreground tabular-nums">
-              {formatCurrency(inst.accounts.reduce((s, a) => s + (a.currentBalance ?? 0), 0))}
+              {formatCurrency(inst.accounts.filter((a) => ["investment", "brokerage"].includes(a.type)).reduce((s, a) => s + (a.currentBalance ?? 0), 0))}
             </span>
           </div>
         ))}
