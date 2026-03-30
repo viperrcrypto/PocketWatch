@@ -4,13 +4,9 @@ import { useMemo } from "react"
 import { formatCurrency } from "@/lib/utils"
 import type { LocationPin } from "./where-ive-been-types"
 
-// Country code → flag emoji
 function countryFlag(code: string): string {
   if (!code || code.length !== 2) return ""
-  const upper = code.toUpperCase()
-  return String.fromCodePoint(
-    ...Array.from(upper).map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
-  )
+  return String.fromCodePoint(...Array.from(code.toUpperCase()).map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
 }
 
 interface Props {
@@ -21,14 +17,13 @@ export function WhereIveBeenStats({ locations }: Props) {
   const byCountry = useMemo(() => {
     const map = new Map<string, { country: string; cities: LocationPin[]; totalSpent: number; totalTxns: number }>()
     for (const loc of locations) {
-      const key = loc.country
-      const existing = map.get(key)
+      const existing = map.get(loc.country)
       if (existing) {
         existing.cities.push(loc)
         existing.totalSpent += loc.totalSpent
         existing.totalTxns += loc.transactionCount
       } else {
-        map.set(key, { country: key, cities: [loc], totalSpent: loc.totalSpent, totalTxns: loc.transactionCount })
+        map.set(loc.country, { country: loc.country, cities: [loc], totalSpent: loc.totalSpent, totalTxns: loc.transactionCount })
       }
     }
     return Array.from(map.values())
@@ -37,40 +32,34 @@ export function WhereIveBeenStats({ locations }: Props) {
   }, [locations])
 
   if (byCountry.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-xs text-foreground-muted">No location data</p>
-      </div>
-    )
+    return <div className="flex-1 flex items-center justify-center p-6"><p className="text-xs text-foreground-muted">No data</p></div>
   }
 
   return (
     <div className="overflow-y-auto flex-1">
-      <div className="space-y-4 p-4">
+      <div className="space-y-3 p-3">
         {byCountry.map((group) => (
-          <div key={group.country}>
-            <div className="flex items-center justify-between mb-2">
+          <div key={group.country} className="rounded-lg border border-card-border/50 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 bg-background-secondary/30">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{countryFlag(group.country)}</span>
-                <span className="text-sm font-semibold text-white">{group.country}</span>
+                <span className="text-base">{countryFlag(group.country)}</span>
+                <span className="text-xs font-bold text-foreground">{group.country}</span>
+                <span className="text-[9px] text-foreground-muted">{group.totalTxns} txns</span>
               </div>
-              <span className="text-xs font-data font-semibold tabular-nums text-sky-400">{formatCurrency(group.totalSpent)}</span>
+              <span className="text-xs font-data font-bold tabular-nums text-primary">{formatCurrency(group.totalSpent)}</span>
             </div>
-            <div className="space-y-1 ml-8">
+            <div className="divide-y divide-card-border/30">
               {group.cities.slice(0, 5).map((city) => (
-                <div key={`${city.city}-${city.country}`} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs text-white/80 truncate">{city.city}</span>
-                    {city.region && <span className="text-[10px] text-white/30">{city.region}</span>}
+                <div key={`${city.city}-${city.country}`} className="flex items-center justify-between px-3 py-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[11px] text-foreground truncate">{city.city}</span>
+                    {city.region && <span className="text-[9px] text-foreground-muted">{city.region}</span>}
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-[10px] text-white/30 tabular-nums">{city.transactionCount} txns</span>
-                    <span className="text-xs font-data tabular-nums text-white/70">{formatCurrency(city.totalSpent)}</span>
-                  </div>
+                  <span className="text-[11px] font-data tabular-nums text-foreground-muted flex-shrink-0">{formatCurrency(city.totalSpent)}</span>
                 </div>
               ))}
               {group.cities.length > 5 && (
-                <p className="text-[10px] text-white/25 italic">+ {group.cities.length - 5} more cities</p>
+                <div className="px-3 py-1 text-[9px] text-foreground-muted/50 text-center">+ {group.cities.length - 5} more</div>
               )}
             </div>
           </div>

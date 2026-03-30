@@ -1,25 +1,11 @@
 "use client"
 
 import { useMemo } from "react"
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
-import MarkerClusterGroup from "react-leaflet-cluster"
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { formatCurrency } from "@/lib/utils"
 import type { LocationPin } from "./where-ive-been-types"
-
-// Glowing pin for dark map
-const pinIcon = L.divIcon({
-  className: "",
-  html: `<div style="position:relative;width:24px;height:24px">
-    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(56,189,248,0.25);animation:ping 2.5s cubic-bezier(0,0,0.2,1) infinite"></div>
-    <div style="position:absolute;inset:4px;border-radius:50%;background:#38bdf8;border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 12px rgba(56,189,248,0.6),0 0 4px rgba(56,189,248,0.8)"></div>
-  </div>
-  <style>@keyframes ping{75%,100%{transform:scale(2);opacity:0}}</style>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -16],
-})
 
 interface Props {
   locations: LocationPin[]
@@ -28,13 +14,15 @@ interface Props {
 export function WhereIveBeenMap({ locations }: Props) {
   const bounds = useMemo(() => {
     if (locations.length === 0) return null
-    const b = L.latLngBounds(locations.map((l) => [l.lat, l.lon] as [number, number]))
-    return b.pad(0.15)
+    return L.latLngBounds(locations.map((l) => [l.lat, l.lon] as [number, number])).pad(0.15)
   }, [locations])
+
+  // Scale radius by spend (min 6, max 18)
+  const maxSpend = useMemo(() => Math.max(...locations.map((l) => l.totalSpent), 1), [locations])
 
   if (locations.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center bg-background-secondary/30">
+      <div className="h-full flex items-center justify-center bg-background-secondary/20">
         <div className="text-center">
           <span className="material-symbols-rounded text-foreground-muted/20 block mb-2" style={{ fontSize: 48 }}>map</span>
           <p className="text-sm text-foreground-muted">No location data yet</p>
@@ -55,35 +43,38 @@ export function WhereIveBeenMap({ locations }: Props) {
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png"
       />
-      <MarkerClusterGroup
-        chunkedLoading
-        maxClusterRadius={40}
-        spiderfyOnMaxZoom
-        showCoverageOnHover={false}
-      >
-        {locations.map((loc) => (
-          <Marker
+      {locations.map((loc) => {
+        const r = 6 + (loc.totalSpent / maxSpend) * 12
+        return (
+          <CircleMarker
             key={`${loc.city}-${loc.country}-${loc.lat}`}
-            position={[loc.lat, loc.lon]}
-            icon={pinIcon}
+            center={[loc.lat, loc.lon]}
+            radius={r}
+            pathOptions={{
+              fillColor: "#3b82f6",
+              fillOpacity: 0.7,
+              color: "#1d4ed8",
+              weight: 2,
+              opacity: 0.9,
+            }}
           >
-            <Popup closeButton={false} className="custom-popup">
-              <div style={{ minWidth: 160, fontFamily: "inherit" }}>
-                <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 2px" }}>{loc.city}</p>
-                <p style={{ fontSize: 11, color: "#888", margin: "0 0 8px" }}>
+            <Popup closeButton={false}>
+              <div style={{ minWidth: 150, fontFamily: "system-ui, sans-serif" }}>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{loc.city}</div>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>
                   {loc.region ? `${loc.region}, ` : ""}{loc.country}
-                </p>
-                <div style={{ borderTop: "1px solid #eee", paddingTop: 6, display: "flex", justifyContent: "space-between", gap: 16 }}>
-                  <span style={{ fontSize: 11, color: "#666" }}>{loc.transactionCount} txn{loc.transactionCount !== 1 ? "s" : ""}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loc.totalSpent)}</span>
+                </div>
+                <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 6, display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>{loc.transactionCount} txn{loc.transactionCount !== 1 ? "s" : ""}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#3b82f6" }}>{formatCurrency(loc.totalSpent)}</span>
                 </div>
               </div>
             </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
+          </CircleMarker>
+        )
+      })}
     </MapContainer>
   )
 }
