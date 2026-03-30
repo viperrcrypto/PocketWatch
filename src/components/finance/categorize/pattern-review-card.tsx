@@ -18,8 +18,13 @@ interface PatternReviewCardProps {
 export function PatternReviewCard({ transaction: tx, onAccept, onChange, onSkip, isSubmitting }: PatternReviewCardProps) {
   const [showPicker, setShowPicker] = useState(false)
   const [nickname, setNickname] = useState("")
-  const currentMeta = getCategoryMeta(tx.currentCategory)
   const topSuggestion = tx.suggestedCategories[0]
+  // Use top suggestion (which includes user rules) over the auto-applied category
+  const displayCategory = topSuggestion?.category ?? tx.currentCategory
+  const displaySubcategory = topSuggestion?.subcategory ?? tx.currentSubcategory
+  const displayMeta = getCategoryMeta(displayCategory)
+  const confidenceMap: Record<string, number> = { high: 0.9, medium: 0.65, low: 0.3 }
+  const displayConfidence = confidenceMap[topSuggestion?.confidence ?? "low"] ?? 0.5
 
   // "C" key toggles category picker
   useEffect(() => {
@@ -76,19 +81,19 @@ export function PatternReviewCard({ transaction: tx, onAccept, onChange, onSkip,
           />
         </div>
 
-        {/* Current auto-applied category */}
+        {/* Top suggestion (prioritizes user rules over auto-applied category) */}
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-background-secondary">
           <span className="text-xs text-foreground-muted flex-shrink-0">Suggested:</span>
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-rounded" style={{ fontSize: 16, color: currentMeta.hex }}>
-              {currentMeta.icon}
+            <span className="material-symbols-rounded" style={{ fontSize: 16, color: displayMeta.hex }}>
+              {displayMeta.icon}
             </span>
-            <span className="text-sm font-medium text-foreground">{tx.currentCategory}</span>
-            {tx.currentSubcategory && (
-              <span className="text-xs text-foreground-muted">· {tx.currentSubcategory}</span>
+            <span className="text-sm font-medium text-foreground">{displayCategory}</span>
+            {displaySubcategory && (
+              <span className="text-xs text-foreground-muted">· {displaySubcategory}</span>
             )}
           </div>
-          <ConfidenceBar confidence={topSuggestion ? 0.65 : 0.5} showLabel className="ml-auto" />
+          <ConfidenceBar confidence={displayConfidence} showLabel className="ml-auto" />
         </div>
 
         {/* Alternative suggestions */}
@@ -140,7 +145,14 @@ export function PatternReviewCard({ transaction: tx, onAccept, onChange, onSkip,
         </div>
 
         <button
-          onClick={() => onAccept(nickname || undefined)}
+          onClick={() => {
+            // If top suggestion differs from current category, apply it as a change
+            if (displayCategory && displayCategory !== tx.currentCategory) {
+              onChange(displayCategory, displaySubcategory ?? undefined, nickname || undefined)
+            } else {
+              onAccept(nickname || undefined)
+            }
+          }}
           disabled={isSubmitting}
           className="flex items-center gap-2 px-6 py-2.5 bg-foreground text-background rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
         >
