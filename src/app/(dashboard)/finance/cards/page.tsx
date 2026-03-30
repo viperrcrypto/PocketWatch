@@ -81,13 +81,16 @@ export default function FinanceCardsPage() {
       const liab = creditCardLiabilities.find((l: { accountId: string }) => l.accountId === c.accountId)
       const instName = acct?.institutionName ?? ""
 
-      // Re-derive card name at display time to fix stored bad names
-      // (e.g. cardholder names like "Z. KAL" or generic "Credit Card")
+      // Prefer account's custom name (user-renamed), fall back to card profile name
+      // Re-derive if the name looks like a person name or generic "Credit Card"
       const storedName = c.cardName
+      const accountName = acct?.name
       const needsRename = looksLikePersonName(storedName) || /^credit\s*card$/i.test(storedName)
-      const displayName = needsRename
-        ? deriveCardName({ name: acct?.name ?? storedName, officialName: acct?.officialName, mask: acct?.mask, institutionName: instName })
-        : storedName
+      const displayName = accountName && accountName !== storedName
+        ? accountName
+        : needsRename
+          ? deriveCardName({ name: accountName ?? storedName, officialName: acct?.officialName, mask: acct?.mask, institutionName: instName })
+          : storedName
 
       // Resolve annual fee: known cards map > AI enriched > DB (known map is authoritative)
       const aiEnriched = c.aiEnrichedData as { annualFee?: number; cardNetwork?: string; rewardType?: string } | null

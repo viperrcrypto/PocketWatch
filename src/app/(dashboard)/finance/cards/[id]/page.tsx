@@ -251,7 +251,7 @@ export default function CardDetailPage({
           </div>
           <div className="bg-card border border-card-border rounded-xl p-4">
             <CardPerksChecklist
-              cardName={card.cardName}
+              cardName={account?.name ?? card.cardName}
               annualFee={card.annualFee ?? 0}
               perks={perks.map((p) => ({
                 id: p.id,
@@ -280,7 +280,7 @@ export default function CardDetailPage({
         />
       )}
 
-      <CardChat cardId={id} cardName={card.cardName} aiData={aiData} />
+      <CardChat cardId={id} cardName={account?.name ?? card.cardName} aiData={aiData} />
       {benefits && benefits.length > 0 && <CardBenefitsAI benefits={benefits} />}
       {statementCredits && <CardStatementCredits credits={statementCredits} />}
 

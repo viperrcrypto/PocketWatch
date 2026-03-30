@@ -217,6 +217,14 @@ export async function POST(req: NextRequest) {
       update: data,
     })
 
+    // Keep FinanceAccount.name in sync with card profile rename
+    if (rest.cardName) {
+      await db.financeAccount.updateMany({
+        where: { id: accountId, institution: { userId: user.id } },
+        data: { name: rest.cardName },
+      })
+    }
+
     return NextResponse.json(card)
   } catch (err) {
     const mapped = mapFinanceError(err, "Failed to save card profile")
