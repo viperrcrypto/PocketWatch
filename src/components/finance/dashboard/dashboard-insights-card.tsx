@@ -105,7 +105,7 @@ export function DashboardInsightsCard() {
   }, [aiData])
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
+    <div className="bg-card rounded-xl overflow-hidden flex flex-col max-h-[460px]" style={{ boxShadow: "var(--shadow-sm)" }}>
       {/* Header — title + filter tabs + refresh all on one line */}
       <div className="flex items-center gap-2 px-5 py-3 border-b border-card-border/30">
         <div className="flex items-center gap-2 flex-shrink-0">

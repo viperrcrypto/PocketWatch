@@ -324,8 +324,8 @@ export default function FinanceDashboardPage() {
 
       {/* Cash Flow + AI Insights */}
       {deep && (
-        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6" style={{ gridAutoRows: "minmax(0, 1fr)" }}>
-          <div className="bg-card rounded-xl p-5 flex flex-col" style={{ boxShadow: "var(--shadow-sm)" }}>
+        <FadeIn delay={0.3} className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="bg-card rounded-xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
             {/* Header */}
             <div className="flex items-center gap-2 mb-5">
               <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 16 }}>account_balance_wallet</span>
