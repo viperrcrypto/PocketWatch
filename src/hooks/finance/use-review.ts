@@ -74,8 +74,7 @@ export function useConfirmReview() {
       { method: "POST", body: JSON.stringify(data) }
     ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: financeKeys.reviewCount() })
-      qc.invalidateQueries({ queryKey: financeKeys.reviewQueue() })
+      qc.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
 }
