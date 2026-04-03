@@ -214,7 +214,7 @@ export function FlightSearchForm({ onSearch, isSearching, progress, recentSearch
         type="submit"
         disabled={isSearching || !origin || !destination || !date}
         className={cn(
-          "w-full py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+          "w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-200",
           isSearching
             ? "bg-primary/20 text-primary cursor-wait"
             : "btn-primary"

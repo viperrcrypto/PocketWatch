@@ -71,7 +71,7 @@ export function UploadConfirmStep({ isPDF, preview, accountName, onUpload, onRes
         </div>
         <div className="h-1.5 rounded-full bg-background-secondary overflow-hidden">
           <div
-            className={cn("h-full rounded-full transition-all duration-500",
+            className={cn("h-full rounded-full transition-[width] duration-500",
               coverage.percent >= 80 ? "bg-success" : coverage.percent >= 50 ? "bg-amber-500" : "bg-primary"
             )}
             style={{ width: `${Math.min(coverage.percent, 100)}%` }}

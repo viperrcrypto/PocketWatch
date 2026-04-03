@@ -148,7 +148,7 @@ export function PatternReviewFlow() {
           </div>
           <div className="h-1.5 bg-background-secondary rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-foreground transition-all duration-500"
+              className="h-full rounded-full bg-foreground transition-[width] duration-500"
               style={{ width: `${Math.max(progressPercent, 2)}%` }}
             />
           </div>
@@ -157,7 +157,7 @@ export function PatternReviewFlow() {
 
       {/* Card with enter animation */}
       {currentTx ? (
-        <div key={currentTx.id} className="animate-fade-up">
+        <div key={currentTx.id} className="">
           <PatternReviewCard
             transaction={currentTx}
             onAccept={handleAccept}

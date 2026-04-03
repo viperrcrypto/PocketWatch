@@ -23,7 +23,7 @@ interface SubscriptionsSectionProps {
 
 export function SubscriptionsSection({ monthlySubTotal, topSubs, totalActiveSubs, donutData }: SubscriptionsSectionProps) {
   return (
-    <div className="animate-fade-up delay-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="delay-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Active Subscriptions */}
       <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-card-border/30">

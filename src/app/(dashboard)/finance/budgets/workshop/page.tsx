@@ -213,7 +213,7 @@ export default function BudgetWorkshopPage() {
             </Link>
             <button
               onClick={resetToLastMonth}
-              className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-colors"
             >
               <span className="material-symbols-rounded" style={{ fontSize: 16 }}>history</span>
               Reset to Last Month
@@ -270,7 +270,7 @@ export default function BudgetWorkshopPage() {
             {availableCategories.length > 0 && (
               <button
                 onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card-elevated border border-card-border text-foreground-muted hover:text-primary hover:border-primary/30 transition-all text-xs font-semibold"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card-elevated border border-card-border text-foreground-muted hover:text-primary hover:border-primary/30 transition-colors text-xs font-semibold"
               >
                 <span className="material-symbols-rounded" style={{ fontSize: 18 }}>add</span>
                 Add Category
@@ -305,7 +305,7 @@ export default function BudgetWorkshopPage() {
             ) : (
               <button
                 onClick={() => setShowCategoryPicker(true)}
-                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border-2 border-dashed border-card-border hover:border-primary/40 hover:bg-primary-subtle transition-all group"
+                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border-2 border-dashed border-card-border hover:border-primary/40 hover:bg-primary-subtle transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                   <span className="material-symbols-rounded">add_circle</span>

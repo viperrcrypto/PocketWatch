@@ -54,14 +54,7 @@ export function BudgetSpendingTable({
                 <tr key={cat.category} className="hover:bg-foreground/[0.02] transition-colors">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="size-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                        style={{
-                          background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))`,
-                        }}
-                      >
-                        <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 16 }}>{meta.icon}</span>
-                      </div>
+                      <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.hex }}>{meta.icon}</span>
                       <div>
                         <div className="text-xs font-semibold text-foreground">{cat.category}</div>
                         <div className="text-[10px] text-foreground-muted">

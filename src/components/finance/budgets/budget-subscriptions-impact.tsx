@@ -35,7 +35,7 @@ export function BudgetSubscriptionsImpact({ subscriptions, monthlyTotal, totalBu
         </div>
         <div className="h-1.5 rounded-full bg-background-secondary overflow-hidden">
           <div
-            className={cn("h-full rounded-full transition-all duration-500",
+            className={cn("h-full rounded-full transition-[width] duration-500",
               pctOfBudget > 75 ? "bg-error" : pctOfBudget > 50 ? "bg-amber-500" : "bg-primary"
             )}
             style={{ width: `${Math.min(pctOfBudget, 100)}%` }}
@@ -75,7 +75,7 @@ export function BudgetSubscriptionsImpact({ subscriptions, monthlyTotal, totalBu
                 </div>
                 <div className="h-1 rounded-full bg-background-secondary overflow-hidden ml-8">
                   <div
-                    className="h-full rounded-full bg-primary/30 transition-all duration-300"
+                    className="h-full rounded-full bg-primary/30 transition-colors duration-300"
                     style={{ width: `${barWidth}%` }}
                   />
                 </div>

@@ -47,18 +47,13 @@ export function InsightsHealthBreakdown({ health }: { health: any }) {
           return (
             <div
               key={b.factor}
-              className="group rounded-lg transition-all duration-150 hover:bg-background-secondary/40 -mx-2 px-2 py-1"
+              className="group rounded-lg transition-colors duration-150 hover:bg-background-secondary/40 -mx-2 px-2 py-1"
               style={{ borderLeft: "2px solid transparent" }}
               onMouseEnter={(e) => { e.currentTarget.style.borderLeftColor = meta.color }}
               onMouseLeave={(e) => { e.currentTarget.style.borderLeftColor = "transparent" }}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                  style={{ background: `linear-gradient(135deg, ${meta.color}, color-mix(in srgb, ${meta.color} 80%, #000))` }}
-                >
-                  <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 16 }}>{meta.icon}</span>
-                </div>
+                <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.color }}>{meta.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="relative flex items-center gap-2">
@@ -84,7 +79,7 @@ export function InsightsHealthBreakdown({ health }: { health: any }) {
                   </div>
                   <div className="h-2 rounded-full bg-background-secondary overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-700"
+                      className="h-full rounded-full transition-[width] duration-700"
                       style={{
                         width: `${b.score}%`,
                         background: `linear-gradient(90deg, ${meta.color}, color-mix(in srgb, ${meta.color} 70%, #fff))`,

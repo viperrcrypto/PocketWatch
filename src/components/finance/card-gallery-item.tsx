@@ -40,9 +40,9 @@ export function CardGalleryItem({ card, href }: CardGalleryItemProps) {
       href={href}
       className={cn(
         "block rounded-2xl overflow-hidden p-5",
-        "border backdrop-blur-sm transition-all duration-200",
+        "border backdrop-blur-sm transition-colors duration-200",
         "bg-card/60 border-card-border/50",
-        "hover:border-primary/30 hover:shadow-lg",
+        "hover:border-primary/30",
       )}
     >
       <div className="flex flex-col md:flex-row gap-5">

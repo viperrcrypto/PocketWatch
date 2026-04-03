@@ -76,7 +76,7 @@ export function SyncButton({
       <button
         onClick={onRefresh}
         disabled={!!isRefreshing || refreshCooldown}
-        className="relative flex items-center gap-2 px-4 py-2.5 bg-card border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover hover:bg-card-elevated transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs tracking-wide"
+        className="relative flex items-center gap-2 px-4 py-2.5 bg-card border border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover hover:bg-card-elevated transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs tracking-wide"
       >
         <span
           className="material-symbols-rounded text-sm"
@@ -104,7 +104,7 @@ export function SyncButton({
 
   return (
     <div
-      className={`relative overflow-hidden flex items-center gap-3 px-4 py-2.5 ${bgColor} border ${borderColor} rounded-xl transition-all duration-500 ease-out`}
+      className={`relative overflow-hidden flex items-center gap-3 px-4 py-2.5 ${bgColor} border ${borderColor} rounded-xl transition-colors duration-500 ease-out`}
     >
       <span
         className={`material-symbols-rounded text-base flex-shrink-0 ${accentColor}`}
@@ -147,7 +147,7 @@ export function SyncButton({
       {/* Thin progress bar at bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-card-border/30">
         <div
-          className={`h-full ${barColor} rounded-full transition-all duration-700 ease-out`}
+          className={`h-full ${barColor} rounded-full transition-[width] duration-700 ease-out`}
           style={{ width: `${Math.max(progressPct, 2)}%` }}
         />
       </div>

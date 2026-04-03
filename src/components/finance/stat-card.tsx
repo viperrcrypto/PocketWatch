@@ -28,36 +28,25 @@ export function FinanceStatCard({
   return (
     <div
       className={cn(
-        "p-5 transition-all duration-300 group rounded-xl min-h-[126px] border border-transparent card-hover-lift",
+        "p-5 transition-colors duration-300 group rounded-xl min-h-[126px] border border-transparent card-hover-lift",
         className
       )}
       style={{
         boxShadow: "var(--shadow-sm)",
-        background: accentColor
-          ? `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 3%, var(--card)), var(--card))`
-          : "var(--card)",
+        background: "var(--card)",
       }}
     >
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">
           {label}
         </span>
-        <div
-          className="flex items-center justify-center w-9 h-9 rounded-xl transition-transform group-hover:scale-105"
-          style={{
-            background: accentColor
-              ? `linear-gradient(135deg, ${accentColor}, color-mix(in srgb, ${accentColor} 80%, #000))`
-              : "var(--background-secondary)",
-          }}
+        <span
+          className="material-symbols-rounded text-lg"
+          style={{ color: accentColor || "var(--foreground-muted)" }}
+          aria-hidden="true"
         >
-          <span
-            className={cn("material-symbols-rounded text-lg transition-colors", accentColor ? "text-white drop-shadow-sm" : "")}
-            style={{ color: accentColor ? undefined : "var(--foreground-muted)" }}
-            aria-hidden="true"
-          >
-            {icon}
-          </span>
-        </div>
+          {icon}
+        </span>
       </div>
       {isLoading ? (
         <div className="h-8 animate-shimmer w-32 rounded-lg" />

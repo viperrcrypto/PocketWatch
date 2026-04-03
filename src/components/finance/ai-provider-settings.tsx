@@ -158,7 +158,7 @@ export function AIProviderSettings() {
                 <div
                   key={provider.id}
                   className={cn(
-                    "border rounded-xl p-4 transition-all",
+                    "border rounded-xl p-4 transition-colors",
                     isVerified
                       ? "border-success/30 bg-success/5"
                       : isConfigured
@@ -234,7 +234,7 @@ export function AIProviderSettings() {
                   ) : !isConfigured ? (
                     <button
                       onClick={() => { setEditingProvider(provider.id); setApiKeyInput("") }}
-                      className="px-3 py-1.5 border border-card-border rounded-lg text-xs font-medium text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-all"
+                      className="px-3 py-1.5 border border-card-border rounded-lg text-xs font-medium text-foreground-muted hover:text-foreground hover:border-card-border-hover transition-colors"
                     >
                       {provider.requiresKey ? "Add API Key" : "Enable"}
                     </button>

@@ -81,7 +81,7 @@ export function PerkProgressRow({ id, name, maxValue, usedValue, percentUsed, pe
       <div className="flex items-center gap-2">
         <div className="flex-1 h-1.5 rounded-full bg-background-secondary overflow-hidden">
           <div
-            className={cn("h-full rounded-full transition-all duration-500", barColor(percentUsed, daysRemaining))}
+            className={cn("h-full rounded-full transition-[width] duration-500", barColor(percentUsed, daysRemaining))}
             style={{ width: `${Math.min(percentUsed, 100)}%` }}
           />
         </div>

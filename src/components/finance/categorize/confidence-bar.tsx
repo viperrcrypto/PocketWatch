@@ -17,7 +17,7 @@ export function ConfidenceBar({ confidence, showLabel, className }: ConfidenceBa
     <div className={cn("flex items-center gap-2", className)}>
       <div className="h-1.5 w-16 rounded-full bg-background-secondary overflow-hidden">
         <div
-          className={cn("h-full rounded-full transition-all duration-500", color)}
+          className={cn("h-full rounded-full transition-[width] duration-500", color)}
           style={{ width: `${pct}%` }}
         />
       </div>

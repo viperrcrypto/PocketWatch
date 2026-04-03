@@ -33,7 +33,7 @@ export function BudgetProgressBar({ spent, limit, color, showPercent, className 
         style={{ background: "color-mix(in srgb, var(--foreground) 12%, var(--background-secondary))" }}
       >
         <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
+          className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
             width: `${Math.max(displayPercent, 1)}%`,
             background: `linear-gradient(90deg, ${fromColor}, ${fillColor})`,

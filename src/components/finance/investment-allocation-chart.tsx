@@ -249,7 +249,7 @@ export function InvestmentAllocationChart({ holdings, totalValue, compact = fals
           <button
             onClick={() => setGroupMode("type")}
             className={cn(
-              "px-2 py-0.5 text-[10px] font-medium rounded-md transition-all duration-200",
+              "px-2 py-0.5 text-[10px] font-medium rounded-md transition-colors duration-200",
               groupMode === "type"
                 ? "bg-card text-foreground shadow-sm"
                 : "text-foreground-muted hover:text-foreground"
@@ -260,7 +260,7 @@ export function InvestmentAllocationChart({ holdings, totalValue, compact = fals
           <button
             onClick={() => setGroupMode("sector")}
             className={cn(
-              "px-2 py-0.5 text-[10px] font-medium rounded-md transition-all duration-200",
+              "px-2 py-0.5 text-[10px] font-medium rounded-md transition-colors duration-200",
               groupMode === "sector"
                 ? "bg-card text-foreground shadow-sm"
                 : "text-foreground-muted hover:text-foreground"
@@ -332,7 +332,7 @@ export function InvestmentAllocationChart({ holdings, totalValue, compact = fals
               <div
                 key={s.key}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg transition-all duration-200 cursor-default",
+                  "flex items-center gap-2 rounded-lg transition-colors duration-200 cursor-default",
                   compact ? "px-1 py-1 -mx-1" : "gap-3 px-2 py-1.5 -mx-2",
                   isActive ? "bg-background-secondary/60" : "hover:bg-background-secondary/30"
                 )}
@@ -379,7 +379,7 @@ export function InvestmentAllocationChart({ holdings, totalValue, compact = fals
                   {!compact && (
                     <div className="h-1 bg-background-secondary rounded-full overflow-hidden mt-0.5">
                       <div
-                        className="h-full rounded-full transition-all duration-700"
+                        className="h-full rounded-full transition-[width] duration-700"
                         style={{
                           width: `${s.pct}%`,
                           backgroundColor: colors[i],

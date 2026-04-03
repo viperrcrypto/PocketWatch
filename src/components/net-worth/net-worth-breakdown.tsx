@@ -8,7 +8,6 @@ interface BreakdownItem {
   value: number
   icon: string
   color: string
-  bgColor: string
 }
 
 interface NetWorthBreakdownProps {
@@ -29,10 +28,10 @@ export function NetWorthBreakdown({
   isHidden,
 }: NetWorthBreakdownProps) {
   const items: BreakdownItem[] = [
-    { label: "Cash", value: fiatCash, icon: "account_balance", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    { label: "Investments", value: fiatInvestments, icon: "show_chart", color: "text-violet-500", bgColor: "bg-violet-500/10" },
-    { label: "Digital Assets", value: cryptoValue, icon: "currency_bitcoin", color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    { label: "Debt", value: -fiatDebt, icon: "credit_card", color: "text-red-500", bgColor: "bg-red-500/10" },
+    { label: "Cash", value: fiatCash, icon: "account_balance", color: "text-emerald-500" },
+    { label: "Investments", value: fiatInvestments, icon: "show_chart", color: "text-violet-500" },
+    { label: "Digital Assets", value: cryptoValue, icon: "currency_bitcoin", color: "text-amber-500" },
+    { label: "Debt", value: -fiatDebt, icon: "credit_card", color: "text-red-500" },
   ]
 
   const positiveTotal = fiatCash + fiatInvestments + cryptoValue
@@ -44,19 +43,19 @@ export function NetWorthBreakdown({
         <div className="flex h-2.5 rounded-full overflow-hidden bg-background-secondary">
           {fiatCash > 0 && (
             <div
-              className="bg-emerald-500 transition-all duration-500"
+              className="bg-emerald-500 transition-[width] duration-500"
               style={{ width: `${(fiatCash / positiveTotal) * 100}%` }}
             />
           )}
           {fiatInvestments > 0 && (
             <div
-              className="bg-violet-500 transition-all duration-500"
+              className="bg-violet-500 transition-[width] duration-500"
               style={{ width: `${(fiatInvestments / positiveTotal) * 100}%` }}
             />
           )}
           {cryptoValue > 0 && (
             <div
-              className="bg-amber-500 transition-all duration-500"
+              className="bg-amber-500 transition-[width] duration-500"
               style={{ width: `${(cryptoValue / positiveTotal) * 100}%` }}
             />
           )}
@@ -76,11 +75,9 @@ export function NetWorthBreakdown({
               className="flex items-center gap-3 bg-card rounded-xl px-4 py-3.5"
               style={{ boxShadow: "var(--shadow-sm)" }}
             >
-              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", item.bgColor)}>
-                <span className={cn("material-symbols-rounded", item.color)} style={{ fontSize: 18 }}>
-                  {item.icon}
-                </span>
-              </div>
+              <span className={cn("material-symbols-rounded flex-shrink-0", item.color)} style={{ fontSize: 20 }}>
+                {item.icon}
+              </span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-foreground-muted font-medium">{item.label}</p>
                 <p className={cn("text-sm font-semibold tabular-nums", item.value < 0 ? "text-red-500" : "text-foreground")}>

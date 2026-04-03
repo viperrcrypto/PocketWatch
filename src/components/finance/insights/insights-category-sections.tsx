@@ -57,10 +57,7 @@ export function InsightsIncomeSources({ sources }: { sources?: any[] }) {
             const barWidth = maxIncome > 0 ? (src.amount / maxIncome) * 100 : 0
             return (
               <div key={src.name} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                  style={{ background: "linear-gradient(135deg, #22c55e, color-mix(in srgb, #22c55e 80%, #000))" }}>
-                  <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 15 }}>payments</span>
-                </div>
+                <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: "#22c55e" }}>payments</span>
                 <span className="text-xs font-bold text-foreground-muted/50 tabular-nums w-4">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -68,7 +65,7 @@ export function InsightsIncomeSources({ sources }: { sources?: any[] }) {
                     <span className="font-data text-sm font-medium text-success tabular-nums ml-2">{formatCurrency(src.amount)}</span>
                   </div>
                   <div className="h-2 rounded-full bg-background-secondary overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-500"
+                    <div className="h-full rounded-full transition-[width] duration-500"
                       style={{ width: `${barWidth}%`, background: "linear-gradient(90deg, #22c55e, #16a34a)" }} />
                   </div>
                 </div>
@@ -96,7 +93,7 @@ export function InsightsBudgetHealth({ budgetHealth }: { budgetHealth?: any[] })
               <Link
                 key={b.category}
                 href={`/finance/transactions?category=${encodeURIComponent(b.category)}`}
-                className={cn("block rounded-xl p-3 -mx-1 transition-all hover:bg-foreground/[0.04]", over && "ring-1 ring-error/30 shadow-[0_0_12px_-3px_var(--error)]")}
+                className={cn("block rounded-xl p-3 -mx-1 transition-colors hover:bg-foreground/[0.04]", over && "ring-1 ring-error/30 shadow-[0_0_12px_-3px_var(--error)]")}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2.5">
@@ -114,7 +111,7 @@ export function InsightsBudgetHealth({ budgetHealth }: { budgetHealth?: any[] })
                   </div>
                 </div>
                 <div className="h-2.5 rounded-full bg-background-secondary overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500"
+                  <div className="h-full rounded-full transition-[width] duration-500"
                     style={{ width: `${Math.min(b.percentUsed, 100)}%`, background: barBg }} />
                 </div>
                 {b.projectedOverage > 0 && (
@@ -142,12 +139,8 @@ export function InsightsTopCategories({ categories }: { categories?: any[] }) {
                 key={cat.category}
                 href={`/finance/transactions?category=${encodeURIComponent(cat.category)}`}
                 className="flex gap-3 rounded-lg pl-1 hover:bg-foreground/[0.04] py-1 transition-colors"
-                style={{ borderLeft: `3px solid ${meta.hex}` }}
               >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                  style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}>
-                  <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 17 }}>{meta.icon}</span>
-                </div>
+                <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 20, color: meta.hex }}>{meta.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">{cat.category}</span>
@@ -193,17 +186,14 @@ export function InsightsMerchantsPurchases({ deep }: { deep: any }) {
                 const meta = getCategoryMeta(m.category)
                 return (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}>
-                      <span className="text-[10px] font-bold text-white">{i + 1}</span>
-                    </div>
+                    <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.hex }}>{meta.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm text-foreground truncate">{m.name}</span>
                         <span className="font-data text-sm font-medium text-foreground tabular-nums ml-2">{formatCurrency(m.total)}</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-background-secondary overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500"
+                        <div className="h-full rounded-full transition-[width] duration-500"
                           style={{ width: `${barWidth}%`, background: `linear-gradient(90deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }} />
                       </div>
                       <span className="text-[10px] text-foreground-muted">{m.count} transactions</span>
@@ -258,7 +248,7 @@ export function InsightsDayOfWeek({ patterns }: { patterns: any[] | undefined })
               return (
                 <div key={d.day} className="flex flex-col items-center gap-1.5 group rounded-lg py-2 transition-colors hover:bg-foreground/[0.03]">
                   <div className="w-full h-20 flex items-end justify-center">
-                    <div className="w-full max-w-[40px] rounded-t-lg transition-all duration-500 group-hover:opacity-90"
+                    <div className="w-full max-w-[40px] rounded-t-lg transition-[width] duration-500 group-hover:opacity-90"
                       style={{ height: `${barHeight}%`, background: `linear-gradient(to top, ${gradColor})`, opacity: 0.7 + intensity * 0.3 }} />
                   </div>
                   <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">{d.day}</span>
@@ -278,10 +268,7 @@ export function InsightsAnomalies({ anomalies }: { anomalies: any[] | undefined 
   return (
     <div className="bg-card border border-error/20 rounded-xl overflow-hidden">
       <div className="px-5 py-3 border-b border-card-border/50 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
-          style={{ background: "linear-gradient(135deg, var(--error), color-mix(in srgb, var(--error) 80%, #000))" }}>
-          <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 14 }}>warning</span>
-        </div>
+        <span className="material-symbols-rounded text-error" style={{ fontSize: 18 }}>warning</span>
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground">Unusual Spending</span>
           <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-error" /></span>

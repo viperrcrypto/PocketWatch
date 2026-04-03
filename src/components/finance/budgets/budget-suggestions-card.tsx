@@ -266,7 +266,7 @@ export function BudgetSuggestionsCard({
                       </div>
                       <div className="h-1 rounded-full bg-background-secondary overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-500"
+                          className="h-full rounded-full transition-[width] duration-500"
                           style={{ width: `${barWidth}%`, backgroundColor: item.hex }}
                         />
                       </div>

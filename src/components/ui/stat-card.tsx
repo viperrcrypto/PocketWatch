@@ -78,7 +78,7 @@ export function StatCard({
           <div className="h-1 bg-card-border overflow-hidden">
             <div
               className={cn(
-                "h-full transition-all",
+                "h-full transition-colors",
                 variant === "success" && "bg-success",
                 variant === "warning" && "bg-warning",
                 variant === "error" && "bg-error",

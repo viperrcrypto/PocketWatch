@@ -145,7 +145,7 @@ export function TransactionRow({
       {/* Expanded detail panel */}
       <div
         className={cn(
-          "overflow-hidden transition-all duration-200 origin-top",
+          "overflow-hidden transition-colors duration-200 origin-top",
           expanded ? "max-h-96 opacity-100 scale-y-100" : "max-h-0 opacity-0 scale-y-95"
         )}
       >

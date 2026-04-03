@@ -155,7 +155,7 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
                 key={f.value}
                 onClick={() => setTypeFilter(f.value)}
                 className={cn(
-                  "px-2 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-all duration-200",
+                  "px-2 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-colors duration-200",
                   typeFilter === f.value
                     ? "bg-foreground text-background"
                     : "text-foreground-muted hover:text-foreground hover:bg-background-secondary"
@@ -263,7 +263,7 @@ export function InvestmentHoldingsTable({ holdings, totalValue }: Props) {
                     <div className="flex items-center justify-end gap-2">
                       <div className="w-16 h-1.5 bg-background-secondary rounded-full overflow-hidden hidden sm:block">
                         <div
-                          className="h-full bg-primary/40 rounded-full transition-all duration-500"
+                          className="h-full bg-primary/40 rounded-full transition-[width] duration-500"
                           style={{ width: `${Math.min(portfolioPct, 100)}%` }}
                         />
                       </div>

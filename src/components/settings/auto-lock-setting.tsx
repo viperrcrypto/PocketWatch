@@ -61,7 +61,7 @@ export function AutoLockSetting() {
               type="button"
               onClick={() => handleSelect(opt.value)}
               disabled={updateSettings.isPending}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-150 disabled:opacity-50 ${
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors duration-150 disabled:opacity-50 ${
                 currentValue === opt.value
                   ? "bg-primary text-white shadow-sm"
                   : "bg-transparent text-foreground-muted hover:text-foreground"

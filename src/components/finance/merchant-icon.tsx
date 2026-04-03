@@ -56,18 +56,11 @@ export function MerchantIcon({ logoUrl, website, category, size = "md" }: Mercha
 
   // Tier 3: Category icon fallback
   return (
-    <div
-      className={`${dims} ${roundedness} flex items-center justify-center flex-shrink-0 shadow-sm`}
-      style={{
-        background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))`,
-      }}
+    <span
+      className="material-symbols-rounded flex-shrink-0"
+      style={{ fontSize: iconSize + 2, color: meta.hex }}
     >
-      <span
-        className="material-symbols-rounded text-white drop-shadow-sm"
-        style={{ fontSize: iconSize }}
-      >
-        {meta.icon}
-      </span>
-    </div>
+      {meta.icon}
+    </span>
   )
 }

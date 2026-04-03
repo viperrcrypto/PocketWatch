@@ -136,7 +136,7 @@ export function PerksTracker({ cards, onTogglePerk }: PerksTrackerProps) {
           <div className="h-2 rounded-full bg-background-secondary overflow-hidden">
             <div
               className={cn(
-                "h-full rounded-full transition-all duration-500",
+                "h-full rounded-full transition-[width] duration-500",
                 agg.roi >= 100 ? "bg-success" : agg.roi >= 50 ? "bg-amber-500" : "bg-error"
               )}
               style={{ width: `${Math.min(agg.roi, 100)}%` }}
@@ -217,7 +217,7 @@ function CardPerksSection({ card, isExpanded, onToggleExpand, onTogglePerk }: {
         {limited.length > 0 && (
           <div className="mt-2 h-1.5 rounded-full bg-background-secondary overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-all duration-300", card.annualFee === 0 ? "bg-primary" : roi >= 100 ? "bg-success" : roi >= 50 ? "bg-amber-500" : "bg-error")}
+              className={cn("h-full rounded-full transition-colors duration-300", card.annualFee === 0 ? "bg-primary" : roi >= 100 ? "bg-success" : roi >= 50 ? "bg-amber-500" : "bg-error")}
               style={{ width: `${Math.max(creditPct, usedAnnual > 0 ? 4 : 0)}%` }}
             />
           </div>

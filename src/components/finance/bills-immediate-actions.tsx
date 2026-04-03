@@ -23,9 +23,7 @@ export function BillsImmediateActions({ bills }: BillsImmediateActionsProps) {
     <div className="bg-card border border-card-border rounded-xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
       <div className="px-5 py-3 border-b border-card-border/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-warning/10 flex items-center justify-center">
-            <span className="material-symbols-rounded text-warning" style={{ fontSize: 14 }}>priority_high</span>
-          </div>
+          <span className="material-symbols-rounded text-warning" style={{ fontSize: 18 }}>priority_high</span>
           <span className="text-sm font-bold text-foreground">Immediate Actions</span>
         </div>
         <span className="text-[10px] font-data font-semibold tabular-nums text-foreground-muted">

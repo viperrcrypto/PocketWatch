@@ -157,12 +157,10 @@ function SourceCard({
   return (
     <a
       href={href}
-      className="bg-card rounded-xl p-5 flex items-center gap-4 group card-hover-lift transition-all"
+      className="bg-card rounded-xl p-5 flex items-center gap-4 group card-hover-lift transition-colors"
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
-      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-        <span className="material-symbols-rounded text-primary" style={{ fontSize: 22 }}>{icon}</span>
-      </div>
+      <span className="material-symbols-rounded text-primary flex-shrink-0" style={{ fontSize: 22 }}>{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-[10px] text-foreground-muted">{subtitle}</p>

@@ -148,15 +148,10 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
             href="https://x.com/messages/compose?recipient_id=viperr&text=Hey%20I%27d%20like%20to%20sponsor%20PocketWatch"
             target="_blank"
             rel="noopener noreferrer"
-            className="group block mx-1 rounded-lg border border-dashed border-foreground-muted/20 hover:border-primary/40 transition-all duration-200 overflow-hidden"
+            className="group block mx-1 rounded-lg border border-dashed border-foreground-muted/20 hover:border-primary/40 transition-colors duration-200 overflow-hidden"
           >
             <div className="px-3 py-2.5 flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, var(--foreground-muted), color-mix(in srgb, var(--foreground-muted) 60%, transparent))", opacity: 0.15 }}
-              >
-                <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 14, opacity: 0.6 }}>handshake</span>
-              </div>
+              <span className="material-symbols-rounded text-foreground-muted/40 flex-shrink-0" style={{ fontSize: 16 }}>handshake</span>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-medium text-foreground-muted/50 group-hover:text-foreground-muted transition-colors">Get your brand featured here</p>
                 <p className="text-[9px] text-foreground-muted/30 group-hover:text-foreground-muted/50 transition-colors">DM @viperr on X</p>

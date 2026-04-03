@@ -57,13 +57,8 @@ export function InsightsForecastStreaks({ forecast, streaks }: { forecast: any; 
             </div>
 
             {/* Safe daily spend callout */}
-            <div className="relative rounded-xl p-3.5 flex items-center gap-3 bg-background-secondary/60 border-l-[3px]" style={{ borderImage: "linear-gradient(180deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #000)) 1" }}>
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
-                style={{ background: grad135("var(--primary)") }}
-              >
-                <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>wallet</span>
-              </div>
+            <div className="relative rounded-xl p-3.5 flex items-center gap-3 bg-background-secondary/60 border-l-[3px] border-primary">
+              <span className="material-symbols-rounded text-primary flex-shrink-0" style={{ fontSize: 20 }}>wallet</span>
               <div className="flex-1">
                 <p className="text-xs font-medium text-foreground">
                   Safe daily spend: <span className="font-data font-bold tabular-nums text-primary">{formatCurrency(forecast.safeDailySpend)}</span>
@@ -74,7 +69,7 @@ export function InsightsForecastStreaks({ forecast, streaks }: { forecast: any; 
                 {/* Days remaining progress bar */}
                 <div className="h-1 rounded-full bg-background-secondary mt-1.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-700"
+                    className="h-full rounded-full transition-[width] duration-700"
                     style={{
                       width: `${Math.max(0, Math.min(100, ((30 - forecast.daysRemaining) / 30) * 100))}%`,
                       background: grad("primary")
@@ -117,7 +112,7 @@ export function InsightsForecastStreaks({ forecast, streaks }: { forecast: any; 
             {/* Visual progress bar — thicker with gradient */}
             <div className="h-3 rounded-full bg-background-secondary overflow-hidden mb-5">
               <div
-                className="h-full rounded-full transition-all duration-700"
+                className="h-full rounded-full transition-[width] duration-700"
                 style={{
                   width: `${Math.min(streaks.noSpendRate, 100)}%`,
                   background: grad(streaks.noSpendRate >= 30 ? "success" : streaks.noSpendRate >= 15 ? "primary" : "warning")
@@ -152,7 +147,7 @@ function FlowBar({ label, amount, maxAmount, type, prefix }: {
         </span>
       </div>
       <div className="h-2.5 rounded-full bg-background-secondary overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: grad(key) }} />
+        <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pct}%`, background: grad(key) }} />
       </div>
     </div>
   )
@@ -166,12 +161,7 @@ function StreakStat({ value, label, icon, color }: {
       className="text-center p-3 rounded-xl bg-background-secondary/40 border-t-2 transition-transform duration-200 hover:scale-[1.04]"
       style={{ borderTopColor: color }}
     >
-      <div
-        className="w-8 h-8 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm"
-        style={{ background: grad135(color) }}
-      >
-        <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 16 }}>{icon}</span>
-      </div>
+      <span className="material-symbols-rounded mx-auto mb-2 block" style={{ fontSize: 20, color }}>{icon}</span>
       <span className="font-data text-xl font-bold text-foreground tabular-nums block">{value}</span>
       <span className="text-[9px] text-foreground-muted uppercase tracking-wider leading-tight block mt-0.5">{label}</span>
     </div>

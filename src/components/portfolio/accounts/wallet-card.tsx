@@ -279,7 +279,7 @@ function ChainEditor({
               key={chain.id}
               onClick={() => onToggleEditChain(chain.id)}
               disabled={dimmed}
-              className={`flex items-center gap-1.5 px-2.5 py-1 border transition-all rounded-md text-xs font-medium ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 border transition-colors rounded-md text-xs font-medium ${
                 isSelected
                   ? "text-foreground"
                   : dimmed

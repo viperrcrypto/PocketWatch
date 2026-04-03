@@ -42,7 +42,7 @@ function OfferCard({ card }: { card: BonusSearchResult }) {
       href={card.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block rounded-lg border border-card-border hover:border-primary/30 hover:bg-background-secondary/30 transition-all p-4 group"
+      className="block rounded-lg border border-card-border hover:border-primary/30 hover:bg-background-secondary/30 transition-colors p-4 group"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">

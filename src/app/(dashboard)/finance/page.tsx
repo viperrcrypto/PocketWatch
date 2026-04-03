@@ -198,7 +198,7 @@ export default function FinanceDashboardPage() {
                     key={r}
                     onClick={() => setNwRange(r)}
                     className={cn(
-                      "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all",
+                      "px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors",
                       nwRange === r
                         ? "bg-primary text-white shadow-sm"
                         : "text-foreground-muted hover:text-foreground"
@@ -300,9 +300,7 @@ export default function FinanceDashboardPage() {
             href="/finance/categorize"
             className="flex items-center gap-3 bg-card border border-amber-500/20 rounded-xl px-4 py-3 hover:border-amber-500/40 transition-colors group"
           >
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-rounded text-amber-500" style={{ fontSize: 16 }}>rate_review</span>
-            </div>
+            <span className="material-symbols-rounded text-amber-500 flex-shrink-0" style={{ fontSize: 18 }}>rate_review</span>
             <div className="flex-1">
               <p className="text-xs font-medium text-foreground">
                 {deep.uncategorizedCount} transaction{deep.uncategorizedCount !== 1 ? "s" : ""} need review
@@ -372,8 +370,8 @@ export default function FinanceDashboardPage() {
               const spendPct = Math.max(1, (deep.totalSpending / total) * 100)
               return (
                 <div className="flex h-3 rounded-full overflow-hidden bg-background-secondary mb-5">
-                  <div className="bg-success transition-all duration-700 rounded-l-full" style={{ width: `${incomePct}%` }} />
-                  <div className="bg-error transition-all duration-700 rounded-r-full" style={{ width: `${spendPct}%` }} />
+                  <div className="bg-success transition-[width] duration-700 rounded-l-full" style={{ width: `${incomePct}%` }} />
+                  <div className="bg-error transition-[width] duration-700 rounded-r-full" style={{ width: `${spendPct}%` }} />
                 </div>
               )
             })()}

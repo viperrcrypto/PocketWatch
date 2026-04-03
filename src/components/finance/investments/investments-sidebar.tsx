@@ -153,7 +153,7 @@ function AllocationSection({ holdings, totalValue, manualAccounts }: {
                       <span className="text-[10px] font-semibold font-data tabular-nums text-foreground ml-2">{formatCurrency(s.value)}</span>
                     </div>
                     <div className="h-1 bg-background-secondary rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
+                      <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
                     </div>
                   </div>
                   <span className="text-[9px] text-foreground-muted font-data tabular-nums w-10 text-right">
@@ -184,7 +184,7 @@ function AllocationSection({ holdings, totalValue, manualAccounts }: {
                   <span className="text-[10px] font-semibold font-data tabular-nums text-foreground ml-2">{formatCurrency(s.value)}</span>
                 </div>
                 <div className="h-1 bg-background-secondary rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
+                  <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
                 </div>
               </div>
               <span className="text-[10px] text-foreground-muted font-data tabular-nums w-8 text-right">{s.pct.toFixed(0)}%</span>

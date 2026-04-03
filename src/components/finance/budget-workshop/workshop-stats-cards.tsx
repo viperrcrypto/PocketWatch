@@ -143,7 +143,7 @@ export function WorkshopStatsCards({
         </p>
         <div className="mt-3 h-1.5 w-full bg-background-secondary rounded-full overflow-hidden">
           <div
-            className={cn("h-full rounded-full transition-all duration-500", buffer >= 0 ? "bg-primary" : "bg-error")}
+            className={cn("h-full rounded-full transition-[width] duration-500", buffer >= 0 ? "bg-primary" : "bg-error")}
             style={{ width: `${Math.min(Math.max(bufferPercent, 0), 100)}%` }}
           />
         </div>

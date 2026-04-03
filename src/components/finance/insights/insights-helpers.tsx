@@ -2,10 +2,7 @@ import type { CategoryMeta } from "@/lib/finance/categories"
 
 export function GradIcon({ meta, size = 32, icon = 15 }: { meta: CategoryMeta; size?: number; icon?: number }) {
   return (
-    <div className="rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-      style={{ width: size, height: size, background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}>
-      <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: icon }}>{meta.icon}</span>
-    </div>
+    <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: icon + 2, color: meta.hex }}>{meta.icon}</span>
   )
 }
 

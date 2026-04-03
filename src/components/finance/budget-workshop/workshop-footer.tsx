@@ -33,7 +33,7 @@ export function WorkshopFooter({
         <button
           onClick={onFinalize}
           disabled={isSaving || !hasChanges}
-          className="w-full md:w-auto px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-all disabled:opacity-50"
+          className="w-full md:w-auto px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors disabled:opacity-50"
         >
           {isSaving ? "Saving..." : "Finalize Budget"}
         </button>

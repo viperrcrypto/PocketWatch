@@ -88,7 +88,7 @@ export function FlightResultCard({ flight }: FlightResultCardProps) {
       href={flight.bookingUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="block card p-4 hover:translate-y-[-1px] hover:shadow-md transition-all duration-200"
+      className="block card p-4 hover:translate-y-[-1px] hover:shadow-md transition-colors duration-200"
     >
       {/* Row 1: Airline + badges left, price right */}
       <div className="flex items-start justify-between gap-2 mb-2">

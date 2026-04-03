@@ -173,7 +173,7 @@ export function PointsPortfolio({ programs, totalValue, totalMonthlyReward = 0 }
               return (
                 <div
                   key={p.programName}
-                  className="h-full rounded-full transition-all duration-300"
+                  className="h-full rounded-full transition-colors duration-300"
                   style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color }}
                 />
               )
@@ -211,7 +211,7 @@ export function PointsPortfolio({ programs, totalValue, totalMonthlyReward = 0 }
           return (
             <div
               key={p.programName}
-              className="relative p-3 rounded-xl border border-card-border hover:border-card-border-hover transition-all overflow-hidden"
+              className="relative p-3 rounded-xl border border-card-border hover:border-card-border-hover transition-colors overflow-hidden"
             >
               <div className="relative flex items-center gap-3">
                 <ProgramAvatar program={p} />

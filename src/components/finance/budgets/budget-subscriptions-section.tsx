@@ -217,7 +217,7 @@ export function BudgetSubscriptionsSection() {
                   type="button"
                   onClick={() => handleFilterChange(opt.key as typeof groupBy)}
                   className={cn(
-                    "px-3 py-1 text-[10px] font-medium rounded-md transition-all duration-150",
+                    "px-3 py-1 text-[10px] font-medium rounded-md transition-colors duration-150",
                     groupBy === opt.key
                       ? "bg-primary text-white shadow-sm"
                       : "bg-transparent text-foreground-muted hover:text-foreground"

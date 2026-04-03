@@ -118,12 +118,7 @@ export function BudgetIntelligencePanel({ onClose }: { onClose: () => void }) {
               const style = VERDICT_STYLES[item.verdict]
               return (
                 <div key={item.category} className="flex items-center gap-2.5 py-1.5">
-                  <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                    style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-                  >
-                    <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 14 }}>{meta.icon}</span>
-                  </div>
+                  <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 16, color: meta.hex }}>{meta.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{item.category}</p>
                     <p className="text-[10px] text-foreground-muted tabular-nums font-data">

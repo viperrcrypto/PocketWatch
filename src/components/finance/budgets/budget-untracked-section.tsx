@@ -77,19 +77,9 @@ export function BudgetUntrackedSection({
               />
 
               {/* Category icon */}
-              <div
-                className="size-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                style={{
-                  background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))`,
-                }}
-              >
-                <span
-                  className="material-symbols-rounded text-white drop-shadow-sm"
-                  style={{ fontSize: 15 }}
-                >
-                  {meta.icon}
-                </span>
-              </div>
+              <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.hex }}>
+                {meta.icon}
+              </span>
 
               {/* Name + amounts */}
               <div className="flex-1 min-w-0">
@@ -116,7 +106,7 @@ export function BudgetUntrackedSection({
               {/* Add button */}
               <button
                 onClick={() => onAddBudget(cat.category, cat.suggested)}
-                className="text-primary text-[11px] font-bold px-3 py-1.5 rounded-md border border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center gap-1 flex-shrink-0"
+                className="text-primary text-[11px] font-bold px-3 py-1.5 rounded-md border border-primary/20 hover:bg-primary hover:text-white transition-colors flex items-center gap-1 flex-shrink-0"
               >
                 <span
                   className="material-symbols-rounded"

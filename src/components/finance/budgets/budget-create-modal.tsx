@@ -83,7 +83,7 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
                   const meta = getCategoryMeta(cat)
                   const isBudgeted = budgetedSet.has(cat)
                   return (
-                    <button key={cat} onClick={() => !isBudgeted && handleSelectCategory(cat)} disabled={isBudgeted} className={cn("flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-center", isBudgeted ? "border-card-border opacity-40 cursor-not-allowed" : "border-card-border hover:border-primary hover:bg-primary/5 cursor-pointer")}>
+                    <button key={cat} onClick={() => !isBudgeted && handleSelectCategory(cat)} disabled={isBudgeted} className={cn("flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-colors text-center", isBudgeted ? "border-card-border opacity-40 cursor-not-allowed" : "border-card-border hover:border-primary hover:bg-primary/5 cursor-pointer")}>
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.hex}20` }}>
                         <span className="material-symbols-rounded" style={{ fontSize: 16, color: meta.hex }}>{isBudgeted ? "check" : meta.icon}</span>
                       </div>

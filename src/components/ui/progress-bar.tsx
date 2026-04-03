@@ -85,7 +85,7 @@ export function ProgressBar({
       )}>
         <div
           className={cn(
-            "h-full transition-all duration-300 ease-out",
+            "h-full transition-colors duration-300 ease-out",
             variantConfig[variant]
           )}
           style={{ width: `${percentage}%` }}
@@ -121,7 +121,7 @@ export function CompactProgress({
       )}>
         <div
           className={cn(
-            "h-full transition-all duration-300 ease-out",
+            "h-full transition-colors duration-300 ease-out",
             variantConfig[variant]
           )}
           style={{ width: `${percentage}%` }}
@@ -186,7 +186,7 @@ export function EnhancedProgress({
         {/* Use lg size (h-12 = 48px) for maximum prominence */}
         <div className="h-12 bg-background border-2 border-card-border overflow-hidden relative">
           <div
-            className="h-full bg-success transition-all duration-500 ease-out relative"
+            className="h-full bg-success transition-[width] duration-500 ease-out relative"
             style={{ width: `${Math.min(percentage, 100)}%` }}
           >
             {/* Show percentage inside bar when there's enough space */}
@@ -259,7 +259,7 @@ export function DetailedProgress({
       )}>
         <div
           className={cn(
-            "h-full transition-all duration-300 ease-out relative",
+            "h-full transition-colors duration-300 ease-out relative",
             variantConfig[variant]
           )}
           style={{ width: `${percentage}%` }}

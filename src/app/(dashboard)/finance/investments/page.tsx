@@ -235,15 +235,15 @@ export default function InvestmentsPage() {
             onError: (err) => toast.error(err.message),
           })}
           disabled={resync.isPending}
-          className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-all border border-card-border flex items-center gap-1.5 disabled:opacity-50"
+          className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-colors border border-card-border flex items-center gap-1.5 disabled:opacity-50"
         >
           <span className={cn("material-symbols-rounded", resync.isPending && "animate-spin")} style={{ fontSize: 14 }}>sync</span>
           {resync.isPending ? "Syncing..." : "Sync"}
         </button>
-        <Link href="/finance/accounts" className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-all border border-card-border flex items-center gap-1.5">
+        <Link href="/finance/accounts" className="text-foreground-muted text-xs font-bold px-3 py-2 rounded-lg hover:text-foreground hover:bg-background-secondary transition-colors border border-card-border flex items-center gap-1.5">
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>link</span>Connect
         </Link>
-        <button onClick={() => setShowAddForm(true)} className="text-primary text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 border border-primary/30 hover:bg-primary hover:text-white transition-all">
+        <button onClick={() => setShowAddForm(true)} className="text-primary text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 border border-primary/30 hover:bg-primary hover:text-white transition-colors">
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>add</span>Add Entry
         </button>
       </div>
@@ -372,7 +372,7 @@ export default function InvestmentsPage() {
             <div className="flex items-center gap-1 overflow-x-auto">
               {TX_TYPE_TABS.map((tab) => (
                 <button key={tab.value} onClick={() => { setInvTxType(tab.value); setInvTxPage(1) }}
-                  className={cn("px-2.5 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-all duration-200",
+                  className={cn("px-2.5 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-colors duration-200",
                     invTxType === tab.value ? "bg-foreground text-background" : "text-foreground-muted hover:text-foreground hover:bg-background-secondary")}>
                   {tab.label}
                 </button>

@@ -49,7 +49,7 @@ export function AccountCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left bg-card border rounded-xl p-4 transition-all duration-200 hover:shadow-md",
+        "w-full text-left bg-card border rounded-xl p-4 transition-colors duration-200 card-hover-lift",
         isSelected
           ? "border-primary ring-1 ring-primary/20"
           : "border-card-border hover:border-card-border-hover"
@@ -94,7 +94,7 @@ export function AccountCard({
           <div className="w-full h-1.5 rounded-full bg-background-secondary overflow-hidden">
             <div
               className={cn(
-                "h-full rounded-full transition-all",
+                "h-full rounded-full transition-colors",
                 utilization >= 75 ? "bg-error"
                   : utilization >= 50 ? "bg-orange-500"
                     : utilization >= 30 ? "bg-amber-500"

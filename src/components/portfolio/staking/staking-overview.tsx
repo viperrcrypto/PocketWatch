@@ -153,7 +153,7 @@ export function StakingView() {
         <button
           onClick={() => rebuildMutation.mutate()}
           disabled={rebuildMutation.isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-warning hover:text-warning/80 bg-background-secondary hover:bg-card border border-card-border rounded-lg transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-warning hover:text-warning/80 bg-background-secondary hover:bg-card border border-card-border rounded-lg transition-colors disabled:opacity-50"
         >
           <span
             className={`material-symbols-rounded text-sm ${rebuildMutation.isPending ? "animate-spin" : ""}`}
@@ -166,7 +166,7 @@ export function StakingView() {
         <button
           onClick={handleRefresh}
           disabled={refreshMutation.isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-background-secondary hover:bg-card border border-card-border rounded-lg transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-background-secondary hover:bg-card border border-card-border rounded-lg transition-colors disabled:opacity-50"
         >
           <span
             className={`material-symbols-rounded text-sm ${refreshMutation.isPending ? "animate-spin" : ""}`}
@@ -225,7 +225,7 @@ export function StakingView() {
           value={`${formatFiatValue(totalAnnualYield)}/yr`}
           change={{ value: "View history", positive: true }}
           onClick={() => setShowYieldHistory(true)}
-          className="cursor-pointer hover:border-card-border-hover transition-all"
+          className="cursor-pointer hover:border-card-border-hover transition-colors"
         />
       </div>
 

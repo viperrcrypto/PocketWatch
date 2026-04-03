@@ -135,13 +135,13 @@ export function CardChat({ cardId, cardName, aiData }: CardChatProps) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
             placeholder={`Ask about ${cardName}...`}
             disabled={askMutation.isPending}
-            className="flex-1 bg-background-secondary rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-muted outline-none focus:ring-2 focus:ring-primary/30 transition-all disabled:opacity-50"
+            className="flex-1 bg-background-secondary rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-muted outline-none focus:ring-2 focus:ring-primary/30 transition-colors disabled:opacity-50"
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || askMutation.isPending}
             className={cn(
-              "px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5",
+              "px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5",
               input.trim() && !askMutation.isPending
                 ? "bg-primary text-white hover:bg-primary-hover active:scale-95"
                 : "bg-card-elevated text-foreground-muted cursor-not-allowed"

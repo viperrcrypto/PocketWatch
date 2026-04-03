@@ -35,7 +35,7 @@ export function CategorySuggestions({ suggestions, selected, onSelect }: Categor
             key={`${s.category}-${s.source}`}
             onClick={() => onSelect(s.category, s.subcategory)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border",
               isSelected
                 ? "border-foreground bg-foreground text-background"
                 : "border-card-border bg-card text-foreground hover:border-foreground/30 hover:bg-background-secondary"

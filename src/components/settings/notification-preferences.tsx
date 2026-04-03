@@ -101,7 +101,7 @@ export function NotificationPreferencesSection() {
                   <button
                     key={opt.value}
                     onClick={() => setChannelSeverity({ ...channelSeverity, [ch.key]: opt.value })}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-150 ${
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors duration-150 ${
                       (channelSeverity[ch.key] ?? "info") === opt.value
                         ? "bg-primary text-white shadow-sm"
                         : "bg-transparent text-foreground-muted hover:text-foreground"

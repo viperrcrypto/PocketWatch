@@ -41,7 +41,7 @@ export function InvestmentsAddForm({
       <div className="flex flex-wrap gap-2 mb-4">
         {INVESTMENT_TYPE_OPTIONS.map((opt) => (
           <button key={opt.value} onClick={() => onTypeChange(opt.value)}
-            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200",
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors duration-200",
               formType === opt.value ? "border-transparent shadow-sm" : "border-card-border text-foreground-muted hover:text-foreground hover:border-card-border-hover"
             )}
             style={formType === opt.value ? { backgroundColor: `${opt.color}15`, color: opt.color, borderColor: `${opt.color}30` } : undefined}>

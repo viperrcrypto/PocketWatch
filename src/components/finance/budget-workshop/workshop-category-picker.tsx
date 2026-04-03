@@ -19,16 +19,11 @@ export function WorkshopCategoryPicker({
             <button
               key={cat}
               onClick={() => onAdd(cat)}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-card border border-card-border hover:border-primary/30 hover:bg-primary-subtle transition-all text-left"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-card border border-card-border hover:border-primary/30 hover:bg-primary-subtle transition-colors text-left"
             >
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-              >
-                <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 16 }}>
-                  {meta.icon}
-                </span>
-              </div>
+              <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.hex }}>
+                {meta.icon}
+              </span>
               <span className="text-xs font-medium text-foreground truncate">{cat}</span>
             </button>
           )

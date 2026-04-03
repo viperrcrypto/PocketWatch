@@ -80,19 +80,9 @@ export function BudgetWorkshopCategory({
       {/* Category Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
-            style={{
-              background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))`,
-            }}
-          >
-            <span
-              className="material-symbols-rounded text-white drop-shadow-sm"
-              style={{ fontSize: 20 }}
-            >
-              {meta.icon}
-            </span>
-          </div>
+          <span className="material-symbols-rounded" style={{ fontSize: 22, color: meta.hex }}>
+            {meta.icon}
+          </span>
           <div>
             <h4 className="text-sm font-semibold text-foreground">{category}</h4>
             <p className="text-[10px] text-foreground-muted">Budget Limit</p>

@@ -50,11 +50,11 @@ export function InsightsRecurringAllocation({ deep, donutData, recurringData, ho
               </div>
               <div className="flex h-4 rounded-full overflow-hidden gap-0.5">
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full transition-[width] duration-500"
                   style={{ width: `${deep.recurringVsOneTime.fixedCostRatio}%`, background: "linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #000))" }}
                 />
                 <div
-                  className="h-full rounded-full bg-foreground-muted/20 transition-all duration-500"
+                  className="h-full rounded-full bg-foreground-muted/20 transition-[width] duration-500"
                   style={{ width: `${100 - deep.recurringVsOneTime.fixedCostRatio}%` }}
                 />
               </div>
@@ -86,9 +86,7 @@ export function InsightsRecurringAllocation({ deep, donutData, recurringData, ho
           {recurringData && recurringData.outflows.length > 0 && (
             <div className="bg-card border border-card-border rounded-xl p-6">
               <div className="flex items-center gap-2.5 mb-1">
-                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000))" }}>
-                  <span className="material-symbols-rounded text-white" style={{ fontSize: 14 }}>sync</span>
-                </div>
+                <span className="material-symbols-rounded text-primary" style={{ fontSize: 18 }}>sync</span>
                 <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Recurring Costs</span>
               </div>
               <div className="mt-2 mb-4 flex items-baseline gap-2">
@@ -130,9 +128,7 @@ export function InsightsRecurringAllocation({ deep, donutData, recurringData, ho
             return (
               <div className="bg-card border border-card-border rounded-xl p-6">
                 <div className="flex items-center gap-2.5 mb-1">
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "linear-gradient(135deg, #8B5CF6, color-mix(in srgb, #8B5CF6 80%, #000))" }}>
-                    <span className="material-symbols-rounded text-white" style={{ fontSize: 14 }}>trending_up</span>
-                  </div>
+                  <span className="material-symbols-rounded" style={{ fontSize: 18, color: "#8B5CF6" }}>trending_up</span>
                   <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">Investment Allocation</span>
                 </div>
                 <div className="mt-2 mb-4 flex items-baseline gap-2">

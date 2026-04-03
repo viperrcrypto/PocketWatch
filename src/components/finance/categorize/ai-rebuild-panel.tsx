@@ -131,7 +131,7 @@ export function AIRebuildPanel({ uncategorizedCount }: AIRebuildPanelProps) {
           </div>
           <div className="h-2.5 bg-background-secondary rounded-full overflow-hidden relative">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-700 relative overflow-hidden"
+              className="h-full rounded-full bg-primary transition-[width] duration-700 relative overflow-hidden"
               style={{ width: `${Math.max(pct, 2)}%` }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-[shimmer_1.5s_infinite]" style={{ backgroundSize: "200% 100%" }} />
@@ -256,7 +256,7 @@ function ModeCard({ title, description, icon, variant, disabled, onClick }: {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full text-left bg-card border rounded-2xl p-5 transition-all hover:border-card-border-hover disabled:opacity-40 disabled:cursor-not-allowed",
+        "w-full text-left bg-card border rounded-2xl p-5 transition-colors hover:border-card-border-hover disabled:opacity-40 disabled:cursor-not-allowed",
         variant === "warning" ? "border-amber-500/30 hover:border-amber-500/50" : "border-card-border"
       )}
     >
@@ -381,7 +381,7 @@ function MerchantResultsList({ merchants }: { merchants: ProcessedMerchant[] }) 
         {visible.map((m, i) => {
           const meta = getCategoryMeta(m.category)
           return (
-            <div key={`${m.merchantName}-${i}`} className="flex items-center gap-3 px-4 py-2.5 animate-fade-up">
+            <div key={`${m.merchantName}-${i}`} className="flex items-center gap-3 px-4 py-2.5">
               <span className="material-symbols-rounded" style={{ fontSize: 14, color: meta.hex }}>{meta.icon}</span>
               <span className="text-xs font-medium text-foreground flex-1 truncate">{m.merchantName}</span>
               <span className="text-xs text-foreground-muted">{m.category}</span>

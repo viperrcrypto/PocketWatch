@@ -154,7 +154,7 @@ export default function FinanceTransactionsPage() {
                 type="button"
                 onClick={() => { setDateRange(preset.key); setPage(1) }}
                 className={cn(
-                  "px-3 py-2 text-xs font-medium rounded-md transition-all duration-150",
+                  "px-3 py-2 text-xs font-medium rounded-md transition-colors duration-150",
                   dateRange === preset.key
                     ? "bg-primary text-white shadow-sm"
                     : "bg-transparent text-foreground-muted hover:text-foreground"
@@ -178,7 +178,7 @@ export default function FinanceTransactionsPage() {
                 type="button"
                 onClick={() => { setTxType(opt.key); setPage(1) }}
                 className={cn(
-                  "px-3 py-2 text-xs font-medium rounded-md transition-all duration-150",
+                  "px-3 py-2 text-xs font-medium rounded-md transition-colors duration-150",
                   txType === opt.key
                     ? "bg-primary text-white shadow-sm"
                     : "bg-transparent text-foreground-muted hover:text-foreground"

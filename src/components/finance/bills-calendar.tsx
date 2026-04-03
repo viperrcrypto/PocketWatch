@@ -139,7 +139,7 @@ export function BillsCalendar({ bills = [], className, onSelectBill, onMonthChan
               type="button"
               onClick={() => hasBills ? setSelectedDay(isSelected ? null : cell.day) : setSelectedDay(null)}
               className={cn(
-                "aspect-square p-1 flex flex-col items-center transition-all relative",
+                "aspect-square p-1 flex flex-col items-center transition-colors relative",
                 "bg-card/50 hover:bg-card/80",
                 isToday && "ring-1.5 ring-inset ring-primary/50 bg-primary-subtle",
                 isSelected && hasBills && "ring-2 ring-inset ring-primary bg-primary-muted",

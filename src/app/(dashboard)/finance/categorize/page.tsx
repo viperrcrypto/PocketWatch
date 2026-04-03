@@ -47,7 +47,7 @@ export default function CategorizePage() {
         <button
           onClick={() => router.push("/finance/categorize")}
           className={cn(
-            "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all",
+            "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
             mode === "review"
               ? "bg-card text-foreground shadow-sm"
               : "text-foreground-muted hover:text-foreground"
@@ -65,7 +65,7 @@ export default function CategorizePage() {
         <button
           onClick={() => router.push("/finance/categorize?mode=rebuild")}
           className={cn(
-            "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all",
+            "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
             mode === "rebuild"
               ? "bg-card text-foreground shadow-sm"
               : "text-foreground-muted hover:text-foreground"

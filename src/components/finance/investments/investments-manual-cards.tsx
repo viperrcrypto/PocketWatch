@@ -28,7 +28,7 @@ export function InvestmentsManualCards({
 }: ManualCardsProps) {
   if (manualAccounts.length === 0 && !showAddForm) {
     return (
-      <button onClick={onShowAdd} className="w-full border-2 border-dashed border-card-border rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-foreground-muted hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all duration-200">
+      <button onClick={onShowAdd} className="w-full border-2 border-dashed border-card-border rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-foreground-muted hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-colors duration-200">
         <span className="material-symbols-rounded" style={{ fontSize: 32 }}>add_chart</span>
         <span className="text-sm font-medium">Add your first manual investment</span>
         <span className="text-xs">Track real estate, stocks, crypto, and more</span>
@@ -43,12 +43,10 @@ export function InvestmentsManualCards({
       {manualAccounts.map((acct) => {
         const meta = getInvestmentTypeMeta(acct.subtype)
         return (
-          <div key={acct.id} className="group bg-card border border-card-border rounded-xl p-4 hover:border-card-border-hover transition-all duration-200" style={{ borderLeft: `3px solid ${meta.color}` }}>
+          <div key={acct.id} className="group bg-card border border-card-border rounded-xl p-4 hover:border-card-border-hover transition-colors duration-200" style={{ borderLeft: `3px solid ${meta.color}` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: `linear-gradient(135deg, ${meta.color}, color-mix(in srgb, ${meta.color} 80%, #000))` }}>
-                  <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 20 }}>{meta.icon}</span>
-                </div>
+                <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 22, color: meta.color }}>{meta.icon}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{acct.name}</p>
                   <span className="px-1.5 py-0.5 text-[9px] font-medium uppercase rounded" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>{meta.label}</span>
@@ -109,7 +107,7 @@ export function InvestmentsManualCards({
         )
       })}
       {!showAddForm && (
-        <button onClick={onShowAdd} className="border-2 border-dashed border-card-border rounded-xl p-4 flex flex-col items-center justify-center gap-2 min-h-[130px] text-foreground-muted hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all duration-200">
+        <button onClick={onShowAdd} className="border-2 border-dashed border-card-border rounded-xl p-4 flex flex-col items-center justify-center gap-2 min-h-[130px] text-foreground-muted hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-colors duration-200">
           <span className="material-symbols-rounded" style={{ fontSize: 24 }}>add_circle</span>
           <span className="text-xs font-medium">Add Investment</span>
         </button>

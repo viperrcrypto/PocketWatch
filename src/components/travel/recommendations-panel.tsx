@@ -25,7 +25,7 @@ export function RecommendationsPanel({ recommendations }: RecommendationsPanelPr
           href={rec.bookingUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block card p-4 hover:translate-y-[-1px] hover:shadow-md transition-all duration-200"
+          className="block card p-4 hover:translate-y-[-1px] hover:shadow-md transition-colors duration-200"
         >
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0">

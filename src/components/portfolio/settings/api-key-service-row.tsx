@@ -178,7 +178,7 @@ function KeyRow({
             {keyEntry.label || "Key"}
             <button
               onClick={() => { setRenamingKeyId(keyId); setRenameValue(keyEntry.label || "") }}
-              className="opacity-0 group-hover/key:opacity-100 text-foreground-muted hover:text-foreground transition-all"
+              className="opacity-0 group-hover/key:opacity-100 text-foreground-muted hover:text-foreground transition-colors"
               title="Rename key"
             >
               <span className="material-symbols-rounded" style={{ fontSize: 11 }}>edit</span>

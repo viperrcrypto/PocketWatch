@@ -95,7 +95,7 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
               stroke={arc.color}
               strokeWidth="8"
               strokeLinecap="round"
-              className="transition-all duration-700 ease-out"
+              className="transition-[width] duration-700 ease-out"
             />
           ))
         ) : (
@@ -108,7 +108,7 @@ export function BudgetProgressRing({ spent, budget, size = 192, segments = [] }:
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className="transition-all duration-1000 ease-out"
+            className="transition-colors duration-1000 ease-out"
           />
         )}
       </svg>

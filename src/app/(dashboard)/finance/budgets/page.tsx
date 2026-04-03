@@ -243,7 +243,7 @@ function TabButton({ active, onClick, icon, children }: { active: boolean; onCli
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all",
+        "inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors",
         active
           ? "bg-primary text-white shadow-sm"
           : "text-foreground-muted hover:text-foreground hover:bg-foreground/5"

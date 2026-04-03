@@ -71,12 +71,12 @@ export default function BudgetInsightsPage() {
         subtitle="Data-driven analysis of your spending vs budgets"
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/finance/budgets" className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-all">
+            <Link href="/finance/budgets" className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-colors">
               <span className="material-symbols-rounded" style={{ fontSize: 16 }}>arrow_back</span>
               Budgets
             </Link>
             {hasBudgets && (
-              <Link href="/finance/budgets/workshop" className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-all">
+              <Link href="/finance/budgets/workshop" className="flex items-center gap-1.5 px-4 py-2 bg-card border border-card-border text-foreground-muted rounded-lg text-sm font-medium hover:border-card-border-hover hover:text-foreground transition-colors">
                 <span className="material-symbols-rounded" style={{ fontSize: 16 }}>tune</span>
                 Workshop
               </Link>

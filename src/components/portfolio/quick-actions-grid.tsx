@@ -17,7 +17,7 @@ export function QuickActionsGrid() {
         <Link
           key={card.href}
           href={card.href}
-          className="flex items-center gap-5 px-5 py-5 bg-card border border-card-border hover:border-card-border-hover transition-all duration-300 group rounded-xl"
+          className="flex items-center gap-5 px-5 py-5 bg-card border border-card-border hover:border-card-border-hover transition-colors duration-300 group rounded-xl"
         >
           <div className="flex items-center justify-center w-12 h-12 bg-background border border-card-border group-hover:border-card-border-hover flex-shrink-0 transition-colors rounded-lg">
             <span className="material-symbols-rounded text-xl text-foreground-muted group-hover:text-foreground transition-colors duration-300">
@@ -32,7 +32,7 @@ export function QuickActionsGrid() {
               {card.subtitle}
             </p>
           </div>
-          <span className="material-symbols-rounded text-base text-foreground-muted group-hover:text-foreground group-hover:translate-x-1 ml-auto transition-all duration-300">
+          <span className="material-symbols-rounded text-base text-foreground-muted group-hover:text-foreground group-hover:translate-x-1 ml-auto transition-colors duration-300">
             arrow_forward
           </span>
         </Link>

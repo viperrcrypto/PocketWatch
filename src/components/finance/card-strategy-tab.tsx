@@ -199,9 +199,7 @@ export function CardStrategyTab({
                     <tr key={r.category} className="hover:bg-background-secondary/20 transition-colors">
                       <td className="px-5 py-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex w-6 h-6 rounded-md items-center justify-center shadow-sm" style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}>
-                            <span className="material-symbols-rounded text-white" style={{ fontSize: 13 }}>{meta.icon}</span>
-                          </span>
+                          <span className="material-symbols-rounded" style={{ fontSize: 16, color: meta.hex }}>{meta.icon}</span>
                           <span className="font-medium text-foreground">{r.category}</span>
                         </div>
                       </td>
@@ -269,12 +267,7 @@ function MissedRewardsBreakdown({ items }: { items: WalletStrategyItem[] }) {
             <div key={item.category} className="px-5 py-3 group/row hover:bg-background-secondary/20 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm group-hover/row:scale-110 group-hover/row:-rotate-3 transition-all duration-300 ease-out"
-                    style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-                  >
-                    <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 16 }}>{meta.icon}</span>
-                  </div>
+                  <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 18, color: meta.hex }}>{meta.icon}</span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{item.category}</p>
                     <p className="text-[10px] text-foreground-muted">

@@ -137,7 +137,7 @@ function HealthScoreGauge({ score, grade }: { score: number; grade: string }) {
             strokeLinecap="round"
             strokeDasharray={`${arcLength}`}
             strokeDashoffset={dashOffset}
-            className="transition-all duration-1000 ease-out"
+            className="transition-colors duration-1000 ease-out"
             style={{
               filter: `drop-shadow(0 0 6px color-mix(in srgb, ${color} 40%, transparent))`,
             }}

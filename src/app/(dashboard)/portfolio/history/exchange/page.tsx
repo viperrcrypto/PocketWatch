@@ -146,13 +146,13 @@ export default function ExchangeHistoryPage() {
       {/* Cross-link to current balances */}
       <Link
         href="/portfolio/balances/exchange"
-        className="flex items-center gap-3 bg-card border border-card-border hover:border-card-border-hover rounded-xl px-5 py-3 mb-3 group transition-all"
+        className="flex items-center gap-3 bg-card border border-card-border hover:border-card-border-hover rounded-xl px-5 py-3 mb-3 group transition-colors"
       >
         <span className="material-symbols-rounded text-primary text-lg">account_balance_wallet</span>
         <span className="text-sm text-foreground-muted group-hover:text-foreground transition-colors">
           View Current Exchange Balances
         </span>
-        <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground ml-auto text-sm transition-all group-hover:translate-x-0.5">
+        <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground ml-auto text-sm transition-colors group-hover:translate-x-0.5">
           arrow_forward
         </span>
       </Link>

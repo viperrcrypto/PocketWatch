@@ -31,7 +31,7 @@ export function InsightsBanner({ insights }: InsightsBannerProps) {
   return (
     <button
       onClick={() => setExpanded(!expanded)}
-      className="w-full card px-4 py-2.5 text-left transition-all duration-200 hover:shadow-sm"
+      className="w-full card px-4 py-2.5 text-left transition-colors duration-200 hover:shadow-sm"
     >
       {/* Collapsed header */}
       <div className="flex items-center gap-2 min-w-0">

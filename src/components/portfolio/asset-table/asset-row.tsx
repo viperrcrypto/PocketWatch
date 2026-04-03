@@ -87,7 +87,7 @@ export function AssetRow({
           <div className="flex items-center justify-end gap-2">
             <div className="w-16 h-[2px] bg-card-border overflow-hidden flex-shrink-0 rounded-full">
               <div
-                className="h-full bg-foreground/40 transition-all duration-500"
+                className="h-full bg-foreground/40 transition-[width] duration-500"
                 style={{ width: `${Math.min(pct, 100)}%` }}
               />
             </div>

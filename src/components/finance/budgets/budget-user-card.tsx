@@ -145,20 +145,13 @@ function PopulatedState({
               className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-foreground/[0.025] transition-colors"
             >
               {/* Category icon */}
-              <div
-                className="size-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                style={{
-                  background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))`,
-                }}
+              <span
+                className="material-symbols-rounded flex-shrink-0"
+                style={{ fontSize: 16, color: meta.hex }}
+                aria-hidden="true"
               >
-                <span
-                  className="material-symbols-rounded text-white drop-shadow-sm"
-                  style={{ fontSize: 13 }}
-                  aria-hidden="true"
-                >
-                  {meta.icon}
-                </span>
-              </div>
+                {meta.icon}
+              </span>
 
               {/* Bar + label */}
               <div className="flex-1 min-w-0">
@@ -173,7 +166,7 @@ function PopulatedState({
                 {/* Premium progress bar — rounded track, gradient fill */}
                 <div className="h-[5px] rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--foreground) 12%, var(--background-secondary))" }}>
                   <div
-                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    className="h-full rounded-full transition-[width] duration-700 ease-out"
                     style={{
                       width: `${Math.max(barPercent, 1.5)}%`,
                       background: isOver

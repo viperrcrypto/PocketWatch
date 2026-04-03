@@ -54,12 +54,7 @@ export function InsightsCategoryComparison({
             <div key={item.category} className="p-5 hover:bg-background-secondary/30 transition-colors">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                    style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-                  >
-                    <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>{meta.icon}</span>
-                  </div>
+                  <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 20, color: meta.hex }}>{meta.icon}</span>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{item.category}</p>
                     <p className="text-[10px] text-foreground-muted">
@@ -86,7 +81,7 @@ export function InsightsCategoryComparison({
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-medium text-foreground-muted w-16 text-right uppercase tracking-wider">Suggested</span>
                   <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-primary/60 transition-all duration-700" style={{ width: `${dataDrivenWidth}%` }} />
+                    <div className="h-full rounded-full bg-primary/60 transition-[width] duration-700" style={{ width: `${dataDrivenWidth}%` }} />
                   </div>
                   <span className="text-xs font-semibold font-data tabular-nums text-foreground w-16 text-right">{formatCurrency(item.dataDriven, "USD", 0)}</span>
                 </div>
@@ -94,7 +89,7 @@ export function InsightsCategoryComparison({
                   <div className="flex items-center gap-3">
                     <span className="text-[9px] font-medium text-foreground-muted w-16 text-right uppercase tracking-wider">Budget</span>
                     <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-success/60 transition-all duration-700" style={{ width: `${budgetWidth}%` }} />
+                      <div className="h-full rounded-full bg-success/60 transition-[width] duration-700" style={{ width: `${budgetWidth}%` }} />
                     </div>
                     <span className="text-xs font-semibold font-data tabular-nums text-foreground w-16 text-right">{formatCurrency(item.yourBudget, "USD", 0)}</span>
                   </div>
@@ -103,7 +98,7 @@ export function InsightsCategoryComparison({
                   <div className="flex items-center gap-3">
                     <span className="text-[9px] font-medium text-foreground-muted w-16 text-right uppercase tracking-wider">Spent</span>
                     <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-foreground-muted/50 transition-all duration-700" style={{ width: `${spentWidth}%` }} />
+                      <div className="h-full rounded-full bg-foreground-muted/50 transition-[width] duration-700" style={{ width: `${spentWidth}%` }} />
                     </div>
                     <span className="text-xs font-semibold font-data tabular-nums text-foreground-muted w-16 text-right">{formatCurrency(item.currentSpent, "USD", 0)}</span>
                   </div>

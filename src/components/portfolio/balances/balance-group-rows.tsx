@@ -56,7 +56,7 @@ export function BalanceGroupRows({
           <td className="px-1 py-3 text-center">
             <button
               onClick={(e) => { e.stopPropagation(); onHideToken(group.displayName) }}
-              className="opacity-0 group-hover/row:opacity-100 p-1 rounded hover:bg-card-border/40 text-foreground-muted hover:text-foreground transition-all"
+              className="opacity-0 group-hover/row:opacity-100 p-1 rounded hover:bg-card-border/40 text-foreground-muted hover:text-foreground transition-colors"
               title={`Hide ${group.displayName}`}
             >
               <span className="material-symbols-rounded" style={{ fontSize: 16 }}>visibility_off</span>

@@ -119,7 +119,7 @@ export function CardRewardMultipliers({ multipliers }: {
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {multipliers.map((m) => (
-          <div key={m.category} className="p-5 rounded-xl bg-card border border-card-border hover:border-primary/30 transition-all">
+          <div key={m.category} className="p-5 rounded-xl bg-card border border-card-border hover:border-primary/30 transition-colors">
             <span className="material-symbols-rounded text-primary text-2xl mb-2 block">{m.icon}</span>
             <p className="text-foreground-muted text-xs font-medium">{m.category}</p>
             <p className="text-foreground text-xl font-bold">{m.rate}x {m.unit}</p>
@@ -145,7 +145,7 @@ export function CardTransferPartners({ partners }: {
       </h3>
       <div className="flex flex-wrap gap-2">
         {partners.map((partner) => (
-          <div key={partner.name} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-card-border hover:border-primary/30 transition-all">
+          <div key={partner.name} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-card-border hover:border-primary/30 transition-colors">
             {partner.shortCode && (
               <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">{partner.shortCode}</div>
             )}
@@ -188,7 +188,7 @@ export function CardBenefitsAI({ benefits }: {
       </h3>
       <div className="space-y-3">
         {filtered.map((benefit, i) => (
-          <div key={i} className="p-4 rounded-xl bg-card border border-card-border hover:bg-card-elevated transition-all">
+          <div key={i} className="p-4 rounded-xl bg-card border border-card-border hover:bg-card-elevated transition-colors">
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
                 <span className="material-symbols-rounded" style={{ fontSize: 20 }}>{benefit.icon}</span>
@@ -275,7 +275,7 @@ export function CardAIRefreshSection({
         {noProvider ? (
           <Link
             href="/settings?tab=finance#ai-intelligence"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-hover active:scale-95 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-hover active:scale-95 transition-colors"
           >
             <span className="material-symbols-rounded" style={{ fontSize: 18 }}>settings</span>
             Configure AI Provider
@@ -285,7 +285,7 @@ export function CardAIRefreshSection({
             onClick={onRefresh}
             disabled={isPending}
             className={cn(
-              "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all",
+              "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors",
               isPending ? "bg-card-elevated text-foreground-muted cursor-not-allowed" : "bg-primary/10 text-primary hover:bg-primary/20 active:scale-95",
             )}
           >

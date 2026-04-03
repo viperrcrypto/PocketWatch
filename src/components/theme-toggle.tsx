@@ -23,7 +23,7 @@ export function ThemeToggle() {
   useEffect(() => {
     if (!mounted) return
     document.documentElement.setAttribute("data-theme", theme)
-    document.documentElement.style.background = theme === "dark" ? "#000" : "#fff"
+    document.documentElement.style.background = theme === "dark" ? "#0C0C0E" : "#fff"
     localStorage.setItem("theme", theme)
   }, [theme, mounted])
 

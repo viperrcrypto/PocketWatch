@@ -64,12 +64,7 @@ export function BudgetCategoryRow({
         aria-expanded={expanded}
       >
         {/* Category icon */}
-        <div
-          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
-          style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-        >
-          <span className="material-symbols-rounded text-white drop-shadow-sm" style={{ fontSize: 18 }}>{meta.icon}</span>
-        </div>
+        <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 20, color: meta.hex }}>{meta.icon}</span>
 
         {/* Category name + progress */}
         <div className="flex-1 min-w-0">

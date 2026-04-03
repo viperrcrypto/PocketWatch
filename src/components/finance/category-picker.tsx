@@ -82,7 +82,7 @@ export function CategoryPicker({ selected, onSelect }: CategoryPickerProps) {
             key={cat.key}
             onClick={() => onSelect(cat.key, null)}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left",
+              "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left",
               selected === cat.key
                 ? "bg-foreground text-background"
                 : "hover:bg-background-secondary text-foreground-muted hover:text-foreground"
@@ -123,7 +123,7 @@ export function CategoryPicker({ selected, onSelect }: CategoryPickerProps) {
                 key={c}
                 onClick={() => setNewColor(c)}
                 className={cn(
-                  "w-5 h-5 rounded-full transition-all",
+                  "w-5 h-5 rounded-full transition-colors",
                   newColor === c ? "ring-2 ring-foreground ring-offset-1 ring-offset-card" : ""
                 )}
                 style={{ backgroundColor: c }}

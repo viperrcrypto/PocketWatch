@@ -119,7 +119,7 @@ export function CardDetailHero({
 
         <Link
           href="/finance/transactions"
-          className="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-hover active:opacity-90 transition-all text-center text-sm block"
+          className="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-hover active:opacity-90 transition-colors text-center text-sm block"
         >
           View Transactions
         </Link>

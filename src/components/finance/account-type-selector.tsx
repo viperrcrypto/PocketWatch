@@ -37,7 +37,7 @@ export function AccountTypeSelector({ type, onChangeType, className }: AccountTy
     <div ref={ref} className={cn("relative inline-block", className)}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-        className={cn("badge inline-flex items-center gap-1 cursor-pointer hover:ring-1 hover:ring-foreground/20 transition-all", current.color)}
+        className={cn("badge inline-flex items-center gap-1 cursor-pointer hover:ring-1 hover:ring-foreground/20 transition-colors", current.color)}
         title="Change account type"
       >
         <span className="material-symbols-rounded text-xs">{current.icon}</span>

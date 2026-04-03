@@ -220,13 +220,13 @@ export default function ExchangeBalancesPage() {
       {rows.length > 0 && (
         <Link
           href="/portfolio/history/exchange"
-          className="flex items-center gap-3 bg-card border border-card-border hover:border-card-border-hover rounded-xl px-5 py-3 mb-4 group transition-all"
+          className="flex items-center gap-3 bg-card border border-card-border hover:border-card-border-hover rounded-xl px-5 py-3 mb-4 group transition-colors"
         >
           <span className="material-symbols-rounded text-primary text-lg">swap_vert</span>
           <span className="text-sm text-foreground-muted group-hover:text-foreground transition-colors">
             View Deposit &amp; Withdrawal History
           </span>
-          <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground ml-auto text-sm transition-all group-hover:translate-x-0.5">
+          <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground ml-auto text-sm transition-colors group-hover:translate-x-0.5">
             arrow_forward
           </span>
         </Link>

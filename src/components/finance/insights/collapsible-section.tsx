@@ -27,7 +27,7 @@ export function CollapsibleSection({ title, children, defaultOpen = true, count 
         </div>
       </button>
       <div className={cn(
-        "overflow-hidden transition-all duration-200",
+        "overflow-hidden transition-colors duration-200",
         open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
       )}>
         {children}

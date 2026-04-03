@@ -25,7 +25,7 @@ export function OverviewStatCard({
   const borderColor = accentColor || "#2a2a2a"
   return (
     <div
-      className="bg-card border border-card-border p-5 hover:border-card-border-hover transition-all duration-300 group rounded-xl"
+      className="bg-card border border-card-border p-5 hover:border-card-border-hover transition-colors duration-300 group rounded-xl"
       style={{ borderLeft: `2px solid ${borderColor}` }}
     >
       <div className="flex items-center justify-between mb-4">

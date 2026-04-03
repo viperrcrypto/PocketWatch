@@ -156,7 +156,7 @@ export function SubscriptionCard({
   const txns = recentTransactions ?? []
 
   return (
-    <div className="bg-card border border-card-border rounded-xl p-4 space-y-3 hover:border-card-border-hover hover:shadow-md transition-all duration-200">
+    <div className="bg-card border border-card-border rounded-xl p-4 space-y-3 hover:border-card-border-hover transition-colors duration-200">
       {/* Header: icon + name + amount */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -205,7 +205,7 @@ export function SubscriptionCard({
                 <button
                   onClick={() => setShowFreqPicker(!showFreqPicker)}
                   className={cn(
-                    "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-pointer hover:ring-1 hover:ring-foreground-muted/20 transition-all",
+                    "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-pointer hover:ring-1 hover:ring-foreground-muted/20 transition-colors",
                     FREQUENCY_COLORS[frequency] ?? "bg-background-secondary text-foreground-muted"
                   )}
                   title="Click to change frequency"
@@ -227,7 +227,7 @@ export function SubscriptionCard({
                           setShowFreqPicker(false)
                         }}
                         className={cn(
-                          "px-2 py-1 rounded text-[10px] font-medium transition-all",
+                          "px-2 py-1 rounded text-[10px] font-medium transition-colors",
                           opt.value === frequency
                             ? cn(FREQUENCY_COLORS[opt.value], "ring-1 ring-current/20")
                             : "bg-background-secondary/50 text-foreground-muted hover:bg-background-secondary"

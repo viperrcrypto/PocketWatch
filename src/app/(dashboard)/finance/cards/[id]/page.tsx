@@ -194,7 +194,7 @@ export default function CardDetailPage({
           {noProvider ? (
             <Link
               href="/settings?tab=finance#ai-intelligence"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary-hover transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary-hover transition-colors"
             >
               Configure AI
             </Link>
@@ -203,7 +203,7 @@ export default function CardDetailPage({
               onClick={handleAIRefresh}
               disabled={autoEnrich.isPending}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
                 autoEnrich.isPending
                   ? "bg-card-elevated text-foreground-muted cursor-not-allowed"
                   : "bg-primary/10 text-primary hover:bg-primary/20 active:scale-95",

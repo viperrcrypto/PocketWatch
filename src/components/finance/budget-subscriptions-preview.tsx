@@ -48,7 +48,7 @@ export function BudgetSubscriptionsPreview({
         {subscriptions.map((sub) => (
           <div
             key={sub.id}
-            className="flex items-center justify-between px-5 py-3.5 hover:bg-primary-subtle hover:scale-[1.005] transition-all rounded-xl mx-1"
+            className="flex items-center justify-between px-5 py-3.5 hover:bg-primary-subtle hover:scale-[1.005] transition-colors rounded-xl mx-1"
           >
             <div className="flex items-center gap-3 min-w-0">
               <MerchantIcon logoUrl={sub.logoUrl} category={sub.category} />

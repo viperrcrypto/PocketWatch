@@ -201,7 +201,7 @@ export function CardEditModal({ open, onClose, card }: CardEditModalProps) {
             onClick={handleSave}
             disabled={!cardName.trim() || saveCreditCard.isPending}
             className={cn(
-              "px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-all",
+              "px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-colors",
               saveCreditCard.isPending
                 ? "bg-card-elevated text-foreground-muted cursor-not-allowed"
                 : "bg-primary text-white hover:bg-primary-hover active:scale-95",

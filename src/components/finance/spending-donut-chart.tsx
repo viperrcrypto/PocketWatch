@@ -301,7 +301,7 @@ export function SpendingDonutChart({ data, height = 250 }: SpendingDonutChartPro
             <div
               key={slice.index}
               className={cn(
-                "flex items-center gap-2.5 text-xs animate-fade-up cursor-default rounded-lg px-2 py-1.5 -mx-2 transition-all duration-200",
+                "flex items-center gap-2.5 text-xs cursor-default rounded-lg px-2 py-1.5 -mx-2 transition-colors duration-200",
                 isActive && "bg-foreground/[0.04]",
                 activeIndex !== null && !isActive && "opacity-40"
               )}

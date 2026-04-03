@@ -36,7 +36,7 @@ export function WalletStrategyGrid({ strategies }: WalletStrategyGridProps) {
           <div
             key={s.category}
             className={cn(
-              "relative bg-card border rounded-xl p-4 transition-all group hover:shadow-sm",
+              "relative bg-card border rounded-xl p-4 transition-colors group",
               isTop ? "border-primary/40 bg-primary-subtle" : "border-card-border hover:border-card-border-hover"
             )}
           >
@@ -47,14 +47,9 @@ export function WalletStrategyGrid({ strategies }: WalletStrategyGridProps) {
             )}
 
             <div className="flex items-start gap-3">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 group-hover:shadow-md group-hover:-rotate-3 transition-all duration-300 ease-out"
-                style={{ background: `linear-gradient(135deg, ${meta.hex}, color-mix(in srgb, ${meta.hex} 80%, #000))` }}
-              >
-                <span className="material-symbols-rounded text-white drop-shadow-sm group-hover:scale-110 transition-transform duration-300" style={{ fontSize: 18 }}>
-                  {meta.icon}
-                </span>
-              </div>
+              <span className="material-symbols-rounded flex-shrink-0" style={{ fontSize: 20, color: meta.hex }}>
+                {meta.icon}
+              </span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">{s.category}</p>
                 <p className="text-[10px] text-foreground-muted truncate mt-0.5">{s.cardName}</p>
@@ -80,7 +75,7 @@ export function WalletStrategyGrid({ strategies }: WalletStrategyGridProps) {
               <div className="h-1 rounded-full bg-background-secondary overflow-hidden">
                 <div
                   className={cn(
-                    "h-full rounded-full transition-all duration-500",
+                    "h-full rounded-full transition-[width] duration-500",
                     isTop ? "bg-primary" : "bg-foreground-muted/30"
                   )}
                   style={{ width: `${topRate > 0 ? Math.max((s.rewardRate / topRate) * 100, 8) : 0}%` }}

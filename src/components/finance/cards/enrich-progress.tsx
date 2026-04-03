@@ -26,7 +26,7 @@ export function EnrichProgressBar({ progress }: { progress: EnrichProgress }) {
       <div className="h-1 bg-card-elevated rounded-full overflow-hidden">
         <div
           className={cn(
-            "h-full rounded-full transition-all duration-500",
+            "h-full rounded-full transition-[width] duration-500",
             isDone ? (hasFailed ? "bg-warning" : "bg-success") : "bg-primary",
           )}
           style={{ width: `${(progress.current / progress.total) * 100}%` }}

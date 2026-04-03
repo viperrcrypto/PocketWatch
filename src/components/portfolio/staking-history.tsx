@@ -59,7 +59,7 @@ function YearTab({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
         active
           ? "bg-card text-foreground shadow-sm"
           : "text-foreground-muted hover:text-foreground"
