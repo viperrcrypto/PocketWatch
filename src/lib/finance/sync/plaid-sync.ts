@@ -15,7 +15,7 @@ import { markJobRunning, markJobCompleted, markJobFailed } from "./plaid-sync-jo
 import type { SyncResult } from "./helpers"
 
 export async function syncPlaid(
-  institution: Awaited<ReturnType<typeof db.financeInstitution.findUnique>> & { accounts: Array<{ id: string; externalId: string; name: string }> }
+  institution: Awaited<ReturnType<typeof db.financeInstitution.findUnique>> & { accounts: Array<{ id: string; externalId: string; name: string; type: string }> }
 ): Promise<SyncResult> {
   if (!institution!.plaidAccessToken) {
     throw new Error("No Plaid access token")
@@ -39,6 +39,8 @@ export async function syncPlaid(
     const newNameIsGeneric = isUnidentifiedCard(displayName)
     const currentNameIsGeneric = !currentName || isUnidentifiedCard(currentName)
     const shouldUpdateName = currentNameIsGeneric && !newNameIsGeneric
+    // Don't overwrite a user-set account type on sync — only set it if missing.
+    const shouldUpdateType = !existing?.type
 
     await db.financeAccount.updateMany({
       where: {
@@ -47,7 +49,7 @@ export async function syncPlaid(
       },
       data: {
         ...(shouldUpdateName ? { name: displayName } : {}),
-        type: mappedType,
+        ...(shouldUpdateType ? { type: mappedType } : {}),
         currentBalance: pa.balances.current,
         availableBalance: pa.balances.available,
         creditLimit: pa.balances.limit,

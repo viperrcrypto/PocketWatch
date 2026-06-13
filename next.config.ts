@@ -39,18 +39,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Keep googleapis (500KB+) out of the client bundle — only used in API routes
-  serverExternalPackages: ["googleapis", "ccxt", "node-cron", "pdfjs-dist"],
+  // Keep heavy server-only packages out of the client bundle
+  serverExternalPackages: ["ccxt", "node-cron", "pdfjs-dist"],
   turbopack: {
     root: __dirname,
   },
   experimental: {
     optimizePackageImports: [
       "viem",
-      "wagmi",
       "date-fns",
-      "@reown/appkit",
-      "@reown/appkit-adapter-wagmi",
       "@tanstack/react-query",
       "sonner",
       "@radix-ui/react-avatar",
@@ -83,7 +80,11 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'none'",
-              "upgrade-insecure-requests",
+              // No `upgrade-insecure-requests`: WKWebView (the Tauri desktop
+              // app) doesn't treat http://localhost as trustworthy and upgrades
+              // every asset to https://localhost -> TLS failure (-1200) -> black
+              // window. All assets are same-origin anyway, and over the tunnel
+              // Cloudflare already serves https, so the directive adds nothing.
             ].join("; "),
           },
           {

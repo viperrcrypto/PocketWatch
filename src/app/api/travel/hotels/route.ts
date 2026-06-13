@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
     const result = await searchHotels(
       { query, checkInDate: checkIn, checkOutDate: checkOut, adults },
-      { serpApiKey, atfApiKey },
+      { serpApiKey, atfApiKey, trivago: true },
     )
 
     return NextResponse.json(result)

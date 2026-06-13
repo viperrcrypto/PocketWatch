@@ -77,12 +77,8 @@ export default function RootLayout({
       <head>
         {/* Prevent flash — match default theme background */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||((!t)&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.background='#0C0C0E';}else{document.documentElement.style.background='#fff';}}catch(e){}})()` }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"
-        />
+        {/* Material Symbols are self-hosted in globals.css (see the @font-face
+            blocks) — no render-blocking external Google Fonts stylesheet needed. */}
       </head>
       <body
         className={`${dmSans.variable} ${jetbrainsMono.variable} antialiased`}

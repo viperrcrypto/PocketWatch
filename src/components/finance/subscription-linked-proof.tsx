@@ -50,7 +50,7 @@ export function SubscriptionLinkedProof({ transaction }: Props) {
             {formatCurrency(transaction.amount)}
           </span>
           <Link
-            href={`/finance/transactions?search=${encodeURIComponent(transaction.merchantName || transaction.name)}&highlight=${transaction.id}`}
+            href={`/finance/transactions?highlight=${transaction.id}`}
             className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-primary hover:bg-primary-muted transition-colors"
           >
             <span className="material-symbols-rounded text-xs">open_in_new</span>

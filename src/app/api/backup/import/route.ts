@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { getCurrentUser, verifyPassword, SESSION_COOKIE } from "@/lib/auth"
+import { isSecureRequest } from "@/lib/request-proto"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
 import { decryptBackup } from "@/lib/backup/backup-crypto"
@@ -79,7 +80,9 @@ export async function POST(req: NextRequest) {
     const cookieStore = await cookies()
     cookieStore.set(SESSION_COOKIE, result.sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      // Track the real transport (see request-proto.ts) — WKWebView drops
+      // Secure cookies over plain http://localhost.
+      secure: await isSecureRequest(),
       sameSite: "strict",
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       path: "/",

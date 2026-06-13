@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth"
 import { apiError } from "@/lib/api-error"
 import { db } from "@/lib/db"
+import { buildBalancesForUser } from "@/lib/portfolio/balances-read"
 
 /**
  * GET /api/net-worth
@@ -55,41 +56,47 @@ export async function GET() {
 
     const fiatNetWorth = fiatCash + fiatInvestments - fiatDebt
 
-    // ─── Portfolio: latest live snapshot value ───
-    // Prefer live_refresh snapshots (from actual provider fetches) over
-    // reconstructed ones, which can undercount by missing chains/providers.
-    const latestSnapshot = await db.portfolioSnapshot.findFirst({
+    // ─── Portfolio: LIVE cached value (same source as the /portfolio page) ───
+    // Previously this read the latest `live_refresh` snapshot, but that snapshot
+    // is only written when EVERY wallet returns in one fetch — which never happens
+    // with 100+ wallets under provider rate-limiting, so it was frozen at a
+    // months-old, near-empty value (~$29k). Read the live multi-provider cache
+    // instead (already includes exchange balances), and keep the best snapshot
+    // only as a floor so a cold/partial cache can't understate net worth.
+    let liveCrypto = 0
+    try {
+      const live = await buildBalancesForUser(user.id)
+      if (!live.error) liveCrypto = live.totalValue
+    } catch (err) {
+      console.warn("[net-worth] live portfolio read failed, falling back to snapshot:", err)
+    }
+
+    // Best available snapshot (+ exchange snapshot) as a fallback/floor.
+    const fallbackSnapshot = await db.portfolioSnapshot.findFirst({
       where: { userId: user.id, source: "live_refresh" },
       orderBy: { createdAt: "desc" },
-      select: { totalValue: true, createdAt: true, metadata: true },
-    })
-    // Fallback to any snapshot if no live_refresh exists
-    const fallbackSnapshot = latestSnapshot ?? await db.portfolioSnapshot.findFirst({
+      select: { totalValue: true, metadata: true },
+    }) ?? await db.portfolioSnapshot.findFirst({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
-      select: { totalValue: true, createdAt: true, metadata: true },
+      select: { totalValue: true, metadata: true },
     })
 
-    // Use the on-chain value from the snapshot, then add exchange balances
-    // from the latest exchange snapshot so exchange holdings aren't stale
-    let cryptoValue = fallbackSnapshot?.totalValue ?? 0
-
-    // If the live_refresh snapshot doesn't include exchange data, add latest exchange snapshot
+    let snapshotCrypto = fallbackSnapshot?.totalValue ?? 0
     const snapshotMeta = fallbackSnapshot?.metadata
       ? (typeof fallbackSnapshot.metadata === "string" ? JSON.parse(fallbackSnapshot.metadata) : fallbackSnapshot.metadata)
       : null
-    const snapshotHasExchange = (snapshotMeta?.exchangeTotalValue ?? 0) > 0
-
-    if (!snapshotHasExchange) {
+    if ((snapshotMeta?.exchangeTotalValue ?? 0) <= 0) {
       const latestExchangeSnap = await db.exchangeBalanceSnapshot.findFirst({
         where: { userId: user.id },
         orderBy: { createdAt: "desc" },
         select: { totalValue: true },
       })
-      if (latestExchangeSnap) {
-        cryptoValue += latestExchangeSnap.totalValue
-      }
+      if (latestExchangeSnap) snapshotCrypto += latestExchangeSnap.totalValue
     }
+
+    // Prefer the live value; never show less than the last good snapshot.
+    const cryptoValue = Math.max(liveCrypto, snapshotCrypto)
 
     // ─── Combined ───
     const totalNetWorth = fiatNetWorth + cryptoValue
@@ -156,7 +163,8 @@ export async function GET() {
       },
       crypto: {
         value: cryptoValue,
-        snapshotAt: latestSnapshot?.createdAt ?? null,
+        // Live portfolio total (current); null = not a stale snapshot timestamp.
+        snapshotAt: null,
       },
       history,
     })

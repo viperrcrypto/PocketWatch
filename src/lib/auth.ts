@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers"
 import { timingSafeEqual } from "crypto"
+import { isSecureRequest } from "./request-proto"
 import { db } from "./db"
 import bcrypt from "bcryptjs"
 import { generateSalt, deriveKey, wrapDek, unwrapDek } from "./per-user-crypto"
@@ -9,6 +10,22 @@ import { withEncryptionKey } from "./encryption-context"
 export const SESSION_COOKIE = "pocketwatch_session"
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 const SALT_ROUNDS = 12
+
+// Short-lived auth caches. This is a single-user vault, so the session and user
+// rows change rarely but are read 3x per authenticated request (getSession in
+// getCurrentUser, then again in withUserEncryption) by many polling hooks. The
+// TTL is short and the caches are cleared on every session mutation, so an
+// expired/rotated session is never served beyond it.
+const AUTH_CACHE_TTL = 15_000
+type SessionRow = Awaited<ReturnType<typeof db.session.findUnique>>
+type UserRow = Awaited<ReturnType<typeof db.user.findUnique>>
+let sessionCache: { id: string; row: SessionRow; at: number } | null = null
+let userCache: { id: string; row: UserRow; at: number } | null = null
+
+function clearAuthCache() {
+  sessionCache = null
+  userCache = null
+}
 
 function secureCompare(a: string, b: string): boolean {
   const bufA = Buffer.from(a)
@@ -60,6 +77,7 @@ export async function createSession(userId: string, dekHex?: string) {
 
   // Delete any existing sessions (single user, single session)
   await db.session.deleteMany({ where: { userId } })
+  clearAuthCache()
 
   const session = await db.session.create({
     data: {
@@ -73,7 +91,9 @@ export async function createSession(userId: string, dekHex?: string) {
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, session.id, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Track the real transport: WebKit drops Secure cookies over http://localhost
+    // (the desktop app), while the tunnel is https and keeps Secure.
+    secure: await isSecureRequest(),
     sameSite: "strict",
     expires: expiresAt,
     path: "/",
@@ -87,9 +107,13 @@ export async function getSession() {
   const sessionId = cookieStore.get(SESSION_COOKIE)?.value
 
   if (sessionId) {
-    const session = await db.session.findUnique({
-      where: { id: sessionId },
-    })
+    let session: SessionRow
+    if (sessionCache && sessionCache.id === sessionId && Date.now() - sessionCache.at < AUTH_CACHE_TTL) {
+      session = sessionCache.row
+    } else {
+      session = await db.session.findUnique({ where: { id: sessionId } })
+      sessionCache = { id: sessionId, row: session, at: Date.now() }
+    }
 
     if (session && session.expiresAt >= new Date()) {
       return session
@@ -97,6 +121,7 @@ export async function getSession() {
 
     if (session) {
       await db.session.delete({ where: { id: sessionId } })
+      clearAuthCache()
     }
   }
 
@@ -120,9 +145,15 @@ export async function getCurrentUser() {
     return null
   }
 
-  return db.user.findUnique({
+  if (userCache && userCache.id === session.userId && Date.now() - userCache.at < AUTH_CACHE_TTL) {
+    return userCache.row
+  }
+
+  const user = await db.user.findUnique({
     where: { id: session.userId },
   })
+  userCache = { id: session.userId, row: user, at: Date.now() }
+  return user
 }
 
 export async function deleteSession() {
@@ -134,6 +165,7 @@ export async function deleteSession() {
       console.warn("[auth] Failed to delete session:", err)
     })
     cookieStore.delete(SESSION_COOKIE)
+    clearAuthCache()
   }
 }
 
@@ -221,6 +253,7 @@ export async function createSessionWithWrappedDek(
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
   await db.session.deleteMany({ where: { userId } })
+  clearAuthCache()
 
   const session = await db.session.create({
     data: {
@@ -234,7 +267,9 @@ export async function createSessionWithWrappedDek(
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, session.id, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Track the real transport (see request-proto.ts) — WKWebView drops Secure
+    // cookies over plain http://localhost.
+    secure: await isSecureRequest(),
     sameSite: "strict",
     expires: expiresAt,
     path: "/",
@@ -251,4 +286,5 @@ export async function resetVault() {
   await db.session.deleteMany()
   // Delete all users (cascade deletes everything)
   await db.user.deleteMany()
+  clearAuthCache()
 }

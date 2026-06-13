@@ -55,6 +55,7 @@ export function CardsBillsSection({
         <FinanceHeroCard
           label="Coming Up"
           value={`${upcomingCount} upcoming · ${formatCurrency(upcomingTotal)}`}
+          beam
           footerStats={[
             { label: "Bills & Subscriptions", value: formatCurrency(obligationsTotal) },
             { label: "Card Payments", value: formatCurrency(cardPaymentsTotal) },

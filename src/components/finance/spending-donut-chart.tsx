@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useMemo, useRef, useCallback } from "react"
+import Link from "next/link"
 import { useChartTheme } from "@/hooks/use-chart-theme"
 import { formatCurrency, cn } from "@/lib/utils"
 
 interface SpendingDonutChartProps {
   data: Array<{ category: string; amount: number }>
   height?: number
+  /** YYYY-MM of the displayed month, so category drill-through scopes to it. */
+  month?: string
 }
 
 // ─── Geometry helpers ───
@@ -80,7 +83,7 @@ const SPENDING_PALETTE = [
   "#A855F7", // purple
 ]
 
-export function SpendingDonutChart({ data, height = 250 }: SpendingDonutChartProps) {
+export function SpendingDonutChart({ data, height = 250, month }: SpendingDonutChartProps) {
   useChartTheme() // keep subscription for theme changes
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; slice: ArcSlice } | null>(null)
@@ -297,18 +300,16 @@ export function SpendingDonutChart({ data, height = 250 }: SpendingDonutChartPro
           const isActive = activeIndex === slice.index
           const delayMs = LEGEND_BASE_DELAY_MS + slice.index * LEGEND_STAGGER_MS
           const pctDisplay = (slice.pct * 100).toFixed(1)
-          return (
-            <div
-              key={slice.index}
-              className={cn(
-                "flex items-center gap-2.5 text-xs cursor-default rounded-lg px-2 py-1.5 -mx-2 transition-colors duration-200",
-                isActive && "bg-foreground/[0.04]",
-                activeIndex !== null && !isActive && "opacity-40"
-              )}
-              style={{ animationDelay: `${delayMs}ms` }}
-              onMouseEnter={() => setActiveIndex(slice.index)}
-              onMouseLeave={() => setActiveIndex(null)}
-            >
+          // The consolidated "Other" bucket and blank categories aren't linkable.
+          const linkable = slice.category !== "Other" && slice.category !== ""
+          const rowClass = cn(
+            "flex items-center gap-2.5 text-xs rounded-lg px-2 py-1.5 -mx-2 transition-colors duration-200",
+            linkable ? "cursor-pointer hover:bg-foreground/[0.06]" : "cursor-default",
+            isActive && "bg-foreground/[0.04]",
+            activeIndex !== null && !isActive && "opacity-40"
+          )
+          const rowInner = (
+            <>
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-transform duration-200"
                 style={{
@@ -329,6 +330,28 @@ export function SpendingDonutChart({ data, height = 250 }: SpendingDonutChartPro
               <span className="font-data text-foreground-muted tabular-nums flex-shrink-0 w-10 text-right text-[10px]">
                 {pctDisplay}%
               </span>
+            </>
+          )
+          const handlers = {
+            onMouseEnter: () => setActiveIndex(slice.index),
+            onMouseLeave: () => setActiveIndex(null),
+          }
+          if (linkable) {
+            return (
+              <Link
+                key={slice.index}
+                href={`/finance/transactions?category=${encodeURIComponent(slice.category)}${month ? `&month=${month}` : ""}`}
+                className={rowClass}
+                style={{ animationDelay: `${delayMs}ms` }}
+                {...handlers}
+              >
+                {rowInner}
+              </Link>
+            )
+          }
+          return (
+            <div key={slice.index} className={rowClass} style={{ animationDelay: `${delayMs}ms` }} {...handlers}>
+              {rowInner}
             </div>
           )
         })}

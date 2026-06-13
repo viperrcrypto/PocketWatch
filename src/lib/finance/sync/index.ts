@@ -21,7 +21,7 @@ export { saveFinanceSnapshot, backfillHistoricalSnapshots } from "./snapshots"
  */
 export async function syncInstitution(
   institutionId: string,
-  options?: { skipReconcile?: boolean }
+  options?: { skipReconcile?: boolean; force?: boolean }
 ): Promise<SyncResult> {
   const institution = await db.financeInstitution.findUnique({
     where: { id: institutionId },
@@ -43,7 +43,7 @@ export async function syncInstitution(
   try {
     const result = institution.provider === "plaid"
       ? await syncPlaid(institution)
-      : await syncSimpleFIN(institution)
+      : await syncSimpleFIN(institution, options?.force ?? false)
 
     if (!options?.skipReconcile) {
       try {

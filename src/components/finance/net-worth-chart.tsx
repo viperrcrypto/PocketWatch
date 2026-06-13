@@ -129,7 +129,7 @@ export function NetWorthChart({ data, range, height = 300, color }: NetWorthChar
   const lineColor = useMemo(() => {
     if (color) return color
     if (points.length >= 2 && points[points.length - 1].v < points[0].v) return "#ef4444"
-    return "#6366f1"
+    return "#0A84FF" // brand Apple-blue (was off-brand indigo)
   }, [color, points])
 
   // ─── Layout ───
@@ -229,7 +229,8 @@ export function NetWorthChart({ data, range, height = 300, color }: NetWorthChar
       >
         <defs>
           <linearGradient id="nw-area-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={lineColor} stopOpacity={0.22} />
+            <stop offset="0%" stopColor={lineColor} stopOpacity={0.28} />
+            <stop offset="55%" stopColor={lineColor} stopOpacity={0.10} />
             <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
           </linearGradient>
         </defs>

@@ -140,13 +140,15 @@ export async function POST(request: NextRequest) {
     // Call AI provider (stored key or CLI fallback)
     let provider: AIProviderType
     let rawText: string
+    // Web search so insights can reference current external context when useful.
     if (useCLIFallback) {
       provider = "ai_claude_cli"
-      rawText = await callAIProviderRaw({ provider, apiKey: "enabled", model: undefined }, prompt)
+      rawText = await callAIProviderRaw({ provider, apiKey: "enabled", model: undefined }, prompt, { webSearch: true })
     } else {
       const apiKey = await decryptCredential(providerKey.apiKeyEnc)
       provider = providerKey.serviceName as AIProviderType
-      rawText = await callAIProviderRaw({ provider, apiKey, model: providerKey.model ?? undefined }, prompt)
+      const webSearch = provider === "ai_claude_api" || provider === "ai_claude_cli"
+      rawText = await callAIProviderRaw({ provider, apiKey, model: providerKey.model ?? undefined }, prompt, { webSearch })
     }
     const analysis = parseBudgetAIResponse(rawText)
 

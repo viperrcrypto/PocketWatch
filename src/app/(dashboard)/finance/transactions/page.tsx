@@ -16,34 +16,8 @@ import { getCategoryMeta, FINANCE_CATEGORIES } from "@/lib/finance/categories"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { BulkActionBar } from "@/components/finance/bulk-action-bar"
-
-const DATE_PRESETS = [
-  { key: "this-month", label: "This Month" },
-  { key: "last-month", label: "Last Month" },
-  { key: "3-months", label: "3M" },
-  { key: "ytd", label: "YTD" },
-  { key: "all", label: "All" },
-] as const
-
-function getDateRange(preset: string): { start?: string; end?: string } {
-  const now = new Date()
-  switch (preset) {
-    case "this-month":
-      return { start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0] }
-    case "last-month": {
-      const s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const e = new Date(now.getFullYear(), now.getMonth(), 0)
-      return { start: s.toISOString().split("T")[0], end: e.toISOString().split("T")[0] }
-    }
-    case "3-months":
-      return { start: new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().split("T")[0] }
-    case "ytd":
-      return { start: new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0] }
-    case "all":
-    default:
-      return {}
-  }
-}
+import { DATE_PRESETS, getDateRange } from "@/components/finance/transactions-helpers"
+import { useHighlightScroll } from "@/hooks/finance/use-highlight-scroll"
 
 const categoryKeys = Object.keys(FINANCE_CATEGORIES)
 
@@ -55,10 +29,18 @@ export default function FinanceTransactionsPage() {
   const [search, setSearch] = useState(initialSearch)
   const [category, setCategory] = useState(searchParams.get("category") ?? "")
   const [accountId, setAccountId] = useState(searchParams.get("account") ?? "")
-  const [dateRange, setDateRange] = useState(category || initialSearch ? "all" : "this-month")
+  // Optional ?month=YYYY-MM scopes to that calendar month (drill-through from the
+  // dashboard spending donut, so the filtered totals match the month clicked).
+  const monthParam = /^\d{4}-\d{2}$/.test(searchParams.get("month") ?? "") ? searchParams.get("month")! : ""
+  const monthEnd = monthParam
+    ? new Date(Number(monthParam.slice(0, 4)), Number(monthParam.slice(5, 7)), 0).toISOString().slice(0, 10)
+    : ""
+  // A ?highlight target may be any age, so default to the all-time range so the
+  // linked transaction is actually in the result set (and can be scrolled to).
+  const [dateRange, setDateRange] = useState(monthParam ? "custom" : (highlightId || category || initialSearch ? "all" : "this-month"))
   const [txType, setTxType] = useState("")
-  const [customStart, setCustomStart] = useState("")
-  const [customEnd, setCustomEnd] = useState("")
+  const [customStart, setCustomStart] = useState(monthParam ? `${monthParam}-01` : "")
+  const [customEnd, setCustomEnd] = useState(monthEnd)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   // Clear selections when page/filters change — track previous data identity
@@ -95,14 +77,8 @@ export default function FinanceTransactionsPage() {
 
   const { data: reviewData } = useReviewCount()
 
-  // Scroll to highlighted transaction (from subscription proof link)
-  useEffect(() => {
-    if (!highlightId || !data?.transactions) return
-    const el = document.getElementById(`tx-${highlightId}`)
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300)
-    }
-  }, [highlightId, data?.transactions])
+  // Scroll to (and page-walk toward) a ?highlight deep-link target.
+  useHighlightScroll(highlightId, data, page, setPage)
   const reviewCount = reviewData?.count ?? 0
   const hasFilters = search || category || accountId || txType || dateRange !== "this-month"
   const uncategorizedCount = deep?.uncategorizedCount ?? 0
@@ -124,6 +100,16 @@ export default function FinanceTransactionsPage() {
           )}
         />
         <div className="flex items-center gap-2 flex-shrink-0">
+          <a
+            href="/api/finance/transactions/export"
+            download
+            title="Export all transactions as CSV"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-background-secondary transition-colors text-foreground-muted"
+            style={{ borderColor: "var(--card-border)" }}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: 16 }}>download</span>
+            Export
+          </a>
           {(uncategorizedCount > 0 || reviewCount > 0) && (
             <Link
               href="/finance/categorize"

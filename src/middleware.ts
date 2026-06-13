@@ -50,6 +50,8 @@ export const config = {
     "/chat",
     "/travel/:path*",
     "/travel",
+    "/trips/:path*",
+    "/trips",
     // API routes (CSRF check)
     "/api/:path*",
   ],

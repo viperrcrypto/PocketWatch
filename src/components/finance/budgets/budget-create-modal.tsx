@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { createPortal } from "react-dom"
 import { getCategoryMeta, getBudgetableCategories } from "@/lib/finance/categories"
 import { BudgetSparkline } from "./budget-sparkline"
+import { ErrorShake } from "@/components/ui/error-shake"
 import { formatCurrency, cn } from "@/lib/utils"
 
 interface BudgetSuggestion { category: string; avgMonthly: number; lastMonth: number; monthsOfData: number; suggested: number }
@@ -22,6 +24,7 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
   const [step, setStep] = useState<1 | 2>(1)
   const [selectedCategory, setSelectedCategory] = useState("")
   const [amount, setAmount] = useState("")
+  const [invalidAttempts, setInvalidAttempts] = useState(0)
 
   const budgetedSet = useMemo(() => new Set(existingBudgets?.map((b) => b.category) ?? []), [existingBudgets])
   const allCategories = getBudgetableCategories()
@@ -45,7 +48,10 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
   }
 
   const handleCreate = () => {
-    if (!selectedCategory || !numAmount || numAmount <= 0) return
+    if (!selectedCategory || !numAmount || numAmount <= 0) {
+      setInvalidAttempts((n) => n + 1)
+      return
+    }
     onCreate(selectedCategory, numAmount)
     handleReset()
   }
@@ -53,11 +59,14 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
   const handleReset = () => { setStep(1); setSelectedCategory(""); setAmount("") }
   const handleClose = () => { handleReset(); onClose() }
 
-  if (!isOpen) return null
+  if (!isOpen || typeof document === "undefined") return null
 
   const isBelowAvg = selectedSuggestion && numAmount > 0 && numAmount < selectedSuggestion.avgMonthly
 
-  return (
+  // Portal to body so the fixed overlay escapes any transformed/overflow ancestor
+  // (page-transition + stagger motion wrappers create transforms that would
+  // otherwise trap position:fixed, pushing the modal below the fold).
+  return createPortal(
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={handleClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="budget-modal-title" className="bg-card border border-card-border w-full max-w-md rounded-2xl overflow-hidden max-h-[90dvh] flex flex-col" style={{ boxShadow: "var(--shadow-lg)" }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-card-border flex-shrink-0">
@@ -115,10 +124,10 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
               })()}
 
               <div className="text-center">
-                <div className="relative inline-flex items-center">
+                <ErrorShake trigger={invalidAttempts} className="relative inline-flex items-center">
                   <span className="absolute left-3 text-lg text-foreground-muted font-data">$</span>
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-40 text-center text-3xl font-data font-black tabular-nums bg-transparent border-b-2 border-card-border focus:border-primary py-2 text-foreground outline-none pl-7" style={{ letterSpacing: "-0.03em" }} placeholder="0" min={1} step={10} autoFocus />
-                </div>
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={invalidAttempts > 0 && numAmount <= 0} className="w-40 text-center text-3xl font-data font-black tabular-nums bg-transparent border-b-2 border-card-border focus:border-primary py-2 text-foreground outline-none pl-7" style={{ letterSpacing: "-0.03em" }} placeholder="0" min={1} step={10} autoFocus />
+                </ErrorShake>
               </div>
 
               {suggestedAmount > 0 && (
@@ -154,7 +163,8 @@ export function BudgetCreateModal({ isOpen, onClose, existingBudgets, suggestion
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useMemo, useState } from "react"
 import { useStakingPositions, useRefreshStaking, useRebuildStaking } from "@/hooks/use-portfolio-tracker"
 import { PortfolioStatCard } from "@/components/portfolio/portfolio-stat-card"
@@ -7,7 +8,12 @@ import { PortfolioDataTable } from "@/components/portfolio/portfolio-data-table"
 import { CollapsibleSection } from "@/components/ui/collapsible-section"
 import { EmptyState } from "@/components/ui/empty-state"
 import { formatFiatValue } from "@/lib/portfolio/utils"
-import { YieldHistoryModal } from "@/components/portfolio/staking-history"
+
+// Recharts modal only opens on click — keep it out of the initial bundle.
+const YieldHistoryModal = dynamic(
+  () => import("@/components/portfolio/staking-history").then((m) => m.YieldHistoryModal),
+  { ssr: false },
+)
 import type { StakingPosition, OnChainReward } from "./staking-types"
 import { getSortableValue, FreshnessIndicator } from "./staking-badges"
 import { ProtocolAllocationBar } from "./staking-protocol-bar"

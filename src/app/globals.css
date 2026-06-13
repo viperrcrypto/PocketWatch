@@ -3,22 +3,16 @@
 /* Wire Tailwind dark: to app data-theme instead of OS prefers-color-scheme */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Local Material Symbols fallback — icons work offline when Google Fonts CDN is unreachable */
+/* Self-hosted Material Symbols — the FULL icon font. Google's own css2 serves
+   it as ONE file with NO unicode-range: the icon glyphs + ligatures don't live
+   in latin subsets, so subsetted files render raw ligature text ("equalizer")
+   instead of icons. font-display: block — a brief blank beats flashing text. */
 @font-face {
   font-family: "Material Symbols Rounded";
   font-style: normal;
   font-weight: 100 700;
-  font-display: swap;
-  src: url("/fonts/material-symbols-rounded-latin-ext.ttf") format("truetype");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: "Material Symbols Rounded";
-  font-style: normal;
-  font-weight: 100 700;
-  font-display: swap;
-  src: url("/fonts/material-symbols-rounded-latin.ttf") format("truetype");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-display: block;
+  src: url("/fonts/material-symbols-rounded.woff2") format("woff2");
 }
 
 /* ═══ Auth Flow Transitions ═══ */
@@ -67,34 +61,40 @@
    ======================================== */
 
 :root {
-  /* Backgrounds */
-  --background: #FAFAFA;
-  --background-secondary: #F0F0F2;
-  --foreground: #0A0A0C;
-  --foreground-muted: #4A4A4F;
-  --foreground-secondary: #636369;
+  /* Backgrounds — warm-paper undertone (OKLCH, hue ~75, very low chroma) */
+  --background: oklch(0.981 0.0035 75);          /* ~#FAFAF9 (was #FAFAFA) */
+  --background-secondary: oklch(0.947 0.005 75); /* ~#F1F0EE (was #F0F0F2) */
+  --foreground: oklch(0.146 0.006 70);           /* matches #0A0A0C lightness, warm */
+  --foreground-muted: oklch(0.411 0.006 70);     /* matches #4A4A4F lightness — WCAG AA */
+  --foreground-secondary: oklch(0.502 0.006 70); /* matches #636369 lightness — WCAG AA */
 
-  /* Primary — Apple Blue */
-  --primary: #007AFF;
-  --primary-hover: #0066D6;
+  /* Primary — Apple Blue (unchanged appearance, expressed as oklch) */
+  --primary: oklch(0.602 0.215 256);             /* = #007AFF */
+  --primary-hover: oklch(0.531 0.207 257);       /* = #0066D6 */
   --primary-muted: rgba(0, 122, 255, 0.08);
   --primary-subtle: rgba(0, 122, 255, 0.04);
 
-  /* Surface layers */
-  --card: #FFFFFF;
-  --card-elevated: #F0F0F2;
-  --card-border: #D1D1D6;
-  --card-border-hover: #B0B0B5;
+  /* Surface layers — warm-paper, still bright + clean */
+  --card: oklch(0.998 0.0015 75);                /* ~#FFFFFE (was #FFFFFF) */
+  --card-elevated: oklch(0.947 0.005 75);        /* ~#F1F0EE (was #F0F0F2) */
+  --card-border: oklch(0.852 0.005 75);          /* ~#D2D1CD (was #D1D1D6) */
+  --card-border-hover: oklch(0.745 0.006 75);    /* ~#B1AFAA (was #B0B0B5) */
 
-  /* Semantic */
-  --success: #34C759;
+  /* Semantic (unchanged appearance, expressed as oklch) */
+  --success: oklch(0.727 0.181 149);             /* = #34C759 green */
   --success-muted: rgba(52, 199, 89, 0.10);
-  --warning: #FF9500;
+  --warning: oklch(0.762 0.161 64);              /* = #FF9500 orange */
   --warning-muted: rgba(255, 149, 0, 0.10);
-  --error: #E5342E;
+  --error: oklch(0.594 0.221 27);                /* = #E5342E red */
   --error-muted: rgba(229, 52, 46, 0.10);
-  --info: #007AFF;
+  --info: oklch(0.602 0.215 256);                /* = #007AFF blue */
   --info-muted: rgba(0, 122, 255, 0.10);
+
+  /* Readable semantic TEXT on the muted tints — light theme needs darker than
+     the bright fill color so badge/label text clears WCAG AA on the 10% tint. */
+  --success-text: oklch(0.520 0.140 149);
+  --warning-text: oklch(0.545 0.130 64);
+  --error-text: oklch(0.520 0.200 27);
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.85);
@@ -133,30 +133,41 @@
    ======================================== */
 
 [data-theme="dark"] {
-  --background: #0C0C0E;
-  --background-secondary: #1C1C1E;
-  --foreground: #F5F5F7;
-  --foreground-muted: #8E8E93;
-  --foreground-secondary: #AEAEB2;
+  /* Warm-tinted dark surfaces — cozy near-black with amber undertone (hue ~70),
+     layered ramp: background < secondary/card < card-elevated for depth.
+     Lightness preserved per token so all existing contrast holds. */
+  --background: oklch(0.155 0.005 70);            /* preserves #0C0C0E near-black depth, warm */
+  --background-secondary: oklch(0.227 0.006 70); /* matches #1C1C1E depth, warm */
+  --foreground: oklch(0.965 0.003 75);           /* ~#F6F5F4 (was #F5F5F7) */
+  --foreground-muted: oklch(0.660 0.007 70);     /* lifted to clear WCAG AA on card-elevated */
+  --foreground-secondary: oklch(0.738 0.006 70); /* ~#AFADA9 (was #AEAEB2) */
 
-  --primary: #0A84FF;
-  --primary-hover: #409CFF;
+  /* Primary — Apple Blue dark (corrected oklch to actually render #0A84FF) */
+  --primary: oklch(0.640 0.1985 257.4);          /* = #0A84FF */
+  --primary-hover: oklch(0.726 0.155 257);       /* = #409CFF */
   --primary-muted: rgba(10, 132, 255, 0.12);
   --primary-subtle: rgba(10, 132, 255, 0.06);
 
-  --card: #1C1C1E;
-  --card-elevated: #2C2C2E;
-  --card-border: #38383A;
-  --card-border-hover: #48484A;
+  /* Layered warm surface ramp (each step lighter + warmer) */
+  --card: oklch(0.227 0.006 70);                 /* matches #1C1C1E depth, warm (ramp: bg<card<elevated) */
+  --card-elevated: oklch(0.301 0.007 70);        /* ~#2D2C29 (was #2C2C2E) */
+  --card-border: oklch(0.351 0.007 70);          /* ~#393734 (was #38383A) */
+  --card-border-hover: oklch(0.408 0.007 70);    /* ~#494744 (was #48484A) */
 
-  --success: #30D158;
+  /* Semantic (unchanged appearance, expressed as oklch) */
+  --success: oklch(0.768 0.187 150);             /* = #30D158 green */
   --success-muted: rgba(48, 209, 88, 0.12);
-  --warning: #FF9F0A;
+  --warning: oklch(0.785 0.158 67);              /* = #FF9F0A orange */
   --warning-muted: rgba(255, 159, 10, 0.12);
-  --error: #FF453A;
+  --error: oklch(0.637 0.223 28);                /* = #FF453A red */
   --error-muted: rgba(255, 69, 58, 0.12);
-  --info: #0A84FF;
+  --info: oklch(0.640 0.1985 257.4);             /* = #0A84FF blue */
   --info-muted: rgba(10, 132, 255, 0.12);
+
+  /* On dark tints the bright semantic colors already read fine. */
+  --success-text: var(--success);
+  --warning-text: var(--warning);
+  --error-text: var(--error);
 
   --glass-bg: rgba(0, 0, 0, 0.85);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -310,12 +321,26 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  /* Picasso: transform/color only — never `transition: all`. */
+  transition:
+    border-color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-interactive:hover {
   border-color: var(--card-border-hover);
   box-shadow: var(--shadow-md);
+}
+
+.card-interactive:active {
+  transform: scale(0.985);
+}
+
+.card-interactive:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-muted);
 }
 
 .glass-panel {
@@ -342,7 +367,12 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
   font-weight: 500;
   font-size: 14px;
   border: none;
-  transition: background var(--transition-fast), opacity var(--transition-fast);
+  /* Picasso: transform/opacity/color only — never `transition: all`. */
+  transition:
+    background 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
@@ -351,7 +381,13 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
 }
 
 .btn-primary:active {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: scale(0.97);
+}
+
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-muted);
 }
 
 .btn-secondary {
@@ -366,13 +402,27 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
   font-weight: 500;
   font-size: 14px;
   border: 1px solid var(--card-border);
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  /* Picasso: transform/color only — never `transition: all`. */
+  transition:
+    border-color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
 .btn-secondary:hover {
   border-color: var(--card-border-hover);
   background: var(--background-secondary);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-muted);
 }
 
 .btn-ghost {
@@ -387,7 +437,11 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
   font-weight: 500;
   font-size: 14px;
   border: none;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  /* Picasso: transform/color only — never `transition: all`. */
+  transition:
+    color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
@@ -396,11 +450,35 @@ p:not([class*="tabular"]):not([class*="font-data"]):not([class*="text-xs"]):not(
   background: var(--primary-subtle);
 }
 
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+
+.btn-ghost:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-muted);
+}
+
 /* ========================================
    MATERIAL SYMBOLS
    ======================================== */
 
+/* The full class definition used to come from Google's css2 stylesheet (it set
+   font-family + rendering properties, not just the variation axes). Now that the
+   font is self-hosted, the class must carry them itself. */
 .material-symbols-rounded {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "liga";
   font-variation-settings:
     'FILL' 0,
     'wght' 300,
@@ -547,19 +625,19 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 
 .badge-success {
   border-color: var(--success);
-  color: var(--success);
+  color: var(--success-text);
   background-color: var(--success-muted);
 }
 
 .badge-warning {
   border-color: var(--warning);
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: var(--warning-muted);
 }
 
 .badge-error {
   border-color: var(--error);
-  color: var(--error);
+  color: var(--error-text);
   background-color: var(--error-muted);
 }
 
@@ -1288,6 +1366,27 @@ html {
 }
 
 /* ========================================
+   BORDER BEAM — Animated accent ring (chat result cards)
+   ======================================== */
+
+/* Registered so the conic angle interpolates smoothly instead of jumping. */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes beam-rotate {
+  to { --beam-angle: 360deg; }
+}
+
+/* GPU-cheap: only the gradient angle changes, never layout. Reduced-motion is
+   handled by the global prefers-reduced-motion block (duration → 0.01ms). */
+.animate-beam {
+  animation: beam-rotate var(--beam-duration, 6s) linear infinite;
+}
+
+/* ========================================
    SHIMMER ANIMATION — Skeleton loading
    ======================================== */
 
@@ -1300,6 +1399,50 @@ html {
   background: linear-gradient(90deg, var(--card-border) 25%, var(--card-elevated) 50%, var(--card-border) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   MOTION PRIMITIVES — Shimmer text + error shake
+   (transitions.dev effect set, Picasso timings)
+   GPU-cheap: transform/background-position only, never layout.
+   Reduced-motion handled by the global block above (duration → 0.01ms),
+   and each component also gates via useReducedMotion().
+   ======================================== */
+
+/* Shimmer text — a moving highlight band swept across a gradient-clipped text. */
+@keyframes shimmer-text {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.animate-shimmer-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--shimmer-base, var(--foreground-secondary)) 35%,
+    var(--shimmer-highlight, var(--foreground)) 50%,
+    var(--shimmer-base, var(--foreground-secondary)) 65%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text var(--shimmer-duration, 2.4s) linear infinite;
+}
+
+/* Error shake — short horizontal nudge with arrive-style decay, runs once. */
+@keyframes error-shake {
+  0% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.animate-error-shake {
+  animation: error-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 /* ========================================
@@ -1668,13 +1811,15 @@ html, body {
 }
 
 /* ─── Active press states for interactive elements ─── */
-.mobile-nav-pill:active,
-.btn-primary:active,
-.btn-secondary:active,
-.btn-ghost:active {
+/* Picasso press: 80-120ms, transform/opacity only, arrive easing. Per-button
+   :active rules above set the same scale; this keeps the mobile nav pill and
+   any remaining usages consistent without `transition: all`. */
+.mobile-nav-pill:active {
   opacity: 0.7;
   transform: scale(0.97);
-  transition: opacity 0.1s ease, transform 0.1s ease;
+  transition:
+    opacity 0.1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ─── iOS momentum scroll on list containers ─── */
@@ -1694,4 +1839,31 @@ html, body {
   .mobile-header {
     padding-top: env(safe-area-inset-top);
   }
+}
+
+/* ─── Desktop (Tauri) overlay titlebar inset ───
+   The native macOS titlebar (traffic lights, window title) overlays the
+   top-left of the web content. Push the whole app below a fixed draggable
+   titlebar strip so nothing collides with the lights or the window title.
+   Gated on [data-tauri] (set only inside the Tauri webview), so the browser
+   and PWA are unaffected. */
+html[data-tauri] [data-app-sidebar] {
+  top: 32px;
+  height: calc(100% - 32px);
+}
+html[data-tauri] [data-app-main] {
+  padding-top: 32px;
+}
+html[data-tauri] [data-app-chat] {
+  top: 32px;
+}
+html[data-tauri]::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 32px;
+  z-index: 60;
+  -webkit-app-region: drag;
+  app-region: drag;
+  pointer-events: auto;
 }

@@ -1,9 +1,14 @@
 /**
- * Google Flights client via SerpAPI — fetches cash prices for CPP comparison.
+ * Google Flights client — fetches cash prices for CPP comparison.
+ *
+ * Provider chain: direct GetShoppingResults client first (keyless, see
+ * google-flights-direct/), falling back to SerpAPI when the direct client
+ * throws or returns no rows AND a SerpAPI key is available.
  */
 
 import type { UnifiedFlightResult, SearchConfig } from "@/types/travel"
 import { buildCashBookingUrl } from "./constants"
+import { searchGoogleFlightsDirectUnified } from "./google-flights-direct-adapter"
 
 interface SerpApiLeg {
   airline?: string
@@ -28,7 +33,28 @@ interface SerpApiResponse {
   other_flights?: SerpApiItinerary[]
 }
 
+/**
+ * Primary entry point: direct Google client first, SerpAPI fallback.
+ * `apiKey` is the SerpAPI key — pass undefined to disable the fallback
+ * (e.g. return legs, which SerpAPI never covered).
+ */
 export async function searchGoogleFlights(
+  apiKey: string | undefined,
+  config: SearchConfig,
+): Promise<UnifiedFlightResult[]> {
+  try {
+    const direct = await searchGoogleFlightsDirectUnified(config)
+    if (direct.length > 0) return direct
+    console.warn(`[travel] Google direct returned 0 flights (${config.origin}→${config.destination} ${config.departureDate}); trying SerpAPI fallback`)
+  } catch (error) {
+    console.error("[travel] Google direct client failed, trying SerpAPI fallback:", (error as Error).message)
+  }
+  if (!apiKey) return []
+  return searchGoogleFlightsSerp(apiKey, config)
+}
+
+/** Legacy SerpAPI path — kept verbatim as the fallback provider. */
+export async function searchGoogleFlightsSerp(
   apiKey: string,
   config: SearchConfig,
 ): Promise<UnifiedFlightResult[]> {

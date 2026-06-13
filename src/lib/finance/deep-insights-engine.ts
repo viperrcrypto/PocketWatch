@@ -87,9 +87,11 @@ export async function computeDeepInsights(userId: string): Promise<DeepInsightsR
       : Promise.resolve([]),
     db.financeBudget.findMany({ where: { userId, isActive: true } }),
     db.financeSubscription.findMany({ where: { userId } }),
-    db.financeTransaction.count({ where: { ...uncategorizedWhere(userId), date: { gte: currentStart, lt: currentEnd } } }),
+    // Count ALL uncategorized (not just this month) so the dashboard banner
+    // matches the categorize page it links to — which lists all-time uncategorized.
+    db.financeTransaction.count({ where: uncategorizedWhere(userId) }),
     db.financeTransaction.findMany({
-      where: { ...uncategorizedWhere(userId), date: { gte: currentStart, lt: currentEnd } },
+      where: uncategorizedWhere(userId),
       select: { id: true, merchantName: true, name: true, amount: true, date: true, logoUrl: true },
       orderBy: { amount: "desc" },
       take: 5,

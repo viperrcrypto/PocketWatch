@@ -166,9 +166,14 @@ export function InstitutionAccordion({
               >
                 <span className="material-symbols-rounded text-foreground-muted" style={{ fontSize: 20 }}>{TYPE_ICONS[acct.type] ?? "account_balance"}</span>
                 <div className="flex-1 min-w-0">
-                  <EditableName value={acct.name} onSave={(name) => onRenameAccount(acct.id, name)} />
+                  {/* stop rename/type clicks from triggering the row's navigation */}
+                  <span className="contents" onClick={(e) => e.stopPropagation()}>
+                    <EditableName value={acct.name} onSave={(name) => onRenameAccount(acct.id, name)} />
+                  </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <AccountTypeSelector type={acct.type} onChangeType={(type) => onChangeAccountType(acct.id, type)} />
+                    <span className="contents" onClick={(e) => e.stopPropagation()}>
+                      <AccountTypeSelector type={acct.type} onChangeType={(type) => onChangeAccountType(acct.id, type)} />
+                    </span>
                     {acct.mask && <span className="text-[10px] text-foreground-muted tabular-nums">••{acct.mask}</span>}
                     {acct.officialName && acct.officialName !== acct.name && (
                       <span className="text-[10px] text-foreground-muted truncate max-w-[200px]">{acct.officialName}</span>

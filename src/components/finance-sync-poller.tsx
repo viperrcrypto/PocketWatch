@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from "react"
 import { financeFetch } from "@/hooks/finance/shared"
 import { useQueryClient } from "@tanstack/react-query"
 import { useOnlineStatus } from "@/hooks/use-online-status"
+import { SCHEDULER_DRIVES_SYNC } from "@/lib/sync-driver"
 
 const SYNC_INTERVAL_MS = 15 * 60_000 // 15 minutes
 const STALE_THRESHOLD_MS = 10 * 60_000 // Skip if synced within 10 min
@@ -28,7 +29,9 @@ export function FinanceSyncPoller() {
 
     syncingRef.current = true
     try {
-      await financeFetch("/plaid/resync", { method: "POST", timeoutMs: SYNC_TIMEOUT_MS })
+      if (!SCHEDULER_DRIVES_SYNC) {
+        await financeFetch("/plaid/resync", { method: "POST", timeoutMs: SYNC_TIMEOUT_MS })
+      }
       lastSyncRef.current = Date.now()
       qc.invalidateQueries({ queryKey: ["finance"] })
     } catch {

@@ -5,6 +5,20 @@
 
 import { db } from "@/lib/db"
 import { getFlightSearchSummary, getFlightResults, generatePriceMatchEmail, analyzeFareDetails } from "./flight-tools"
+import { searchFlightsLive, searchHotelsLive } from "./travel-action-tools"
+import {
+  listTrips, createTrip, updateTrip, getTripExpenses, getTripBriefing,
+  listSavedRoutes, createSavedRoute,
+  getPointsBalances, getTravelerProfile, updateTravelerProfile,
+} from "./trip-tools"
+import {
+  createBudget, updateBudget,
+  setTransactionCategory, excludeTransaction, markBillPaid,
+} from "./finance-action-tools"
+import {
+  getPortfolioBalances, getStakingPositions, getWalletPnl,
+  getPortfolioHistory, triggerPortfolioRefresh,
+} from "./portfolio-tools"
 
 type ToolInput = Record<string, unknown>
 
@@ -34,6 +48,53 @@ export async function executeTool(name: string, input: ToolInput, userId: string
       return generatePriceMatchEmail(userId, input)
     case "analyze_fare_details":
       return analyzeFareDetails(userId, input)
+    case "search_flights_live":
+      return searchFlightsLive(userId, input)
+    case "search_hotels_live":
+      return searchHotelsLive(userId, input)
+    case "get_points_balances":
+      return getPointsBalances(userId)
+    case "list_trips":
+      return listTrips(userId)
+    case "create_trip":
+      return createTrip(userId, input)
+    case "update_trip":
+      return updateTrip(userId, input)
+    // delete_trip / delete_saved_route / delete_budget are deliberately NOT
+    // wired: destructive deletes are UI-only (confirm dialog), never
+    // model-triggerable from a context containing untrusted provider strings.
+    case "get_trip_briefing":
+      return getTripBriefing(userId, input)
+    case "get_trip_expenses":
+      return getTripExpenses(userId, input)
+    case "create_saved_route":
+      return createSavedRoute(userId, input)
+    case "list_saved_routes":
+      return listSavedRoutes(userId)
+    case "get_traveler_profile":
+      return getTravelerProfile(userId)
+    case "update_traveler_profile":
+      return updateTravelerProfile(userId, input)
+    case "create_budget":
+      return createBudget(userId, input)
+    case "update_budget":
+      return updateBudget(userId, input)
+    case "set_transaction_category":
+      return setTransactionCategory(userId, input)
+    case "exclude_transaction":
+      return excludeTransaction(userId, input)
+    case "mark_bill_paid":
+      return markBillPaid(userId, input)
+    case "get_portfolio_balances":
+      return getPortfolioBalances(userId)
+    case "get_staking_positions":
+      return getStakingPositions(userId)
+    case "get_wallet_pnl":
+      return getWalletPnl(userId)
+    case "get_portfolio_history":
+      return getPortfolioHistory(userId, input)
+    case "trigger_portfolio_refresh":
+      return triggerPortfolioRefresh(userId)
     default:
       return JSON.stringify({ error: `Unknown tool: ${name}` })
   }
@@ -240,10 +301,13 @@ async function getNetWorth(userId: string): Promise<string> {
 
   if (!snapshot) return JSON.stringify({ error: "No net worth snapshots found." })
 
-  let breakdown: unknown = null
-  try {
-    breakdown = JSON.parse(snapshot.breakdown)
-  } catch { /* stored as string */ }
+  // breakdown is field-decrypted + deserialized by the Prisma extension, so it is
+  // already an object; only JSON.parse if it somehow arrived as a raw string
+  // (otherwise JSON.parse(object) throws and breakdown was always null).
+  let breakdown: unknown = snapshot.breakdown ?? null
+  if (typeof breakdown === "string") {
+    try { breakdown = JSON.parse(breakdown) } catch { /* leave as-is */ }
+  }
 
   return JSON.stringify({
     date: (snapshot.date as Date).toISOString().split("T")[0],

@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
         category,
         needsReview: false,
         reviewSkippedAt: null,
+        // Mark as user-set so a later Plaid "modified" sync won't re-categorize it.
+        isAutoApplied: false,
       },
     })
 

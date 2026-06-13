@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
           data: {
             category: item.category,
             subcategory: item.subcategory ?? null,
+            // Treat applied AI suggestions as user-confirmed so sync won't revert.
+            isAutoApplied: false,
           },
         })
 

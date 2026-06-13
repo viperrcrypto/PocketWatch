@@ -14,11 +14,14 @@ import type {
 } from "@/types/travel"
 import { searchRoame, roameFaresToUnified } from "./roame-client"
 import { searchGoogleFlights } from "./google-flights-client"
-import { searchATF } from "./atf-client"
+import { searchAtfAwards } from "./atf-mcp-client"
 import { searchPointMe } from "./pointme-client"
+import { searchSkiplaggedFlights } from "./skiplagged-client"
+import { searchKiwiFlights } from "./kiwi-client"
 import { scoreFlights, deduplicateFlights } from "./value-engine"
 import { getSweetSpotsForRoute } from "./sweet-spots"
 import { expandFlexDates, tagResults, generateWarnings } from "./search-helpers"
+import { generateRecommendations } from "./recommendation-engine"
 
 // ─── Progress Callback ──────────────────────────────────────────
 
@@ -32,8 +35,13 @@ export interface SearchProgress {
 interface SearchCredentials {
   roameSession?: RoameCredentials
   serpApiKey?: string
-  atfApiKey?: string
+  /** ATF now uses OAuth: pass the userId; the MCP client loads/refreshes the token. */
+  atfUserId?: string
   pointmeToken?: string
+  /** Keyless Skiplagged MCP (cash + hidden-city). Set only on the primary combo. */
+  skiplagged?: boolean
+  /** Keyless Kiwi MCP (cash, incl. budget carriers). Set only on the primary combo. */
+  kiwi?: boolean
 }
 
 // ─── Response Cache ─────────────────────────────────────────────
@@ -47,111 +55,6 @@ function getFlightCacheKey(config: SearchConfig): string {
   const dests = config.destinations?.join(",") || config.destination
   const flex = config.flexDates ? ":flex" : ""
   return `flight:${origins}:${dests}:${config.departureDate}:${config.searchClass}${rt}${flex}`
-}
-
-// ─── Recommendation Engine ──────────────────────────────────────
-
-function generateRecommendations(
-  flights: ValueScoredFlight[],
-  _balances: PointsBalance[],
-): Recommendation[] {
-  const recommendations: Recommendation[] = []
-
-  // #1: Best value award
-  const bestValueAwards = flights
-    .filter(f => f.type === "award" && f.realCpp !== null && f.realCpp > 0 && f.canAfford)
-    .sort((a, b) => (b.realCpp || 0) - (a.realCpp || 0))
-
-  if (bestValueAwards.length > 0) {
-    const best = bestValueAwards[0]!
-    const cppLabel = best.cashSource === "exact-match" ? "(vs actual cash)" :
-                     best.cashSource === "same-cabin" ? "(vs avg cash)" : "(est.)"
-    const sweetSpotTag = best.sweetSpotMatch ? " SWEET SPOT" : ""
-
-    recommendations.push({
-      rank: 1,
-      title: `${best.pointsProgram} → ${best.airline}${sweetSpotTag}`,
-      subtitle: `${best.cabinClass} class via ${best.airports.join("→")}`,
-      details: [
-        `${best.flightNumbers.join(" / ")}`,
-        `${Math.floor(best.durationMinutes / 60)}h${best.durationMinutes % 60}m, ${best.stops} stop${best.stops !== 1 ? "s" : ""}`,
-        `Cash comparable: $${best.cashComparable?.toLocaleString()} ${cppLabel}`,
-        best.affordDetails,
-        ...(best.sweetSpotMatch ? [best.sweetSpotMatch.spot.description.slice(0, 80)] : []),
-      ],
-      totalCost: `${(best.points || 0).toLocaleString()} pts + $${best.taxes}`,
-      cppValue: `${best.realCpp}c/pt`,
-      bookingUrl: best.bookingUrl,
-      badgeText: "#1 BEST VALUE",
-      badgeColor: "emerald",
-    })
-  }
-
-  // #2: Best product (premium cabin + high value score)
-  const alreadyUsed = bestValueAwards[0]?.id
-  const bestPremium = flights
-    .filter(f =>
-      f.type === "award" &&
-      (f.cabinClass === "business" || f.cabinClass === "first") &&
-      f.canAfford &&
-      f.id !== alreadyUsed
-    )
-    .sort((a, b) => b.valueScore - a.valueScore)[0]
-
-  if (bestPremium) {
-    recommendations.push({
-      rank: 2,
-      title: `${bestPremium.pointsProgram} → ${bestPremium.airline}`,
-      subtitle: `${bestPremium.cabinClass} class • ${bestPremium.airports.join("→")}`,
-      details: [
-        bestPremium.flightNumbers.join(" / "),
-        `Value Score: ${bestPremium.valueScore}/100`,
-        bestPremium.realCpp ? `${bestPremium.realCpp}c/pt vs $${bestPremium.cashComparable?.toLocaleString()} cash` : "",
-        `${Math.floor(bestPremium.durationMinutes / 60)}h${bestPremium.durationMinutes % 60}m`,
-      ].filter(Boolean),
-      totalCost: `${(bestPremium.points || 0).toLocaleString()} pts + $${bestPremium.taxes}`,
-      cppValue: bestPremium.realCpp ? `${bestPremium.realCpp}c/pt` : null,
-      bookingUrl: bestPremium.bookingUrl,
-      badgeText: "#2 BEST PRODUCT",
-      badgeColor: "accent",
-    })
-  }
-
-  // #3: Cash option
-  const cheapestCash = flights
-    .filter(f => f.type === "cash" && f.cashPrice && f.cashPrice > 0)
-    .sort((a, b) => (a.cashPrice || Infinity) - (b.cashPrice || Infinity))[0]
-
-  if (cheapestCash) {
-    const bestAwardCpp = bestValueAwards[0]?.realCpp ?? null
-    const cashWins = bestAwardCpp === null || bestAwardCpp < 1.0
-    const borderline = bestAwardCpp !== null && bestAwardCpp >= 1.0 && bestAwardCpp < 1.5
-
-    const cppDetail = bestAwardCpp === null
-      ? "No award redemptions available — cash is your best option"
-      : cashWins
-        ? `Cash wins — best award is only ${bestAwardCpp}c/pt, save points for a better route`
-        : borderline
-          ? `Awards get ${bestAwardCpp}c/pt — borderline value. Cash at $${cheapestCash.cashPrice?.toLocaleString()} is comparable`
-          : `Points get ${bestAwardCpp}c/pt value here — use them`
-
-    recommendations.push({
-      rank: 3,
-      title: `Cash ${cheapestCash.cabinClass} at $${cheapestCash.cashPrice?.toLocaleString()}`,
-      subtitle: `${cheapestCash.airline} • ${cheapestCash.stops === 0 ? "Nonstop" : `${cheapestCash.stops} stop`}`,
-      details: [
-        cheapestCash.flightNumbers.join(" / "),
-        cppDetail,
-      ],
-      totalCost: `$${cheapestCash.cashPrice?.toLocaleString()}`,
-      cppValue: null,
-      bookingUrl: cheapestCash.bookingUrl,
-      badgeText: cashWins ? "#3 CASH WINS" : borderline ? "#3 CONSIDER CASH" : "#3 USE POINTS",
-      badgeColor: "gold",
-    })
-  }
-
-  return recommendations
 }
 
 // ─── Single-Leg Search ──────────────────────────────────────────
@@ -202,32 +105,38 @@ async function searchOneLeg(
     }
   }
 
-  // Google Flights via SerpAPI (only for outbound — SerpAPI handles RT natively)
-  if (credentials.serpApiKey && leg !== "return") {
+  // Google Flights — keyless direct client first, SerpAPI fallback.
+  // Outbound legs price round-trips natively (RT config → outbound candidates
+  // with RT pricing); return legs now run too, as one-way searches via the
+  // direct client only (SerpAPI never covered return legs, so its fallback
+  // stays outbound-only behind the key gate).
+  {
+    const googleSource = `${prefix}google`
+    const serpFallbackKey = leg === "return" ? undefined : credentials.serpApiKey
     promises.push(
       (async () => {
-        onProgress?.({ source: "google", status: "searching" })
-        const flights = await searchGoogleFlights(credentials.serpApiKey!, googleConfig || {
+        onProgress?.({ source: googleSource, status: "searching" })
+        const flights = await searchGoogleFlights(serpFallbackKey, googleConfig || {
           origin, destination, departureDate: date, searchClass,
         })
         if (leg) flights.forEach(f => f.leg = leg)
         allFlights.push(...flights)
-        completionPct["google"] = flights.length > 0 ? 100 : 0
-        onProgress?.({ source: "google", status: "complete", flights: flights.length })
+        completionPct[googleSource] = flights.length > 0 ? 100 : 0
+        onProgress?.({ source: googleSource, status: "complete", flights: flights.length })
       })().catch(err => {
         console.error(`[travel] Google Flights failed (${origin}→${destination} ${date}):`, (err as Error).message)
-        completionPct["google"] = 0
-        onProgress?.({ source: "google", status: "failed", error: (err as Error).message })
+        completionPct[googleSource] = 0
+        onProgress?.({ source: googleSource, status: "failed", error: (err as Error).message })
       })
     )
   }
 
-  // ATF (Award Travel Finder)
-  if (credentials.atfApiKey) {
+  // ATF (Award Travel Finder) — OAuth Bearer MCP; returns [] if not connected.
+  if (credentials.atfUserId) {
     promises.push(
       (async () => {
         onProgress?.({ source: `${prefix}atf`, status: "searching" })
-        const flights = await searchATF(credentials.atfApiKey!, origin, destination, date)
+        const flights = await searchAtfAwards(credentials.atfUserId!, origin, destination, date)
         for (const f of flights) {
           const roameMatch = allFlights.find(
             r => r.source === "roame" &&
@@ -269,6 +178,45 @@ async function searchOneLeg(
         })
       )
     }
+  }
+
+  // Skiplagged (keyless MCP) — cash + hidden-city inventory. One-way per leg,
+  // so it runs on return legs too. Gated to the primary combo (the flag is only
+  // set on the full credentials object, never on the stripped comboCreds).
+  if (credentials.skiplagged) {
+    promises.push(
+      (async () => {
+        onProgress?.({ source: `${prefix}skiplagged`, status: "searching" })
+        const flights = await searchSkiplaggedFlights({ origin, destination, departureDate: date, searchClass })
+        if (leg) flights.forEach(f => f.leg = leg)
+        allFlights.push(...flights)
+        completionPct[`${prefix}skiplagged`] = flights.length > 0 ? 100 : 0
+        onProgress?.({ source: `${prefix}skiplagged`, status: "complete", flights: flights.length })
+      })().catch(err => {
+        console.error(`[travel] Skiplagged failed (${origin}→${destination} ${date}):`, (err as Error).message)
+        completionPct[`${prefix}skiplagged`] = 0
+        onProgress?.({ source: `${prefix}skiplagged`, status: "failed", error: (err as Error).message })
+      })
+    )
+  }
+
+  // Kiwi (keyless MCP) — cash inventory incl. budget carriers SerpAPI misses.
+  // One-way per leg, primary-combo only (same gating as Skiplagged).
+  if (credentials.kiwi) {
+    promises.push(
+      (async () => {
+        onProgress?.({ source: `${prefix}kiwi`, status: "searching" })
+        const flights = await searchKiwiFlights({ origin, destination, departureDate: date, searchClass })
+        if (leg) flights.forEach(f => f.leg = leg)
+        allFlights.push(...flights)
+        completionPct[`${prefix}kiwi`] = flights.length > 0 ? 100 : 0
+        onProgress?.({ source: `${prefix}kiwi`, status: "complete", flights: flights.length })
+      })().catch(err => {
+        console.error(`[travel] Kiwi failed (${origin}→${destination} ${date}):`, (err as Error).message)
+        completionPct[`${prefix}kiwi`] = 0
+        onProgress?.({ source: `${prefix}kiwi`, status: "failed", error: (err as Error).message })
+      })
+    )
   }
 
   await Promise.allSettled(promises)

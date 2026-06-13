@@ -5,8 +5,7 @@ import Link from "next/link"
 const QUICK_ACTIONS = [
   { label: "Blockchain Balances", subtitle: "On-chain holdings", href: "/portfolio/balances", icon: "language" },
   { label: "Exchange Balances", subtitle: "CEX holdings", href: "/portfolio/balances/exchange", icon: "swap_horiz" },
-  { label: "DeFi & LP", subtitle: "Yield & liquidity positions", href: "/portfolio/defi", icon: "account_tree" },
-  { label: "Analytics", subtitle: "Cost basis & realized gains", href: "/portfolio/history/pnl", icon: "analytics" },
+  { label: "Staking & DeFi", subtitle: "Yield & liquidity positions", href: "/portfolio/staking", icon: "account_tree" },
   { label: "Manual Balances", subtitle: "Cold storage & custom", href: "/portfolio/balances/manual", icon: "edit_note" },
 ] as const
 

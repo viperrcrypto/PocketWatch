@@ -10,6 +10,7 @@ import { encryptCredential, decryptCredential } from "@/lib/finance/crypto"
 import { NextResponse, type NextRequest } from "next/server"
 import { z } from "zod/v4"
 import { parsePointMeCredential } from "@/lib/travel/pointme-auth"
+import { parseRoameCredential, extractRefreshToken } from "@/lib/travel/roame-auth"
 
 function maskKey(key: string): string {
   if (key.length <= 8) return "****"
@@ -22,13 +23,14 @@ export async function GET() {
 
   try {
     const credentials = await db.financeCredential.findMany({
-      where: { userId: user.id, service: { in: ["roame", "serpapi", "atf", "roame_refresh", "pointme"] } },
+      where: { userId: user.id, service: { in: ["roame", "serpapi", "atf", "roame_refresh", "pointme", "atf_oauth"] } },
     })
 
     const services = await Promise.all(
       credentials.map(async (cred) => {
-        const key = await decryptCredential(cred.encryptedKey)
-        const displayKey = cred.service === "roame" || cred.service === "pointme" ? "session-configured" : key
+        const sessionConfigured = cred.service === "roame" || cred.service === "pointme" || cred.service === "atf_oauth"
+        const key = sessionConfigured ? "session-configured" : await decryptCredential(cred.encryptedKey)
+        const displayKey = key
         return {
           service: cred.service,
           maskedKey: maskKey(displayKey),
@@ -58,47 +60,48 @@ export async function POST(req: NextRequest) {
     return apiError("T2011", parsed.error.issues[0]?.message ?? "Invalid request", 400)
   }
 
+  // Parse session blobs first (point.me / Roame) outside the persistence try so a
+  // bad paste returns a clean 400 and infra failures below stay a 500. Each may
+  // yield a refresh token to store alongside the session after the main upsert.
+  let refreshService: string | null = null
+  let refreshTokenToStore: string | null = null
+
+  if (parsed.data.service === "pointme") {
+    // point.me: raw JWT or full session JSON → access token + optional refresh.
+    try {
+      const { accessToken, refreshToken } = parsePointMeCredential(parsed.data.key)
+      parsed.data.key = accessToken
+      if (refreshToken) {
+        refreshService = "pointme_refresh"
+        refreshTokenToStore = refreshToken
+      }
+    } catch (err) {
+      return apiError("T2014", (err as Error).message, 400)
+    }
+  } else if (parsed.data.service === "roame") {
+    // Roame: raw ID token, the full firebase:authUser IndexedDB value (ID token +
+    // refresh token), or { session } JSON. Session → "roame"; refresh → "roame_refresh".
+    try {
+      const { session, refreshToken } = parseRoameCredential(parsed.data.key)
+      parsed.data.key = JSON.stringify({ session })
+      if (refreshToken) {
+        refreshService = "roame_refresh"
+        refreshTokenToStore = refreshToken
+      }
+    } catch (err) {
+      return apiError("T2012", (err as Error).message, 400)
+    }
+  } else if (parsed.data.service === "roame_refresh") {
+    // The dedicated refresh-token field: accept the bare token, the full
+    // firebase:authUser value, or a DevTools dump — store just the refresh token.
+    try {
+      parsed.data.key = extractRefreshToken(parsed.data.key)
+    } catch (err) {
+      return apiError("T2015", (err as Error).message, 400)
+    }
+  }
+
   try {
-    // Parse point.me credential: accepts raw JWT or full session JSON
-    // Extracts accessToken → stored as "pointme", refreshToken → stored as "pointme_refresh"
-    if (parsed.data.service === "pointme") {
-      try {
-        const { accessToken, refreshToken } = parsePointMeCredential(parsed.data.key)
-        parsed.data.key = accessToken
-
-        // Auto-store refresh token if present
-        if (refreshToken) {
-          const refreshEnc = await encryptCredential(refreshToken)
-          await db.financeCredential.upsert({
-            where: { userId_service: { userId: user.id, service: "pointme_refresh" } },
-            create: { userId: user.id, service: "pointme_refresh", encryptedKey: refreshEnc, encryptedSecret: refreshEnc, environment: "production" },
-            update: { encryptedKey: refreshEnc, encryptedSecret: refreshEnc },
-          })
-        }
-      } catch (err) {
-        return apiError("T2014", (err as Error).message, 400)
-      }
-    }
-
-    // Normalize Roame credential: accept raw JWT or JSON with session field
-    if (parsed.data.service === "roame") {
-      try {
-        const maybeJson = JSON.parse(parsed.data.key)
-        if (typeof maybeJson === "object" && maybeJson.session) {
-          // Already a JSON object with session field — keep as-is
-        } else {
-          return apiError("T2012", "Invalid Roame session JSON", 400)
-        }
-      } catch {
-        // Not JSON — treat as raw session JWT, wrap in JSON
-        if (parsed.data.key.startsWith("eyJ")) {
-          parsed.data.key = JSON.stringify({ session: parsed.data.key })
-        } else {
-          return apiError("T2012", "Invalid Roame session — must be a JWT or JSON with session field", 400)
-        }
-      }
-    }
-
     const encryptedKey = await encryptCredential(parsed.data.key)
 
     await db.financeCredential.upsert({
@@ -118,6 +121,17 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Store the refresh token only after the session itself persisted, so a
+    // failure can't leave an orphan refresh token with no session.
+    if (refreshService && refreshTokenToStore) {
+      const refreshEnc = await encryptCredential(refreshTokenToStore)
+      await db.financeCredential.upsert({
+        where: { userId_service: { userId: user.id, service: refreshService } },
+        create: { userId: user.id, service: refreshService, encryptedKey: refreshEnc, encryptedSecret: refreshEnc, environment: "production" },
+        update: { encryptedKey: refreshEnc, encryptedSecret: refreshEnc },
+      })
+    }
+
     return NextResponse.json({ saved: true, service: parsed.data.service })
   } catch (err) {
     return apiError("T2013", "Failed to save credential", 500, err)
@@ -125,7 +139,7 @@ export async function POST(req: NextRequest) {
 }
 
 const deleteSchema = z.object({
-  service: z.enum(["roame", "serpapi", "atf", "roame_refresh", "pointme"]),
+  service: z.enum(["roame", "serpapi", "atf", "roame_refresh", "pointme", "atf_oauth"]),
 })
 
 export async function DELETE(req: NextRequest) {
@@ -141,8 +155,12 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const servicesToDelete = parsed.data.service === "pointme"
-      ? [parsed.data.service, "pointme_refresh"]
-      : [parsed.data.service]
+      ? ["pointme", "pointme_refresh"]
+      : parsed.data.service === "roame"
+        ? ["roame", "roame_refresh"]
+        : parsed.data.service === "atf_oauth"
+          ? ["atf_oauth", "atf_oauth_client"]
+          : [parsed.data.service]
 
     await db.financeCredential.deleteMany({
       where: { userId: user.id, service: { in: servicesToDelete } },

@@ -8,6 +8,7 @@ import { FlightResults } from "@/components/travel/flight-results"
 import { PocketWatchPicks } from "@/components/travel/pocketwatch-picks"
 import { RecommendationsPanel } from "@/components/travel/recommendations-panel"
 import { BalancesPanel } from "@/components/travel/balances-panel"
+import { SavedRoutesPanel } from "@/components/travel/saved-routes-panel"
 import { InsightsBanner } from "@/components/travel/insights-banner"
 import type { SearchConfig } from "@/types/travel"
 
@@ -107,6 +108,7 @@ export default function TravelPage() {
           <div className="space-y-4">
             <RecommendationsPanel recommendations={results.recommendations} />
             <BalancesPanel balances={results.balances} />
+            <SavedRoutesPanel currentConfig={lastConfig} />
 
             {/* Route sweet spots */}
             {results.routeSweetSpots.length > 0 && (
@@ -142,6 +144,12 @@ export default function TravelPage() {
               {balancesData.balances.length} points programs loaded from your cards
             </p>
           )}
+        </div>
+      )}
+
+      {status === "idle" && !results && (
+        <div className="max-w-md mx-auto">
+          <SavedRoutesPanel />
         </div>
       )}
     </div>

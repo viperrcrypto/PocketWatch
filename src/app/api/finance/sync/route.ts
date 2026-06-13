@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
         return apiError("F8052", "Institution not found", 404)
       }
 
-      const result = await syncInstitution(institutionId)
+      // User clicked Sync on this institution — force a real fetch (bypass the
+      // 2h SimpleFIN throttle) so newly-added accounts pull in immediately.
+      const result = await syncInstitution(institutionId, { force: true })
       await saveFinanceSnapshot(user.id)
       await backfillHistoricalSnapshots(user.id)
       invalidateCache(`deep-insights:${user.id}`)

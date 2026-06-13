@@ -3,11 +3,14 @@
 import { ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { motion, useReducedMotion } from "motion/react"
+import { indicatorSpring } from "@/lib/motion-transitions"
 import { cn } from "@/lib/utils"
 import { TRAVEL_NAV_TABS } from "@/lib/portfolio/nav"
 
 function TravelNav() {
   const pathname = usePathname()
+  const reduce = useReducedMotion()
 
   const activeTab = TRAVEL_NAV_TABS.filter((tab) => {
     if (tab.href === "/travel") return pathname === "/travel"
@@ -26,12 +29,19 @@ function TravelNav() {
               role="tab"
               aria-selected={isActive}
               className={cn(
-                "flex items-center gap-2 px-4 py-3 transition-colors duration-200 border-b-2 whitespace-nowrap text-sm",
+                "relative flex items-center gap-2 px-4 py-3 transition-colors duration-200 border-b-2 whitespace-nowrap text-sm",
                 isActive
-                  ? "text-primary border-b-primary font-medium"
+                  ? "text-primary border-b-transparent font-medium"
                   : "text-foreground-muted border-b-transparent hover:text-foreground"
               )}
             >
+              {isActive && (
+                <motion.span
+                  layoutId="travel-nav-underline"
+                  className="absolute inset-x-0 -bottom-px h-0.5 bg-primary rounded-full"
+                  transition={reduce ? { duration: 0 } : indicatorSpring}
+                />
+              )}
               <span
                 className={cn(
                   "material-symbols-rounded transition-colors duration-200",

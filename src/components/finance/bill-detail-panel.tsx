@@ -123,7 +123,7 @@ export function BillDetailPanel({ bill, onClose }: Props) {
       {bill.isPaid && bill.lastTransactionId && (
         <div className="pt-4">
           <Link
-            href={`/finance/transactions?highlight=${bill.lastTransactionId}&search=${encodeURIComponent(bill.merchantName)}`}
+            href={`/finance/transactions?highlight=${bill.lastTransactionId}`}
             onClick={onClose}
             className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-foreground bg-background-secondary rounded-lg hover:bg-background-secondary/80 transition-colors"
           >

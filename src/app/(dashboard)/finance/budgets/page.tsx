@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useState, useMemo, useEffect, useRef } from "react"
 import {
   useFinanceBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget,
@@ -11,17 +12,25 @@ import { FinanceCardSkeleton } from "@/components/finance/finance-loading"
 import { ConfirmDialog } from "@/components/finance/confirm-dialog"
 import { BudgetUntrackedSection } from "@/components/finance/budgets/budget-untracked-section"
 import { BudgetHeroSummary } from "@/components/finance/budgets/budget-hero-summary"
-import { BudgetPaceChart } from "@/components/finance/budgets/budget-pace-chart"
 import { BudgetStatStrip } from "@/components/finance/budgets/budget-stat-strip"
 import { BudgetCategoryList } from "@/components/finance/budgets/budget-category-list"
 import { BudgetCreateModal } from "@/components/finance/budgets/budget-create-modal"
 import { BudgetSubscriptionsImpact } from "@/components/finance/budgets/budget-subscriptions-impact"
 import { BudgetInlineInsights } from "@/components/finance/budgets/budget-inline-insights"
 import { BudgetDataDriven } from "@/components/finance/budgets/budget-data-driven"
+import { BorderBeam } from "@/components/ui/border-beam"
 import { computeBudgetSummary, computePaceMetrics, buildCategoryData, buildInsights } from "@/components/finance/budgets/budget-helpers"
 import type { BudgetInsight } from "@/components/finance/budgets/budget-helpers"
+
+// Recharts pace chart — load lazily (budget-data-driven already does the same).
+const BudgetPaceChart = dynamic(
+  () => import("@/components/finance/budgets/budget-pace-chart").then((m) => m.BudgetPaceChart),
+  { ssr: false },
+)
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { motion, useReducedMotion } from "motion/react"
+import { indicatorSpring } from "@/lib/motion-transitions"
 import { FadeIn } from "@/components/motion/fade-in"
 
 type BudgetTab = "my-budget" | "data-driven"
@@ -190,7 +199,8 @@ export default function FinanceBudgetsPage() {
           </div>
           <h3 className="text-base font-semibold text-foreground mb-1.5">No budgets yet</h3>
           <p className="text-sm text-foreground-muted mb-4 max-w-sm mx-auto">Set spending limits by category to track your progress against goals.</p>
-          <button onClick={() => setShowModal(true)} className="px-5 py-2.5 bg-foreground text-background rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+          <button onClick={() => setShowModal(true)} className="relative overflow-hidden px-5 py-2.5 bg-foreground text-background rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+            <BorderBeam radius={12} size={1.5} speed={6} color="var(--primary)" />
             Create Your First Budget
           </button>
         </div>
@@ -237,18 +247,29 @@ export default function FinanceBudgetsPage() {
 }
 
 function TabButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: string; children: React.ReactNode }) {
+  const reduce = useReducedMotion()
   return (
     <button
       role="tab"
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors",
+        // `isolate` creates a stacking context so the -z-10 sliding pill paints
+        // inside the button (behind the label) instead of escaping behind the
+        // tablist background — otherwise the active pill is invisible.
+        "relative isolate inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors",
         active
-          ? "bg-primary text-white shadow-sm"
+          ? "text-white"
           : "text-foreground-muted hover:text-foreground hover:bg-foreground/5"
       )}
     >
+      {active && (
+        <motion.span
+          layoutId="budget-tab-indicator"
+          className="absolute inset-0 -z-10 rounded-lg bg-primary shadow-sm"
+          transition={reduce ? { duration: 0 } : indicatorSpring}
+        />
+      )}
       <span className="material-symbols-rounded" style={{ fontSize: 16 }}>{icon}</span>
       {children}
     </button>

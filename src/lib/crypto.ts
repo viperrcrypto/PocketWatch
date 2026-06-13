@@ -55,20 +55,31 @@ async function importKey(): Promise<CryptoKey> {
 
 /**
  * Import a hex-encoded key for Web Crypto API.
+ *
+ * Memoized by hex string: decrypt/encrypt of field-encrypted models calls this
+ * once per encrypted field per row, so a paginated read would otherwise trigger
+ * hundreds of importKey calls. A single vault has only 1-2 distinct keys.
  */
-export async function importKeyFromHex(hexKey: string): Promise<CryptoKey> {
+const importKeyCache = new Map<string, Promise<CryptoKey>>()
+
+export function importKeyFromHex(hexKey: string): Promise<CryptoKey> {
+  const cached = importKeyCache.get(hexKey)
+  if (cached) return cached
+
   const keyBytes = new Uint8Array(32)
   for (let i = 0; i < 32; i++) {
     keyBytes[i] = parseInt(hexKey.slice(i * 2, i * 2 + 2), 16)
   }
 
-  return crypto.subtle.importKey(
+  const promise = crypto.subtle.importKey(
     "raw",
     keyBytes.buffer as ArrayBuffer,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
     ["encrypt", "decrypt"]
   )
+  importKeyCache.set(hexKey, promise)
+  return promise
 }
 
 /**

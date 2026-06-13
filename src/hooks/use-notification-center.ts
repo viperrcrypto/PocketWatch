@@ -63,7 +63,7 @@ export function useUnreadCount() {
     queryKey: centerKeys.unread(),
     queryFn: () => notifyFetch<{ count: number }>("/unread"),
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }
 

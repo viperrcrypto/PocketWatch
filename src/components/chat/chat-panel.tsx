@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useChat } from "@/hooks/use-chat"
 import { ChatMessageBubble } from "./chat-message"
 import { ThreadList } from "./thread-list"
@@ -14,7 +14,9 @@ export function ChatPanel() {
   } = useChat()
 
   const pathname = usePathname()
+  const router = useRouter()
   const [input, setInput] = useState("")
+  const [queued, setQueued] = useState<string[]>([])
   const [showThreads, setShowThreads] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -31,12 +33,32 @@ export function ChatPanel() {
     if (isOpen) inputRef.current?.focus()
   }, [isOpen])
 
+  // Flush the next queued message once the current stream finishes.
+  useEffect(() => {
+    if (status === "idle" && queued.length > 0) {
+      const [next, ...rest] = queued
+      setQueued(rest)
+      sendMessage(next)
+    }
+  }, [status, queued, sendMessage])
+
   const handleSend = useCallback(() => {
     const trimmed = input.trim()
-    if (!trimmed || status === "streaming" || status === "tool_running") return
+    if (!trimmed) return
     setInput("")
-    sendMessage(trimmed)
+    // While a response is streaming, queue the message instead of dropping it;
+    // the effect above sends it when the stream completes.
+    if (status === "streaming" || status === "tool_running") {
+      setQueued((q) => [...q, trimmed])
+    } else {
+      sendMessage(trimmed)
+    }
   }, [input, status, sendMessage])
+
+  const openFullPage = useCallback(() => {
+    closePanel()
+    router.push("/chat")
+  }, [closePanel, router])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -62,7 +84,7 @@ export function ChatPanel() {
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full md:w-[400px] bg-background border-l border-card-border flex flex-col">
+      <div data-app-chat className="fixed right-0 top-0 bottom-0 z-50 w-full md:w-[400px] bg-background border-l border-card-border flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-14 border-b border-card-border shrink-0">
           <div className="flex items-center gap-2 min-w-0">
@@ -78,6 +100,14 @@ export function ChatPanel() {
             </span>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={openFullPage}
+              className="touch-target rounded-lg hover:bg-card-hover transition-colors"
+              aria-label="Open full window"
+              title="Open full window"
+            >
+              <span className="material-symbols-rounded text-lg">open_in_full</span>
+            </button>
             <button
               onClick={newThread}
               className="touch-target rounded-lg hover:bg-card-hover transition-colors"
@@ -137,35 +167,44 @@ export function ChatPanel() {
 
         {/* Input bar */}
         <div className="shrink-0 border-t border-card-border px-4 py-3">
+          {queued.length > 0 && (
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] text-foreground-muted">
+              <span className="material-symbols-rounded text-sm">schedule</span>
+              {queued.length} message{queued.length > 1 ? "s" : ""} queued
+              <button onClick={() => setQueued([])} className="ml-auto hover:text-foreground transition-colors">
+                Clear
+              </button>
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about your finances..."
+              placeholder={isStreaming ? "Queue a message — sends when ready…" : "Ask about your finances..."}
               rows={1}
               className="flex-1 resize-none bg-card border border-card-border rounded-xl px-3 py-2.5 text-base md:text-sm outline-none focus:border-primary transition-colors placeholder:text-foreground-muted max-h-32"
-              disabled={isStreaming}
             />
-            {isStreaming ? (
+            {isStreaming && (
               <button
                 onClick={abortStream}
                 className="shrink-0 w-11 h-11 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors"
                 aria-label="Stop"
+                title="Stop"
               >
                 <span className="material-symbols-rounded text-lg">stop</span>
               </button>
-            ) : (
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="shrink-0 w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-colors"
-                aria-label="Send"
-              >
-                <span className="material-symbols-rounded text-lg">send</span>
-              </button>
             )}
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="shrink-0 w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-colors"
+              aria-label={isStreaming ? "Queue message" : "Send"}
+              title={isStreaming ? "Queue message" : "Send"}
+            >
+              <span className="material-symbols-rounded text-lg">{isStreaming ? "schedule_send" : "send"}</span>
+            </button>
           </div>
         </div>
       </div>

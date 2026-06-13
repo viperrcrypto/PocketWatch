@@ -7,7 +7,8 @@
 import "dotenv/config"
 import { db } from "../src/lib/db"
 
-const USER_ID = "cmmmg5lcs0000jljbsg47ovzb"
+const USER_ID = process.env.DEMO_USER_ID ?? ""
+if (!USER_ID) throw new Error("Set DEMO_USER_ID in .env to run the demo seeder.")
 
 async function main() {
   const deleted = await db.portfolioSnapshot.deleteMany({ where: { userId: USER_ID } })

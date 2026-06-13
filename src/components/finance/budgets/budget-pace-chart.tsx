@@ -26,11 +26,12 @@ export function BudgetPaceChart({
   const data = buildPaceChartData(dailySpending, totalBudgeted, daysInMonth, dayOfMonth, projectedTotal)
   const isOverPace = projectedTotal > totalBudgeted
   const dynamicColor = isOverPace ? error : success
+  const gradientId = isOverPace ? "pace-fill-over" : "pace-fill-under"
   const projectedDiff = Math.abs(projectedTotal - totalBudgeted)
   const maxY = Math.max(totalBudgeted, projectedTotal) * 1.1
 
   return (
-    <div className="bg-card rounded-2xl p-6 flex-1" style={{ boxShadow: "var(--shadow-sm)" }}>
+    <div className="bg-card border border-card-border rounded-2xl p-6 flex-1" style={{ boxShadow: "var(--shadow-sm)" }}>
       <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground-muted mb-4">
         Daily Cumulative Spending
       </p>
@@ -38,12 +39,20 @@ export function BudgetPaceChart({
       <div aria-label={`Spending pace: ${formatCurrency(projectedTotal, "USD", 0)} projected vs ${formatCurrency(totalBudgeted, "USD", 0)} budget`}>
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
+            <defs>
+              {/* Soft vertical fill under the spending line — pace-tinted (success/error), fading to transparent */}
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={dynamicColor} stopOpacity={0.24} />
+                <stop offset="55%" stopColor={dynamicColor} stopOpacity={0.08} />
+                <stop offset="100%" stopColor={dynamicColor} stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={border} vertical={false} />
             <XAxis dataKey="day" tick={{ fontSize: 10, fill: foregroundMuted }} tickLine={false} axisLine={false} ticks={buildXTicks(daysInMonth, dayOfMonth)} />
             <YAxis tick={{ fontSize: 10, fill: foregroundMuted }} tickFormatter={(v) => v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`} axisLine={false} tickLine={false} domain={[0, maxY]} width={48} />
             <ReferenceLine y={totalBudgeted} stroke={foregroundMuted} strokeDasharray="8 4" strokeWidth={1} label={{ value: `Budget ${formatCurrency(totalBudgeted, "USD", 0)}`, position: "right", fontSize: 9, fill: foregroundMuted }} />
             <Line type="monotone" dataKey="ideal" stroke={foregroundMuted} strokeDasharray="6 4" strokeWidth={1.5} dot={false} name="Budget Pace" connectNulls={false} animationDuration={800} />
-            <Area type="monotone" dataKey="actual" fill={dynamicColor} fillOpacity={0.06} stroke="none" connectNulls={false} animationDuration={800} />
+            <Area type="monotone" dataKey="actual" fill={`url(#${gradientId})`} stroke="none" connectNulls={false} animationDuration={800} />
             <Line type="monotone" dataKey="actual" stroke={dynamicColor} strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: dynamicColor }} name="Your Spending" connectNulls={false} animationDuration={800} />
             <Line type="monotone" dataKey="projected" stroke={dynamicColor} strokeDasharray="4 4" strokeWidth={1.5} dot={false} name="Projected" connectNulls={false} animationDuration={600} />
             <Tooltip content={<ChartTooltip formatLabel={(day) => `Day ${day}`} />} />

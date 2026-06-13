@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { cn, formatCurrency } from "@/lib/utils"
 
 interface Bill {
@@ -8,13 +9,34 @@ interface Bill {
   amount: number
   daysUntil: number
   isPaid?: boolean
+  lastTransactionId?: string | null
+  category?: string | null
+}
+
+/** Drill-through to the underlying transaction(s): the exact paid transaction if
+ * linked; otherwise the category's transactions when the bill is only labeled by
+ * category (the nameless "Food & Dining"-style false positives), else a merchant
+ * search. */
+function billHref(bill: Bill): string {
+  if (bill.lastTransactionId) return `/finance/transactions?highlight=${bill.lastTransactionId}`
+  if (bill.category && bill.merchantName === bill.category) {
+    return `/finance/transactions?category=${encodeURIComponent(bill.category)}`
+  }
+  return `/finance/transactions?search=${encodeURIComponent(bill.merchantName)}`
 }
 
 interface BillsImmediateActionsProps {
   bills: Bill[]
+  /** Dismiss a materialized subscription bill (id is a plain cuid, not cc-/plaid:). */
+  onDismiss?: (id: string) => void
 }
 
-export function BillsImmediateActions({ bills }: BillsImmediateActionsProps) {
+/** Only real subscription rows (cuid ids) can be dismissed — CC/Plaid bills can't. */
+function isDismissible(id: string): boolean {
+  return !id.startsWith("cc-") && !id.startsWith("plaid:")
+}
+
+export function BillsImmediateActions({ bills, onDismiss }: BillsImmediateActionsProps) {
   // Only show upcoming unpaid bills due within 7 days, never negative days (already past)
   const urgent = bills.filter((b) => b.daysUntil >= 0 && b.daysUntil <= 7 && !b.isPaid)
   if (urgent.length === 0) return null
@@ -37,7 +59,8 @@ export function BillsImmediateActions({ bills }: BillsImmediateActionsProps) {
           const isUrgent = bill.daysUntil <= 3
 
           return (
-            <div key={bill.id} className="flex items-center justify-between px-5 py-3 hover:bg-background-secondary/20 transition-colors">
+            <div key={bill.id} className="flex items-center gap-1 px-5 py-3 hover:bg-background-secondary/20 transition-colors group">
+            <Link href={billHref(bill)} className="flex items-center justify-between flex-1 min-w-0">
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
@@ -65,12 +88,26 @@ export function BillsImmediateActions({ bills }: BillsImmediateActionsProps) {
                   </p>
                 </div>
               </div>
-              <span className={cn(
-                "font-data text-sm font-bold tabular-nums",
-                isToday ? "text-error" : "text-foreground"
-              )}>
-                {formatCurrency(bill.amount)}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={cn(
+                  "font-data text-sm font-bold tabular-nums",
+                  isToday ? "text-error" : "text-foreground"
+                )}>
+                  {formatCurrency(bill.amount)}
+                </span>
+                <span className="material-symbols-rounded text-foreground-muted/40" style={{ fontSize: 16 }} aria-hidden="true">chevron_right</span>
+              </div>
+            </Link>
+            {onDismiss && isDismissible(bill.id) && (
+              <button
+                onClick={() => onDismiss(bill.id)}
+                className="flex-shrink-0 p-1 text-foreground-muted/40 hover:text-error transition-colors opacity-0 group-hover:opacity-100"
+                aria-label={`Dismiss ${bill.merchantName} — not a bill`}
+                title="Not a bill — dismiss"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 18 }} aria-hidden="true">close</span>
+              </button>
+            )}
             </div>
           )
         })}

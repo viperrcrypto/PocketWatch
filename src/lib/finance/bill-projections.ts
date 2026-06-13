@@ -12,6 +12,17 @@ import {
 
 type AccountMap = Map<string, { type: string; subtype: string | null; name: string; mask: string | null; institution: { institutionName: string | null } | null }>
 
+/**
+ * Whole calendar days from today (local midnight) to `target` (a local-midnight
+ * due date); negative if past. Midnight-to-midnight so an afternoon "now" never
+ * rounds a bill due tomorrow down to "Due today".
+ */
+function calendarDaysUntil(target: Date, now: Date): number {
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+  return Math.round((target.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 /** Project a materialized subscription into the target month */
 export function projectSubBill(
   s: { id: string; merchantName: string; nickname: string | null; category: string | null; frequency: string; amount: number; billType: string | null; accountId: string | null; nextChargeDate: Date | null; lastChargeDate: Date | null; lastTransactionId?: string | null },
@@ -53,7 +64,7 @@ export function projectSubBill(
         amount: s.amount, accountType: acct?.type ?? null, accountSubtype: acct?.subtype ?? null,
       })
 
-  const daysUntil = Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const daysUntil = calendarDaysUntil(next, now)
   return {
     id: s.id, merchantName: displayName, amount: s.amount, frequency: s.frequency,
     nextDueDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`,
@@ -115,7 +126,7 @@ export function projectPlaidBill(
     accountType: acct?.type ?? null, accountSubtype: acct?.subtype ?? null,
   })
 
-  const daysUntil = Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const daysUntil = calendarDaysUntil(next, now)
   return {
     id: `plaid:${ps.streamId}`, merchantName: displayName, amount, frequency: freq,
     nextDueDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`,
@@ -174,7 +185,7 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     const minPay = cc.minimumPaymentAmount ?? 0
     if (stmtBal <= 0 && minPay <= 0) continue
 
-    const daysUntil = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const daysUntil = calendarDaysUntil(nextDue, now)
     // FIX Bug 1: Set isPaid based on whether due date has passed
     const isPaid = daysUntil < 0
 
@@ -258,7 +269,7 @@ export async function getCCBills(userId: string, targetMonth: string, now: Date)
     const dueDate = new Date(targetYear, targetMon - 1, dueDay)
     if (!isInMonth(dueDate, targetMonth)) continue
 
-    const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const daysUntil = calendarDaysUntil(dueDate, now)
     // FIX Bug 13: Check for actual payment transaction, not just date-based
     const isPaid = daysUntil < 0
 

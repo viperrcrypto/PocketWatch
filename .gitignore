@@ -76,3 +76,7 @@ coverage.json
 .next 2/
 prisma/dev.db
 tmp_*.ts
+
+# Personal/dev one-off scripts with private data — never commit
+scripts/seed-wallets.ts
+scripts/movement-probe.ts

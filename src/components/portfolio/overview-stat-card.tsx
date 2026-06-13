@@ -2,6 +2,7 @@
 
 import { TextMorph } from "torph/react"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
+import { BorderBeam } from "@/components/ui/border-beam"
 
 export interface OverviewStatCardProps {
   label: string
@@ -11,6 +12,8 @@ export interface OverviewStatCardProps {
   isLoading?: boolean
   accentColor?: string
   isHidden?: boolean
+  /** Render an accent border-beam around the card (headline emphasis). */
+  beam?: boolean
 }
 
 export function OverviewStatCard({
@@ -21,13 +24,15 @@ export function OverviewStatCard({
   isLoading,
   accentColor,
   isHidden,
+  beam = false,
 }: OverviewStatCardProps) {
   const borderColor = accentColor || "#2a2a2a"
   return (
     <div
-      className="bg-card border border-card-border p-5 hover:border-card-border-hover transition-colors duration-300 group rounded-xl"
+      className="relative bg-card border border-card-border p-5 hover:border-card-border-hover transition-colors duration-300 group rounded-xl"
       style={{ borderLeft: `2px solid ${borderColor}` }}
     >
+      {beam && <BorderBeam radius={12} size={1.5} speed={7} />}
       <div className="flex items-center justify-between mb-4">
         <span className="text-foreground-muted text-xs font-semibold tracking-wider">
           {label}

@@ -143,9 +143,6 @@ function analyzeCluster(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
-  const amounts = sorted.map((c) => c.amount)
-  const avgAmount = amounts.reduce((s, a) => s + a, 0) / amounts.length
-
   // Compute intervals in days
   const intervals: number[] = []
   for (let i = 1; i < sorted.length; i++) {
@@ -203,7 +200,10 @@ function analyzeCluster(
 
   return {
     merchantName,
-    amount: Math.round(avgAmount * 100) / 100,
+    // Show the most RECENT charge, not the average — for variable bills (utility
+    // e-payments, card/services charges) the average matches nothing and mismatches
+    // the linked "last payment". The latest charge is the best estimate of the next.
+    amount: Math.round(lastCharge.amount * 100) / 100,
     frequency,
     lastChargeDate: lastCharge.date,
     nextChargeDate: nextDate.toISOString().split("T")[0],
@@ -331,22 +331,25 @@ function isLongFrequency(frequency: Frequency): boolean {
 }
 
 export function computeNextChargeDate(lastDate: Date, frequency: Frequency): Date {
-  const nextDate = new Date(lastDate)
+  // Work entirely in UTC: lastDate from Prisma is a UTC-midnight @db.Date, and
+  // local setMonth/setDate would shift it ±1 day on a non-UTC server, which made
+  // bills show the wrong "due in N days" (often "Due today").
+  const nextDate = new Date(Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth(), lastDate.getUTCDate()))
   switch (frequency) {
     case "monthly":
-      nextDate.setMonth(nextDate.getMonth() + 1)
+      nextDate.setUTCMonth(nextDate.getUTCMonth() + 1)
       break
     case "quarterly":
-      nextDate.setMonth(nextDate.getMonth() + 3)
+      nextDate.setUTCMonth(nextDate.getUTCMonth() + 3)
       break
     case "semi_annual":
-      nextDate.setMonth(nextDate.getMonth() + 6)
+      nextDate.setUTCMonth(nextDate.getUTCMonth() + 6)
       break
     case "yearly":
-      nextDate.setFullYear(nextDate.getFullYear() + 1)
+      nextDate.setUTCFullYear(nextDate.getUTCFullYear() + 1)
       break
     default: // weekly, biweekly
-      nextDate.setDate(nextDate.getDate() + frequencyToDays(frequency))
+      nextDate.setUTCDate(nextDate.getUTCDate() + frequencyToDays(frequency))
   }
   return nextDate
 }

@@ -240,7 +240,7 @@ export interface UnifiedHotelResult {
   latitude: number | null
   longitude: number | null
   // Source tracking
-  sources: ("serpapi" | "roame" | "atf")[]
+  sources: ("serpapi" | "roame" | "atf" | "trivago")[]
 }
 
 export interface HotelSearchConfig {

@@ -16,6 +16,7 @@ import { fetchMultiWalletPositions, type MultiWalletResult, type ZerionWalletDat
 import { fetchMultiHeliusBalances } from "./helius-balance-client"
 import { fetchMultiAlchemyBalances } from "./alchemy-balance-client"
 import { fetchMultiMoralisBalances } from "./moralis-balance-client"
+import { fetchMultiMovementBalances } from "./movement-balance-client"
 
 // Chains treated as EVM — Zerion/Alchemy/Moralis can fetch these.
 // Includes both DB format (uppercase short codes) and Zerion format (lowercase full names).
@@ -31,6 +32,8 @@ const EVM_CHAINS = new Set([
 
 const SOLANA_CHAINS = new Set(["solana", "SOL"])
 const BTC_CHAINS = new Set(["btc", "BTC"])
+// Movement (Aptos/Move L2) — custom fetcher, no Zerion/Alchemy coverage.
+const MOVEMENT_CHAINS = new Set(["movement", "MOVEMENT", "MOVE"])
 
 interface WalletInput {
   address: string
@@ -154,11 +157,30 @@ async function fetchSolanaBalances(
   return { wallets: [], failedCount: wallets.length }
 }
 
+/** Fetch Movement balances (wallet tokens + Yuzu LP) via the custom client. */
+async function fetchMovementBalancesDispatch(
+  userId: string,
+  wallets: WalletInput[],
+): Promise<MultiWalletResult> {
+  if (wallets.length === 0) return { wallets: [], failedCount: 0 }
+  const addresses = wallets.map((w) => w.address)
+  try {
+    return await withProviderPermit(
+      userId, "movement", `movement-balances`, undefined,
+      () => fetchMultiMovementBalances(addresses),
+    )
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    console.warn(`[multi-fetch] Movement fetch failed (${reason})`)
+    return { wallets: [], failedCount: wallets.length }
+  }
+}
+
 /**
  * Fetch balances for all wallets across all chain types.
  *
- * Splits wallets by chain type (EVM vs Solana), dispatches to the
- * right provider chain, merges results, and returns unified MultiWalletResult.
+ * Splits wallets by chain type (EVM vs Solana vs Movement), dispatches to the
+ * right provider, merges results, and returns unified MultiWalletResult.
  */
 export async function fetchAllWalletBalances(
   userId: string,
@@ -167,25 +189,29 @@ export async function fetchAllWalletBalances(
   // Split wallets by chain type
   const evmWallets: WalletInput[] = []
   const solanaWallets: WalletInput[] = []
+  const movementWallets: WalletInput[] = []
 
   for (const w of wallets) {
     const hasEvm = w.chains.some((c) => EVM_CHAINS.has(c))
     const hasSolana = w.chains.some((c) => SOLANA_CHAINS.has(c))
+    const hasMovement = w.chains.some((c) => MOVEMENT_CHAINS.has(c))
 
     if (hasEvm) evmWallets.push(w)
     if (hasSolana) solanaWallets.push(w)
+    if (hasMovement) movementWallets.push(w)
     // BTC wallets are skipped for now
   }
 
   console.log(
-    `[multi-fetch] Dispatching: ${evmWallets.length} EVM, ${solanaWallets.length} Solana` +
-    ` (${wallets.length - evmWallets.length - solanaWallets.length} skipped)`,
+    `[multi-fetch] Dispatching: ${evmWallets.length} EVM, ${solanaWallets.length} Solana, ${movementWallets.length} Movement` +
+    ` (${wallets.length - evmWallets.length - solanaWallets.length - movementWallets.length} skipped)`,
   )
 
-  // Fetch EVM and Solana in parallel — use allSettled so one chain type failing doesn't kill the other
-  const [evmSettled, solanaSettled] = await Promise.allSettled([
+  // Fetch each chain type in parallel — allSettled so one failing doesn't kill the others
+  const [evmSettled, solanaSettled, movementSettled] = await Promise.allSettled([
     fetchEvmBalances(userId, evmWallets),
     fetchSolanaBalances(userId, solanaWallets),
+    fetchMovementBalancesDispatch(userId, movementWallets),
   ])
 
   const evmResult = evmSettled.status === "fulfilled"
@@ -194,6 +220,9 @@ export async function fetchAllWalletBalances(
   const solanaResult = solanaSettled.status === "fulfilled"
     ? solanaSettled.value
     : { wallets: [] as ZerionWalletData[], failedCount: solanaWallets.length }
+  const movementResult = movementSettled.status === "fulfilled"
+    ? movementSettled.value
+    : { wallets: [] as ZerionWalletData[], failedCount: movementWallets.length }
 
   if (evmSettled.status === "rejected") {
     console.warn(`[multi-fetch] EVM fetch failed: ${evmSettled.reason?.message ?? "unknown"}`)
@@ -201,10 +230,13 @@ export async function fetchAllWalletBalances(
   if (solanaSettled.status === "rejected") {
     console.warn(`[multi-fetch] Solana fetch failed: ${solanaSettled.reason?.message ?? "unknown"}`)
   }
+  if (movementSettled.status === "rejected") {
+    console.warn(`[multi-fetch] Movement fetch failed: ${movementSettled.reason?.message ?? "unknown"}`)
+  }
 
   // Merge results
-  const mergedWallets: ZerionWalletData[] = [...evmResult.wallets, ...solanaResult.wallets]
-  const totalFailed = evmResult.failedCount + solanaResult.failedCount
+  const mergedWallets: ZerionWalletData[] = [...evmResult.wallets, ...solanaResult.wallets, ...movementResult.wallets]
+  const totalFailed = evmResult.failedCount + solanaResult.failedCount + movementResult.failedCount
 
   const totalPositions = mergedWallets.reduce((s, w) => s + w.positions.length, 0)
   console.log(

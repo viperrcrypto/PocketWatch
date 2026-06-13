@@ -204,7 +204,12 @@ export function BudgetSubscriptionsSection() {
       ) : null}
 
       {/* Immediate Actions */}
-      {billsData && <BillsImmediateActions bills={billsData.bills} />}
+      {billsData && (
+        <BillsImmediateActions
+          bills={billsData.bills}
+          onDismiss={(id) => updateSub.mutate({ subscriptionId: id, status: "dismissed" })}
+        />
+      )}
 
       {/* Subscriptions */}
       <div className="space-y-4">

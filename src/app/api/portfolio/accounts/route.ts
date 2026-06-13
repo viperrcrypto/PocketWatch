@@ -30,6 +30,8 @@ const CHAIN_ID_MAP: Record<string, string> = {
   BLAST: "blast",
   MANTLE: "mantle",
   BERACHAIN: "berachain",
+  MOVEMENT: "movement",
+  MOVE: "movement",
 }
 
 const DEFAULT_EVM_CHAINS = ["ethereum", "polygon", "arbitrum", "optimism", "base", "avalanche"]

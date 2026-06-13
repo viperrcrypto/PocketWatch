@@ -88,10 +88,16 @@ export async function decryptField(
       str = await decrypt(encrypted)
     }
   } catch {
-    // Gracefully handle pre-existing plaintext data that was stored before
-    // this field was added to ENCRYPTED_FIELDS. Return as-is; it will be
-    // encrypted on the next write via the Prisma extension.
-    return deserializeField(encrypted, fieldType)
+    // Decryption failed. This is either pre-existing plaintext (stored before the
+    // field was added to ENCRYPTED_FIELDS) OR a non-session read context (e.g. the
+    // MCP server) that doesn't hold the per-user DEK. deserializeField re-parses
+    // the raw value, which throws on json fields holding ciphertext — guard it so
+    // a non-decryptable field degrades to null instead of crashing the read.
+    try {
+      return deserializeField(encrypted, fieldType)
+    } catch {
+      return null
+    }
   }
 
   switch (fieldType) {

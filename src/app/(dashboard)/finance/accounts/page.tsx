@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   useFinanceAccounts, useFinanceTransactions, useExchangePlaidToken,
@@ -26,6 +27,7 @@ import { StaggerChildren, StaggerItem } from "@/components/motion/stagger-childr
 const TYPE_ORDER = ["checking", "savings", "credit", "business_credit", "investment", "brokerage", "loan", "mortgage"]
 
 export default function FinanceAccountsPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("all")
   const [expandedInst, setExpandedInst] = useState<Set<string>>(new Set())
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
@@ -240,7 +242,7 @@ export default function FinanceAccountsPage() {
               isOpen={expandedInst.has(inst.id)}
               onToggle={() => toggleInst(inst.id)}
               selectedAccount={selectedAccount}
-              onSelectAccount={(id) => { setSelectedAccount(id); setTxPage(1) }}
+              onSelectAccount={(id) => { if (id) router.push(`/finance/accounts/${id}`) }}
               onSync={() => syncMutation.mutate(inst.id)}
               onDisconnect={() => setDisconnecting({ id: inst.id, name: inst.institutionName })}
               onRenameAccount={(accountId, name) => updateAccount.mutate({ accountId, name })}

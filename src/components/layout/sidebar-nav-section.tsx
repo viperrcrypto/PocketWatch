@@ -58,10 +58,21 @@ export function SidebarNavSection({ label, items, pathname, baseHref, onClose, b
               layoutId={`nav-active-${groupId}`}
               className="absolute inset-0 bg-primary-muted rounded-lg"
               transition={springs.snappy}
-              style={{ zIndex: -1 }}
+              style={{
+                zIndex: -1,
+                boxShadow:
+                  "inset 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent), 0 2px 10px -4px color-mix(in srgb, var(--primary) 40%, transparent)",
+              }}
             />
           ) : (
-            <span className="absolute inset-0 bg-primary-muted rounded-lg" style={{ zIndex: -1 }} />
+            <span
+              className="absolute inset-0 bg-primary-muted rounded-lg"
+              style={{
+                zIndex: -1,
+                boxShadow:
+                  "inset 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent), 0 2px 10px -4px color-mix(in srgb, var(--primary) 40%, transparent)",
+              }}
+            />
           )
         )}
         {/* Left indicator bar */}

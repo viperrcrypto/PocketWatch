@@ -120,7 +120,10 @@ async function runClaudeAPILoop(
         max_tokens: 4096,
         stream: true,
         system: SYSTEM_PROMPT + buildContextPrefix(pageContext),
-        tools: TOOL_DEFINITIONS,
+        // Anthropic-hosted web search (executed server-side, billed per search) so
+        // the assistant can verify current external facts (card fees, rates, news)
+        // instead of guessing from stale training data.
+        tools: [...TOOL_DEFINITIONS, { type: "web_search_20250305", name: "web_search", max_uses: 5 }],
         messages: claudeMessages,
       }),
       signal: AbortSignal.timeout(120_000),
@@ -274,10 +277,13 @@ function streamCLIWithSystemPrompt(
   const bin = resolveClaudeBin()
   return new Promise((resolve, reject) => {
     const { CLAUDECODE, CLAUDE_CODE, CLAUDE_CODE_ENTRYPOINT, ...cleanEnv } = process.env
-    // --dangerously-skip-permissions: required for headless server-side invocation — Claude CLI
-    // cannot prompt interactively in a subprocess. The AI only has access to PocketWatch's own
-    // tool executors (finance/flight queries), not filesystem or shell.
-    const args = ["-p", "--output-format", "text", "--system-prompt", systemPrompt, "--dangerously-skip-permissions"]
+    // PocketWatch's own tools are executed by the app (parsed from the model's
+    // text as {"tool":...} and run by executeTool) — NOT by Claude Code's native
+    // tools — so the CLI needs no native tool permissions for them. We narrowly
+    // allow ONLY WebSearch (for current external facts) instead of the previous
+    // blanket --dangerously-skip-permissions: safer, and still fully headless
+    // (any other native tool is auto-denied in -p mode, never prompts).
+    const args = ["-p", "--output-format", "text", "--system-prompt", systemPrompt, "--allowedTools", "WebSearch"]
     if (model) args.push("--model", model)
     const child = spawn(bin, args, {
       env: { ...cleanEnv, TERM: "dumb" },
@@ -447,6 +453,7 @@ Rules:
 - When calling a tool, output ONLY the JSON. Do not write any text before or after it.
 - After receiving tool results, answer naturally using that data in clean markdown. No JSON in your final answer.
 - Be concise. Use bullet points, tables, and bold for readability.
+- This JSON format is ONLY for the PocketWatch data tools below. For current EXTERNAL facts (card fees, rates, prices, how-to, news) use your built-in web search directly — do NOT wrap web search in this JSON format, and never claim you can't search the web.
 
 Available tools:
 ${toolDescriptions}`

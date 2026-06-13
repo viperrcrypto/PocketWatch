@@ -9,12 +9,15 @@ import { searchSerpApiHotels } from "./hotel-search-client"
 import { searchRoameHotels, matchRoameHotel, type RoameHotelMatch } from "./roame-hotel-client"
 import { searchATFHotels, atfBrandToProgram, type ATFHotelMatch } from "./atf-hotel-client"
 import { searchRoameLocation, searchRoameHotelsLive, roameProgramLabel, type RoameLiveHotel } from "./roame-hotel-graphql"
+import { searchTrivagoHotels } from "./trivago-client"
 
 // ─── Credentials ────────────────────────────────────────────────
 
 export interface HotelSearchCredentials {
   serpApiKey: string | null
   atfApiKey: string | null
+  /** Keyless Trivago MCP (OTA cash prices). Free, so always enabled. */
+  trivago?: boolean
 }
 
 // ─── Response Cache ─────────────────────────────────────────────
@@ -268,6 +271,7 @@ export async function searchHotels(
   let roameLiveResults: UnifiedHotelResult[] = []
   let roameStaticResults: RoameHotelMatch[] = []
   let atfResults: ATFHotelMatch[] = []
+  let trivagoResults: UnifiedHotelResult[] = []
 
   // SerpAPI (cash prices, images, reviews)
   if (credentials.serpApiKey) {
@@ -317,6 +321,23 @@ export async function searchHotels(
     )
   }
 
+  // Trivago (keyless MCP) — OTA-aggregated cash prices. Free, returns [] on failure.
+  if (credentials.trivago) {
+    promises.push(
+      searchTrivagoHotels({
+        query: config.query,
+        checkInDate: config.checkInDate,
+        checkOutDate: config.checkOutDate,
+        adults: config.adults,
+      })
+        .then((hotels) => {
+          trivagoResults = hotels
+          if (hotels.length > 0) sources.push("trivago")
+        })
+        .catch((err) => { console.warn(`[hotels] Trivago failed: ${(err as Error).message}`) }),
+    )
+  }
+
   await Promise.all(promises)
 
   let merged: UnifiedHotelResult[]
@@ -334,6 +355,14 @@ export async function searchHotels(
     const existingNames = new Set(merged.map((h) => h.name))
     merged = addPointsOnlyHotels(merged, roameStaticResults, existingNames, 10)
     console.log(`[hotels] Used fallback path: ${merged.length} hotels, ${withPoints} matched points from static, ${merged.length - serpApiResults.length} points-only added`)
+  }
+
+  // Append Trivago cash hotels not already covered (dedup by name).
+  if (trivagoResults.length > 0) {
+    const existing = new Set(merged.map((h) => h.name.toLowerCase().trim()))
+    const fresh = trivagoResults.filter((h) => !existing.has(h.name.toLowerCase().trim()))
+    if (fresh.length > 0) merged = [...merged, ...fresh]
+    console.log(`[hotels] Trivago: ${trivagoResults.length} results, ${fresh.length} new appended`)
   }
 
   const result: HotelDashboardResults = {

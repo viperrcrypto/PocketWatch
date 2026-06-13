@@ -156,7 +156,7 @@ function renderActiveShape(props: ActiveShapeProps) {
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
-        style={{ filter: `drop-shadow(0 2px 8px ${fill}40)`, transition: "all 0.3s ease" }}
+        style={{ filter: `drop-shadow(0 2px 8px color-mix(in srgb, ${fill} 25%, transparent))`, transition: "all 0.3s ease" }}
       />
       <Sector
         cx={cx}

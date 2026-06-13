@@ -67,9 +67,11 @@ export async function POST(request: NextRequest) {
     .map((msg) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
     .join("\n")
 
-  const prompt = `You are a credit card expert who knows everything about the ${card.cardName}. Answer the user's question with specific, accurate details. Include exact numbers, coverage amounts, time limits, and eligibility rules when relevant. Be concise but thorough. If you're not certain about a specific detail, say so.
+  const prompt = `You are a credit card expert who knows everything about the ${card.cardName}. Answer the user's question with specific, accurate details. Include exact numbers, coverage amounts, time limits, and eligibility rules when relevant. Be concise but thorough.
 
-CARD DETAILS:
+The CARD DETAILS below come from this app's local database and may be outdated or wrong. If the user disputes a detail, or the question is about a current fact that changes (annual fees, APRs, current offers, recent program changes), USE THE web_search TOOL to verify against the issuer's site before answering — do not just repeat the local value. If you used web search, briefly note the source. Never claim you "can't search the internet."
+
+CARD DETAILS (local, may be stale):
 ${cardContext.join("\n")}
 
 ${conversationHistory ? `CONVERSATION HISTORY:\n${conversationHistory}\n` : ""}
@@ -80,10 +82,17 @@ Answer concisely and specifically. No marketing language.`
   try {
     let rawText: string
     if (!providerKey) {
-      rawText = await callAIProviderRaw({ provider: "ai_claude_cli", apiKey: "enabled", model: undefined }, prompt)
+      rawText = await callAIProviderRaw({ provider: "ai_claude_cli", apiKey: "enabled", model: undefined }, prompt, { webSearch: true })
     } else {
       const apiKey = await decryptCredential(providerKey.apiKeyEnc)
-      rawText = await callAIProviderRaw({ provider: providerKey.serviceName as AIProviderType, apiKey, model: providerKey.model ?? undefined }, prompt)
+      // Web search applies to the Anthropic API + Claude CLI paths (a no-op for
+      // OpenAI/Gemini, which answer from training data).
+      const webSearch = providerKey.serviceName === "ai_claude_api" || providerKey.serviceName === "ai_claude_cli"
+      rawText = await callAIProviderRaw(
+        { provider: providerKey.serviceName as AIProviderType, apiKey, model: providerKey.model ?? undefined },
+        prompt,
+        { webSearch },
+      )
     }
 
     return NextResponse.json({ answer: rawText.trim() })

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const querySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(50),
+    limit: z.coerce.number().int().min(1).max(500).default(50),
     startDate: z.string().date().optional(),
     endDate: z.string().date().optional(),
     category: z.string().max(100).optional(),
@@ -100,6 +100,7 @@ const patchSchema = z.object({
   notes: z.string().max(2000).optional(),
   tags: z.array(z.string()).max(20).optional(),
   isExcluded: z.boolean().optional(),
+  tripId: z.string().min(1).nullable().optional(),
 })
 
 export async function PATCH(req: NextRequest) {
@@ -112,13 +113,28 @@ export async function PATCH(req: NextRequest) {
     return apiError("F4011", parsed.error.issues[0]?.message ?? "Invalid request", 400)
   }
 
-  const { transactionId, category, subcategory, notes, tags, isExcluded } = parsed.data
+  const { transactionId, category, subcategory, notes, tags, isExcluded, tripId } = parsed.data
 
   try {
     const tx = await db.financeTransaction.findFirst({
       where: { id: transactionId, userId: user.id },
     })
     if (!tx) return apiError("F4012", "Transaction not found", 404)
+
+    // Assigning to a trip must reference a trip the user owns; null untags.
+    if (tripId) {
+      const trip = await db.trip.findFirst({
+        where: { id: tripId, userId: user.id },
+        select: { id: true },
+      })
+      if (!trip) return apiError("F4014", "Trip not found", 404)
+    }
+
+    // tripId === null means the user removed this charge from the trip — mark it
+    // excluded so the auto-tagger / manual re-tag never re-adds it. Re-assigning
+    // to a real trip clears that exclusion.
+    const tripExclusion =
+      tripId === null ? { tripExcluded: true } : tripId ? { tripExcluded: false } : {}
 
     const updated = await db.financeTransaction.update({
       where: { id: transactionId },
@@ -128,6 +144,8 @@ export async function PATCH(req: NextRequest) {
         ...(notes !== undefined && { notes }),
         ...(tags !== undefined && { tags }),
         ...(isExcluded !== undefined && { isExcluded }),
+        ...(tripId !== undefined && { tripId }),
+        ...tripExclusion,
       },
     })
 

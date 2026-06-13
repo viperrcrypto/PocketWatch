@@ -252,8 +252,22 @@ export async function runPortfolioRefreshJob(jobId: string): Promise<RunRefreshR
     )
     const addressesLower = addresses.map((address) => address.toLowerCase()).sort((a, b) => a.localeCompare(b))
 
+    // Gate on VALUE, not wallet count (value is concentrated, so the full total can
+    // be present at <100% count-coverage). Write when the total hasn't collapsed vs
+    // the last good snapshot; requiring ALL 100+ rate-limited wallets never fired,
+    // leaving net worth frozen on a stale value.
+    let substantiallyComplete = allWalletsReturned
+    if (!substantiallyComplete && totalValue > 0) {
+      const lastGood = await db.portfolioSnapshot.findFirst({
+        where: { userId: job.userId, source: "live_refresh" },
+        orderBy: { createdAt: "desc" },
+        select: { totalValue: true },
+      })
+      substantiallyComplete = !lastGood || totalValue >= lastGood.totalValue * 0.9
+    }
+
     const snapshotQuality = allWalletsReturned && exchangeIncluded ? "complete" : "partial"
-    if (totalValue > 0 && allWalletsReturned) {
+    if (totalValue > 0 && substantiallyComplete) {
       // Create snapshot even if exchange data is partial
       const chainDistribution: Record<string, number> = {}
       for (const wallet of walletData ?? []) {

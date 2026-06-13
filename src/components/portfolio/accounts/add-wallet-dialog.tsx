@@ -32,9 +32,11 @@ export function AddWalletDialog({
   onClose,
 }: AddWalletDialogProps) {
   const trimmed = newAddress.trim()
-  const isEvm = trimmed.startsWith("0x")
+  // Movement (Aptos/Move) addresses are 0x + 64 hex; EVM addresses are 0x + 40 hex.
+  const isMovement = /^0x[0-9a-fA-F]{64}$/.test(trimmed)
+  const isEvm = trimmed.startsWith("0x") && !isMovement
   const isBtc = /^(1|3|bc1)/i.test(trimmed)
-  const isSolana = !isEvm && !isBtc && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)
+  const isSolana = !isEvm && !isBtc && !isMovement && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)
 
   return (
     <MobileSheet open onClose={onClose} title="Add Wallet">
@@ -56,7 +58,7 @@ export function AddWalletDialog({
             )}
             {trimmed.length > 0 && (
               <p className="mt-1.5 text-foreground-muted text-xs">
-                {isEvm ? "EVM address detected — select chains to track" : isBtc ? "Bitcoin address detected" : isSolana ? "Solana address detected" : "Unrecognized address format"}
+                {isEvm ? "EVM address detected — select chains to track" : isBtc ? "Bitcoin address detected" : isSolana ? "Solana address detected" : isMovement ? "Movement address detected" : "Unrecognized address format"}
               </p>
             )}
           </div>
@@ -97,7 +99,7 @@ export function AddWalletDialog({
               {SUPPORTED_CHAINS.map((chain) => {
                 const isSelected = selectedChains.has(chain.id)
                 const isEvmChain = EVM_CHAIN_IDS.includes(chain.id)
-                const dimmed = (isEvm && !isEvmChain) || (isBtc && chain.id !== "BTC") || (isSolana && chain.id !== "SOL")
+                const dimmed = (isEvm && !isEvmChain) || (isBtc && chain.id !== "BTC") || (isSolana && chain.id !== "SOL") || (isMovement && chain.id !== "MOVEMENT")
                 const chainColor = getChainColor(chain.id)
 
                 return (

@@ -107,7 +107,7 @@ interface AIAuditResponse {
 
 // ─── Transaction Hooks ──────────────────────────────────────────
 
-export function useFinanceTransactions(filters: TxFilters = {}) {
+export function useFinanceTransactions(filters: TxFilters = {}, options?: { enabled?: boolean }) {
   const params = new URLSearchParams()
   for (const [k, v] of Object.entries(filters)) {
     if (v !== undefined && v !== "") params.set(k, String(v))
@@ -117,6 +117,7 @@ export function useFinanceTransactions(filters: TxFilters = {}) {
     queryKey: financeKeys.transactions(filters),
     queryFn: () =>
       financeFetch<TxResponse>(`/transactions?${params.toString()}`),
+    enabled: options?.enabled,
   })
 }
 

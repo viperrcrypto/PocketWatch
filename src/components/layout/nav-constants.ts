@@ -22,7 +22,7 @@ export function getActiveSection(pathname: string): string {
   if (pathname.startsWith("/net-worth")) return "netWorth"
   if (pathname.startsWith("/finance")) return "finance"
   if (pathname.startsWith("/portfolio") || pathname.startsWith("/tracker")) return "portfolio"
-  if (pathname.startsWith("/travel")) return "travel"
+  if (pathname.startsWith("/travel") || pathname.startsWith("/trips")) return "travel"
   if (pathname.startsWith("/chat")) return "ai"
   return "netWorth"
 }

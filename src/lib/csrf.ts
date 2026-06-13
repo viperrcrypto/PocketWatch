@@ -23,6 +23,10 @@ const EXEMPT_PREFIXES = [
   "/api/internal/",
   "/api/finance/webhooks/",
   "/api/portfolio/webhooks/",
+  // Bearer-token MCP endpoint: non-browser clients send no CSRF cookie/header,
+  // and cross-origin browsers cannot set the Authorization header, so CSRF adds
+  // nothing here. Without this, a cookie-jar MCP client 403s on repeat calls.
+  "/api/mcp",
 ]
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
@@ -45,9 +49,12 @@ export function ensureCsrfCookie(request: NextRequest, response: NextResponse): 
   if (existing?.value) return response
 
   const token = generateCsrfToken()
+  // Secure must track the REAL transport (tunnel https vs plain localhost http):
+  // WKWebView (the desktop app) refuses Secure cookies over http://localhost.
+  const proto = (request.headers.get("x-forwarded-proto") ?? "").split(",")[0]!.trim()
   response.cookies.set(CSRF_COOKIE, token, {
     httpOnly: false, // JS must read this to attach as header
-    secure: process.env.NODE_ENV === "production",
+    secure: proto === "https",
     sameSite: "strict",
     path: "/",
     maxAge: 60 * 60 * 24 * 365, // 1 year — rotates on clear
@@ -63,9 +70,19 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
   // Only validate mutating methods
   if (!MUTATING_METHODS.has(request.method)) return null
 
-  // Check exemptions
+  // Check exemptions. A trailing-slash entry is a true prefix; a non-slash entry
+  // (e.g. "/api/mcp") matches only the exact path or a slash-bounded child — so a
+  // future cookie-authed route like "/api/mcp-export" can't inherit the exemption.
   const path = request.nextUrl.pathname
-  if (EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix))) return null
+  if (
+    EXEMPT_PREFIXES.some((prefix) =>
+      prefix.endsWith("/")
+        ? path.startsWith(prefix)
+        : path === prefix || path.startsWith(`${prefix}/`),
+    )
+  ) {
+    return null
+  }
 
   const cookieToken = request.cookies.get(CSRF_COOKIE)?.value
   const headerToken = request.headers.get(CSRF_HEADER)

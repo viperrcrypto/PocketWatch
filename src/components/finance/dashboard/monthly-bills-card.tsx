@@ -5,6 +5,7 @@ import Link from "next/link"
 import { formatCurrency, cn } from "@/lib/utils"
 import { MerchantIcon } from "@/components/finance/merchant-icon"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
+import { BorderBeam } from "@/components/ui/border-beam"
 import { useUpcomingBills } from "@/hooks/use-finance"
 
 const BILL_TYPE_LABELS: Record<string, { label: string; icon: string }> = {
@@ -51,7 +52,8 @@ export function MonthlyBillsCard({ isHidden }: MonthlyBillsCardProps) {
   const activeGroups = GROUP_ORDER.filter((key) => (groups[key]?.length ?? 0) > 0)
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+    <div className="relative bg-card rounded-xl overflow-hidden" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <BorderBeam radius={12} size={1.5} speed={7} />
       {/* Header with month navigation */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-card-border/30">
         <div className="flex items-center gap-2">

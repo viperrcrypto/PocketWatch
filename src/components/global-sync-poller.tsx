@@ -4,6 +4,7 @@ import { useCallback } from "react"
 import { useSyncProgress } from "@/hooks/use-portfolio-tracker"
 import { useSyncLocalStorage } from "@/hooks/use-sync-settings"
 import { useOnlineStatus } from "@/hooks/use-online-status"
+import { SCHEDULER_DRIVES_SYNC } from "@/lib/sync-driver"
 
 /**
  * Invisible component that keeps the sync worker advancing
@@ -17,7 +18,11 @@ import { useOnlineStatus } from "@/hooks/use-online-status"
  */
 export function GlobalSyncPoller() {
   const { enabled } = useSyncLocalStorage()
-  const { refetch } = useSyncProgress({ advance: true, autoStart: true, enabled })
+  const { refetch } = useSyncProgress({
+    advance: !SCHEDULER_DRIVES_SYNC,
+    autoStart: !SCHEDULER_DRIVES_SYNC,
+    enabled,
+  })
 
   const handleReconnect = useCallback(() => {
     refetch()

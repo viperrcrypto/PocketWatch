@@ -74,17 +74,20 @@ export async function callAIProvider(
  */
 export async function callAIProviderRaw(
   config: AIProviderConfig,
-  prompt: string
+  prompt: string,
+  options?: { webSearch?: boolean }
 ): Promise<string> {
-  return dispatchToProvider(config, prompt)
+  return dispatchToProvider(config, prompt, options)
 }
 
-async function dispatchToProvider(config: AIProviderConfig, prompt: string): Promise<string> {
+async function dispatchToProvider(config: AIProviderConfig, prompt: string, options?: { webSearch?: boolean }): Promise<string> {
   switch (config.provider) {
     case "ai_claude_cli":
-      return callClaudeCLI(prompt, config.model)
+      return callClaudeCLI(prompt, config.model, options?.webSearch)
     case "ai_claude_api":
-      return callClaudeAPI(config.apiKey, prompt, config.model)
+      // Web search only applies to the Anthropic API path; other providers
+      // answer from training data (the flag is a graceful no-op for them).
+      return callClaudeAPI(config.apiKey, prompt, config.model, options?.webSearch)
     case "ai_openai":
       return callOpenAI(config.apiKey, prompt, config.model)
     case "ai_gemini":
@@ -94,7 +97,7 @@ async function dispatchToProvider(config: AIProviderConfig, prompt: string): Pro
   }
 }
 
-async function callClaudeCLI(prompt: string, model?: string): Promise<string> {
+async function callClaudeCLI(prompt: string, model?: string, webSearch?: boolean): Promise<string> {
   const bin = resolveClaudeBin()
   return new Promise((resolve, reject) => {
     // Use spawn + stdin pipe instead of passing prompt as -p argument
@@ -102,6 +105,9 @@ async function callClaudeCLI(prompt: string, model?: string): Promise<string> {
     // Strip all Claude Code env vars to avoid nested-session detection
     const { CLAUDECODE, CLAUDE_CODE, CLAUDE_CODE_ENTRYPOINT, ...cleanEnv } = process.env
     const args = ["-p", "--output-format", "text"]
+    // Narrowly allow ONLY the WebSearch tool (not broad permissions) so the
+    // assistant can verify current facts headlessly instead of refusing.
+    if (webSearch) args.push("--allowedTools", "WebSearch")
     if (model) args.push("--model", model)
     const child = spawn(bin, args, {
       env: { ...cleanEnv, TERM: "dumb" },
@@ -143,7 +149,7 @@ async function callClaudeCLI(prompt: string, model?: string): Promise<string> {
   })
 }
 
-async function callClaudeAPI(apiKey: string, prompt: string, model?: string): Promise<string> {
+async function callClaudeAPI(apiKey: string, prompt: string, model?: string, webSearch?: boolean): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -154,9 +160,11 @@ async function callClaudeAPI(apiKey: string, prompt: string, model?: string): Pr
     body: JSON.stringify({
       model: model ?? "claude-sonnet-4-20250514",
       max_tokens: 4096,
+      // Anthropic-hosted web search for current external facts (card fees, rates).
+      ...(webSearch ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }] } : {}),
       messages: [{ role: "user", content: prompt }],
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(90_000),
   })
 
   if (!res.ok) {
@@ -165,7 +173,11 @@ async function callClaudeAPI(apiKey: string, prompt: string, model?: string): Pr
   }
 
   const data = await res.json()
-  const text = data.content?.[0]?.text
+  // With web search, the content array holds tool-use/result blocks too — collect
+  // every text block, not just content[0], so we don't drop the actual answer.
+  const text = Array.isArray(data.content)
+    ? data.content.filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("").trim()
+    : data.content?.[0]?.text
   if (!text) throw new Error("Empty response from Claude API")
   return text
 }

@@ -1,0 +1,6 @@
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+dist/
+*.app
+*.dmg

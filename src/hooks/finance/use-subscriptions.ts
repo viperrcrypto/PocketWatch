@@ -97,7 +97,12 @@ export function useUpdateSubscription() {
       category?: string | null
       cancelReminderDate?: string | null
     }) => financeFetch("/subscriptions", { method: "PATCH", body: JSON.stringify(data) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.subscriptions() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: financeKeys.subscriptions() })
+      // Dismissing/cancelling a sub also changes the upcoming-bills projection
+      // (Immediate Actions), so refresh that too.
+      qc.invalidateQueries({ queryKey: financeKeys.bills() })
+    },
     onError: () => { toast.error("Failed to update subscription") },
   })
 }

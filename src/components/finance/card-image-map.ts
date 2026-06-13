@@ -181,11 +181,11 @@ const KNOWN_CARDS: readonly KnownCard[] = [
     imageUrl: "/card-art/apple-card.jpg",
     annualFee: 0,
   },
-  // BILT
+  // BILT — no hardcoded annual fee: the lineup now has multiple tiers (some paid),
+  // so let AI/web enrichment determine the real fee instead of asserting $0.
   {
     keywords: ["bilt"],
     imageUrl: "",
-    annualFee: 0,
   },
   // Discover
   {

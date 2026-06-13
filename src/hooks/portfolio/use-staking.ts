@@ -13,8 +13,7 @@ export function useStakingPositions() {
     gcTime: 15 * 60_000,
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 120_000,
     retry: 0,
   })
 }

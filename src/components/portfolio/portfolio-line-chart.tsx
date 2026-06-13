@@ -30,25 +30,27 @@ interface PortfolioLineChartProps {
   timeframe?: "ALL" | "1Y" | "3M" | "1W" | "1D"
 }
 
-// Chart color palettes
+// Chart color palettes. Neutral uses the brand Apple-blue; positive/negative keep
+// the green/red semantics. Area fills are a soft vertical gradient (deeper at the
+// line, fading to transparent at the baseline) for the premium fintech look.
 const COLOR_MAP = {
   neutral: {
-    line: "#818cf8",
-    areaTop: "rgba(129,140,248,0.28)",
-    areaBottom: "rgba(129,140,248,0)",
-    crosshair: "rgba(129,140,248,0.4)",
-    crosshairHz: "rgba(129,140,248,0.15)",
+    line: "#0A84FF",
+    areaTop: "rgba(10,132,255,0.32)",
+    areaBottom: "rgba(10,132,255,0)",
+    crosshair: "rgba(10,132,255,0.4)",
+    crosshairHz: "rgba(10,132,255,0.15)",
   },
   positive: {
     line: "#4ade80",
-    areaTop: "rgba(74,222,128,0.22)",
+    areaTop: "rgba(74,222,128,0.30)",
     areaBottom: "rgba(74,222,128,0)",
     crosshair: "rgba(74,222,128,0.4)",
     crosshairHz: "rgba(74,222,128,0.15)",
   },
   negative: {
     line: "#f87171",
-    areaTop: "rgba(248,113,113,0.22)",
+    areaTop: "rgba(248,113,113,0.30)",
     areaBottom: "rgba(248,113,113,0)",
     crosshair: "rgba(248,113,113,0.4)",
     crosshairHz: "rgba(248,113,113,0.15)",

@@ -10,10 +10,12 @@ import { db } from "../src/lib/db"
 import { withEncryptionKey } from "../src/lib/encryption-context"
 import { unwrapDek } from "../src/lib/per-user-crypto"
 
-const USER_ID = "cmmmg5lcs0000jljbsg47ovzb"
-// Current session's encrypted DEK (wrapped with master key)
-const ENCRYPTED_DEK =
-  "LIuc0ED+IcWxd4XDBFsx+xTtGEQiCk+j971gtMNHj8SEPMDbBtFfCsRiFJ5Ol/QXIdoBW+/S6SZjlixqtb8ouf7fAzqwfDw5UOhP1b2nBtDLecrDhRCZCDLpkWU="
+// Provide via env — never hardcode a real user id / wrapped DEK in tracked code.
+const USER_ID = process.env.DEMO_USER_ID ?? ""
+const ENCRYPTED_DEK = process.env.DEMO_ENCRYPTED_DEK ?? ""
+if (!USER_ID || !ENCRYPTED_DEK) {
+  throw new Error("Set DEMO_USER_ID and DEMO_ENCRYPTED_DEK in .env to run the demo seeder.")
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 

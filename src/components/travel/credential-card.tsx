@@ -44,7 +44,9 @@ export function CredentialCard({
         )}
       </div>
       <p className="text-xs text-foreground-muted">{description}</p>
-      {credential ? (
+
+      {/* Configured-credential summary + Remove. */}
+      {credential && (
         <div className="flex items-center justify-between bg-background rounded-lg p-3 border border-card-border">
           <div>
             <p className="text-xs text-foreground font-mono">{credential.maskedKey}</p>
@@ -55,12 +57,21 @@ export function CredentialCard({
           <button
             onClick={onDelete}
             disabled={isDeleting}
-            className="text-xs text-red-400 hover:text-red-300 transition-colors"
+            className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
           >
-            Remove
+            {isDeleting ? "Removing…" : "Remove"}
           </button>
         </div>
-      ) : inputType === "textarea" ? (
+      )}
+
+      {/* Input is ALWAYS rendered so a configured credential can be REPLACED
+          in place (the save endpoint upserts) — not just removed-then-re-added. */}
+      {credential && (
+        <p className="text-[10px] text-foreground-muted">
+          Paste a new value below to replace it.
+        </p>
+      )}
+      {inputType === "textarea" ? (
         <div className="space-y-2">
           <textarea
             value={inputValue}
@@ -78,7 +89,7 @@ export function CredentialCard({
                 inputValue.trim() ? "btn-primary" : "bg-card-border text-foreground-muted cursor-not-allowed",
               )}
             >
-              {isSaving ? "Saving..." : saveLabel}
+              {isSaving ? "Saving..." : credential ? "Update" : saveLabel}
             </button>
             {secondaryAction && (
               <button
@@ -108,7 +119,7 @@ export function CredentialCard({
               inputValue.trim() ? "btn-primary" : "bg-card-border text-foreground-muted cursor-not-allowed",
             )}
           >
-            {isSaving ? "Saving..." : saveLabel}
+            {isSaving ? "Saving..." : credential ? "Update" : saveLabel}
           </button>
         </div>
       )}

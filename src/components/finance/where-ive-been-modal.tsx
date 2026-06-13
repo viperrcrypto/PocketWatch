@@ -1,12 +1,18 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "motion/react"
 import { formatCurrency } from "@/lib/utils"
 import { useTransactionLocations } from "@/hooks/finance/use-locations"
-import { WhereIveBeenMap } from "./where-ive-been-map"
 import { WhereIveBeenStats } from "./where-ive-been-stats"
+
+// Leaflet map is client-only and heavy — load it lazily when the modal opens.
+const WhereIveBeenMap = dynamic(
+  () => import("./where-ive-been-map").then((m) => m.WhereIveBeenMap),
+  { ssr: false },
+)
 
 interface Props {
   open: boolean

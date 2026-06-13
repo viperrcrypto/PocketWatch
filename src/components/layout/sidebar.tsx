@@ -68,6 +68,7 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
 
       {/* Sidebar */}
       <aside
+        data-app-sidebar
         className={cn(
           "fixed left-0 top-0 h-full w-64 border-r border-card-border z-50 transition-transform duration-200 lg:translate-x-0 flex flex-col",
           "bg-card",
@@ -143,35 +144,6 @@ export const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: Sidebar
 
         {/* Bottom section */}
         <div className="px-3 py-3 border-t border-card-border flex-shrink-0 space-y-2">
-          {/* Sponsor CTA */}
-          <a
-            href="https://x.com/messages/compose?recipient_id=viperr&text=Hey%20I%27d%20like%20to%20sponsor%20PocketWatch"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block mx-1 rounded-lg border border-dashed border-foreground-muted/20 hover:border-primary/40 transition-colors duration-200 overflow-hidden"
-          >
-            <div className="px-3 py-2.5 flex items-center gap-2.5">
-              <span className="material-symbols-rounded text-foreground-muted/40 flex-shrink-0" style={{ fontSize: 16 }}>handshake</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-foreground-muted/50 group-hover:text-foreground-muted transition-colors">Get your brand featured here</p>
-                <p className="text-[9px] text-foreground-muted/30 group-hover:text-foreground-muted/50 transition-colors">DM @viperr on X</p>
-              </div>
-            </div>
-          </a>
-
-          {/* Credits */}
-          <div className="flex items-center gap-2 px-3 py-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-foreground-muted flex-shrink-0" aria-hidden="true">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            <span className="text-[11px] text-foreground-muted">
-              Built by{" "}
-              <a href="https://x.com/viperr" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@viperr</a>
-              {" & "}
-              <a href="https://x.com/0xXinu" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@0xXinu</a>
-            </span>
-          </div>
-
           <div className="flex items-center gap-1">
             <button
               onClick={handleLock}

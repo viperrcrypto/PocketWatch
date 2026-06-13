@@ -3,6 +3,7 @@
  */
 
 import { db } from "@/lib/db"
+import { cleanText, cleanTextOrNull, cleanUrl, cleanList } from "./sanitize"
 import type { DashboardResults } from "@/types/travel"
 
 type ToolInput = Record<string, unknown>
@@ -29,8 +30,9 @@ export async function getFlightSearchSummary(userId: string): Promise<string> {
   let maxCash = -Infinity
 
   for (const f of flights) {
-    cabinCounts[f.cabinClass] = (cabinCounts[f.cabinClass] ?? 0) + 1
-    airlineSet.add(f.airline)
+    const cabin = cleanText(f.cabinClass)
+    cabinCounts[cabin] = (cabinCounts[cabin] ?? 0) + 1
+    airlineSet.add(cleanText(f.airline))
     if (f.type === "award") {
       awardCount++
       if (f.points != null) {
@@ -47,10 +49,10 @@ export async function getFlightSearchSummary(userId: string): Promise<string> {
   }
 
   return JSON.stringify({
-    route: `${data.meta.origin} → ${data.meta.destination}`,
-    departureDate: data.meta.departureDate,
-    searchedAt: data.meta.searchedAt,
-    sources: data.meta.sources,
+    route: `${cleanText(data.meta.origin)} → ${cleanText(data.meta.destination)}`,
+    departureDate: cleanText(data.meta.departureDate),
+    searchedAt: cleanText(data.meta.searchedAt),
+    sources: cleanList(data.meta.sources),
     totalFlights: flights.length,
     awardFlights: awardCount,
     cashFlights: cashCount,
@@ -59,19 +61,29 @@ export async function getFlightSearchSummary(userId: string): Promise<string> {
     pointsRange: awardCount > 0 && isFinite(minPoints) ? { min: minPoints, max: maxPoints } : null,
     cashRange: cashCount > 0 && isFinite(minCash) ? { min: minCash, max: maxCash } : null,
     recommendations: data.recommendations.map((r) => ({
-      title: r.title,
-      subtitle: r.subtitle,
-      totalCost: r.totalCost,
-      cppValue: r.cppValue,
+      title: cleanText(r.title),
+      subtitle: cleanText(r.subtitle),
+      totalCost: cleanText(r.totalCost),
+      cppValue: cleanTextOrNull(r.cppValue),
     })),
-    insights: data.insights.map((i) => ({ type: i.type, priority: i.priority, title: i.title, detail: i.detail })),
-    routeSweetSpots: data.routeSweetSpots,
+    insights: data.insights.map((i) => ({
+      type: cleanText(i.type),
+      priority: cleanText(i.priority),
+      title: cleanText(i.title),
+      detail: cleanText(i.detail),
+    })),
+    routeSweetSpots: data.routeSweetSpots.map((s) => ({
+      program: cleanText(s.program),
+      cabin: cleanText(s.cabin),
+      maxPoints: s.maxPoints,
+      description: cleanText(s.description),
+    })),
     balances: data.balances.map((b) => ({
-      program: b.program,
+      program: cleanText(b.program),
       balance: b.balance,
-      display: b.displayBalance,
+      display: cleanText(b.displayBalance),
     })),
-    warnings: data.warnings,
+    warnings: cleanList(data.warnings),
   })
 }
 
@@ -122,33 +134,48 @@ export async function getFlightResults(userId: string, input: ToolInput): Promis
 
   const total = flights.length
   const limit = Math.min((input.limit as number) || 10, 30)
-  flights = flights.slice(0, limit)
+  let shown = flights.slice(0, limit)
 
+  // Guarantee nonstop visibility. value_score rewards cheap/award value, so a
+  // (pricier) NONSTOP can rank below the cut even though users specifically want
+  // direct options. When sorting by value and no explicit stops filter is set,
+  // if no nonstop made the cut, surface the best 1-2 nonstops alongside the rest.
+  if (sortBy === "value_score" && input.stops == null && !shown.some((f) => f.stops === 0)) {
+    const bestNonstops = flights.filter((f) => f.stops === 0).slice(0, 2)
+    if (bestNonstops.length > 0) {
+      shown = [...bestNonstops, ...shown].slice(0, Math.min(limit + bestNonstops.length, 30))
+    }
+  }
+  flights = shown
+
+  // `type` discriminator lets the chat renderer detect this payload and swap raw
+  // JSON for rich flight cards (see components/chat/result-payload.ts).
   return JSON.stringify({
+    type: "flights",
     total,
     showing: flights.length,
     flights: flights.map((f) => ({
-      airline: f.airline,
-      flightNumbers: f.flightNumbers,
-      route: `${f.origin} → ${f.destination}`,
-      airports: f.airports,
+      airline: cleanText(f.airline),
+      flightNumbers: cleanList(f.flightNumbers),
+      route: `${cleanText(f.origin)} → ${cleanText(f.destination)}`,
+      airports: cleanList(f.airports),
       stops: f.stops,
       duration: `${Math.floor(f.durationMinutes / 60)}h${f.durationMinutes % 60}m`,
-      cabin: f.cabinClass,
+      cabin: cleanText(f.cabinClass),
       type: f.type,
       points: f.points,
-      program: f.pointsProgram,
+      program: cleanTextOrNull(f.pointsProgram),
       taxes: f.taxes,
       cashPrice: f.cashPrice,
       valueScore: f.valueScore,
       cppValue: f.realCpp,
       cppRating: f.cppRating,
       canAfford: f.canAfford,
-      affordDetails: f.affordDetails,
-      sweetSpot: f.sweetSpotMatch?.label ?? null,
-      departureTime: f.departureTime,
-      arrivalTime: f.arrivalTime,
-      bookingUrl: f.bookingUrl,
+      affordDetails: cleanText(f.affordDetails),
+      sweetSpot: f.sweetSpotMatch ? cleanText(f.sweetSpotMatch.label) : null,
+      departureTime: cleanText(f.departureTime),
+      arrivalTime: cleanText(f.arrivalTime),
+      bookingUrl: cleanUrl(f.bookingUrl),
     })),
   })
 }
@@ -174,8 +201,10 @@ export async function generatePriceMatchEmail(userId: string, input: ToolInput):
   }
 
   const cheapest = cashFlights[0]!
-  const route = `${data.meta.origin} → ${data.meta.destination}`
-  const date = data.meta.departureDate
+  const origin = cleanText(data.meta.origin)
+  const destination = cleanText(data.meta.destination)
+  const route = `${origin} → ${destination}`
+  const date = cleanText(data.meta.departureDate)
 
   // Find the target airline's flights (or the most expensive one)
   const targetFlights = targetAirline
@@ -185,38 +214,42 @@ export async function generatePriceMatchEmail(userId: string, input: ToolInput):
   const target = targetFlights[0]
   const priceDiff = target?.cashPrice ? target.cashPrice - (cheapest.cashPrice || 0) : 0
 
+  const cheapestAirline = cleanText(cheapest.airline)
+  const cheapestCabin = cleanText(cheapest.cabinClass)
+  const targetName = target ? cleanText(target.airline) : null
+
   return JSON.stringify({
     route,
     date,
     cheapestFlight: {
-      airline: cheapest.airline,
+      airline: cheapestAirline,
       price: cheapest.cashPrice,
-      cabin: cheapest.cabinClass,
+      cabin: cheapestCabin,
       stops: cheapest.stops,
     },
     targetFlight: target ? {
-      airline: target.airline,
+      airline: targetName,
       price: target.cashPrice,
-      cabin: target.cabinClass,
+      cabin: cleanText(target.cabinClass),
       priceDifference: priceDiff,
     } : null,
     emailTemplate: [
       `Subject: Price Match Request — ${route} on ${date}`,
       "",
-      `Dear ${target?.airline || "[Airline]"} Customer Service,`,
+      `Dear ${targetName || "[Airline]"} Customer Service,`,
       "",
-      `I am writing to request a price match for my upcoming flight from ${data.meta.origin} to ${data.meta.destination} on ${date}.`,
+      `I am writing to request a price match for my upcoming flight from ${origin} to ${destination} on ${date}.`,
       "",
-      `I found a comparable ${cheapest.cabinClass} class fare on ${cheapest.airline} for $${cheapest.cashPrice}, which is $${priceDiff} less than your current fare of $${target?.cashPrice || "[your price]"}.`,
+      `I found a comparable ${cheapestCabin} class fare on ${cheapestAirline} for $${cheapest.cashPrice}, which is $${priceDiff} less than your current fare of $${target?.cashPrice || "[your price]"}.`,
       "",
-      `As a loyal customer, I would prefer to fly with ${target?.airline || "[your airline]"} and would appreciate if you could match or come close to this competitor pricing.`,
+      `As a loyal customer, I would prefer to fly with ${targetName || "[your airline]"} and would appreciate if you could match or come close to this competitor pricing.`,
       "",
       `Competitor details:`,
-      `- Airline: ${cheapest.airline}`,
+      `- Airline: ${cheapestAirline}`,
       `- Route: ${route}`,
       `- Date: ${date}`,
       `- Price: $${cheapest.cashPrice}`,
-      `- Cabin: ${cheapest.cabinClass}`,
+      `- Cabin: ${cheapestCabin}`,
       `- Stops: ${cheapest.stops === 0 ? "Nonstop" : `${cheapest.stops} stop(s)`}`,
       "",
       `I would be happy to provide a screenshot of the competitor fare if needed.`,
@@ -252,9 +285,9 @@ export async function analyzeFareDetails(userId: string, input: ToolInput): Prom
     const fees = f.type === "cash" ? estimateAirlineFees(iata) : null
 
     return {
-      airline: f.airline,
-      fareClass: f.fareClass,
-      cabin: f.cabinClass,
+      airline: cleanText(f.airline),
+      fareClass: cleanText(f.fareClass),
+      cabin: cleanText(f.cabinClass),
       type: f.type,
       price: f.type === "cash" ? `$${f.cashPrice}` : `${f.points?.toLocaleString()} pts`,
       flexibility: flex ? {

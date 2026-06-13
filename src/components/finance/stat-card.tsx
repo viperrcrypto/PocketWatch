@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { TextMorph } from "torph/react"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
 import { cn } from "@/lib/utils"
@@ -13,6 +14,8 @@ interface StatCardProps {
   accentColor?: string
   isHidden?: boolean
   className?: string
+  /** When set, the whole card becomes a link to this route (drill-through). */
+  href?: string
 }
 
 export function FinanceStatCard({
@@ -24,18 +27,15 @@ export function FinanceStatCard({
   accentColor,
   isHidden,
   className,
+  href,
 }: StatCardProps) {
-  return (
-    <div
-      className={cn(
-        "p-5 transition-colors duration-300 group rounded-xl min-h-[126px] border border-transparent card-hover-lift",
-        className
-      )}
-      style={{
-        boxShadow: "var(--shadow-sm)",
-        background: "var(--card)",
-      }}
-    >
+  const cardClassName = cn(
+    "block p-5 transition-colors duration-300 group rounded-xl min-h-[126px] border border-transparent card-hover-lift",
+    className,
+  )
+  const cardStyle = { boxShadow: "var(--shadow-sm)", background: "var(--card)" }
+  const inner = (
+    <>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">
           {label}
@@ -86,6 +86,19 @@ export function FinanceStatCard({
           )}
         </>
       )}
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={cardClassName} style={cardStyle}>
+        {inner}
+      </Link>
+    )
+  }
+  return (
+    <div className={cardClassName} style={cardStyle}>
+      {inner}
     </div>
   )
 }

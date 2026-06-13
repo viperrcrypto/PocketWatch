@@ -198,10 +198,15 @@ async function buildBalancesResponse(userId: string): Promise<object> {
     }))
   const defiTotalValue = defiPositions.reduce((sum: number, p: any) => sum + (p.value ?? 0), 0)
 
-  // Save a portfolio snapshot for the history chart — but ONLY if all tracked
-  // wallets returned data. A partial fetch (some wallets failed) would create
-  // a snapshot with an artificially low value, poisoning backward propagation.
+  // Save a portfolio snapshot for the history chart. Requiring ALL wallets to
+  // return in one fetch is unachievable with 100+ rate-limited wallets, so the
+  // snapshot was never written and net worth / history flat-lined on a stale
+  // value. Instead write when the fetch is SUBSTANTIALLY complete (>=80% of
+  // wallets) and not a collapsed partial (>=90% of the last good total), so a few
+  // throttled wallets don't block snapshots while a degenerate partial still can't
+  // poison the floor.
   const allWalletsReturned = walletData != null && walletData.length === wallets.length
+  const coverage = walletData != null && wallets.length > 0 ? walletData.length / wallets.length : 0
   const exchangeIncluded = exchangeCreds.length === 0 || (
     exchangeData != null
     && exchangeData.exchanges.length === exchangeCreds.length
@@ -210,32 +215,43 @@ async function buildBalancesResponse(userId: string): Promise<object> {
   const walletAddresses = wallets.map((wallet) => normalizeWalletAddress(wallet.address)).sort((a, b) => a.localeCompare(b))
   const walletFingerprint = walletAddresses.join("|")
 
-  if (totalValue > 0 && allWalletsReturned && exchangeIncluded) {
-    // Write the live snapshot before returning so history/chart reads stay in sync
-    // with the refreshed total shown on the dashboard.
-    try {
-      await db.portfolioSnapshot.create({
-        data: {
-          userId,
-          totalValue,
-          walletCount: wallets.length,
-          source: "live_refresh",
-          metadata: JSON.stringify({
-            chainDistribution,
-            walletAddresses,
-            walletFingerprint,
-            onchainTotalValue: onChainTotal,
-            exchangeTotalValue: exchangeTotal,
-          }),
-        },
-      })
-    } catch (err) {
-      console.warn("[balances] Failed to save portfolio snapshot:", err)
-    }
-  } else if (totalValue > 0 && (!allWalletsReturned || !exchangeIncluded)) {
+  // Gate on VALUE, not wallet count: value is concentrated in a few wallets, so a
+  // fetch can hold the full total at well under 100% count-coverage. Write when the
+  // total hasn't collapsed vs the last good snapshot (guards a partial that dropped
+  // a high-value wallet); this also bootstraps up from the stale ~$29k baseline.
+  let substantiallyComplete = allWalletsReturned
+  if (!substantiallyComplete && totalValue > 0) {
+    const lastGood = await db.portfolioSnapshot.findFirst({
+      where: { userId, source: "live_refresh" },
+      orderBy: { createdAt: "desc" },
+      select: { totalValue: true },
+    })
+    substantiallyComplete = !lastGood || totalValue >= lastGood.totalValue * 0.9
+  }
+
+  if (totalValue > 0 && substantiallyComplete && exchangeIncluded) {
+    // Fire-and-forget the snapshot write so the response returns without waiting on
+    // the DB. The only cost is a ~ms window where a chart read could miss this new
+    // point (self-heals on the next refresh); the displayed total is unaffected.
+    db.portfolioSnapshot.create({
+      data: {
+        userId,
+        totalValue,
+        walletCount: wallets.length,
+        source: "live_refresh",
+        metadata: JSON.stringify({
+          chainDistribution,
+          walletAddresses,
+          walletFingerprint,
+          onchainTotalValue: onChainTotal,
+          exchangeTotalValue: exchangeTotal,
+        }),
+      },
+    }).catch((err) => console.warn("[balances] Failed to save portfolio snapshot:", err))
+  } else if (totalValue > 0 && (!substantiallyComplete || !exchangeIncluded)) {
     console.warn(
-      `[balances] Skipping full snapshot: incomplete fetch — ` +
-      `wallets: ${walletData?.length ?? 0}/${wallets.length}, ` +
+      `[balances] Skipping snapshot: incomplete fetch — ` +
+      `wallets: ${walletData?.length ?? 0}/${wallets.length} (${Math.round(coverage * 100)}%), ` +
       `exchange: ${exchangeIncluded ? "ok" : "failed"}`
     )
   }
@@ -260,13 +276,9 @@ async function buildBalancesResponse(userId: string): Promise<object> {
   // blending into the "total" chart scope. Saved independently of the
   // full portfolio snapshot so exchange history grows even on partial fetches.
   if (exchangeTotal > 0) {
-    try {
-      await db.exchangeBalanceSnapshot.create({
-        data: { userId, totalValue: exchangeTotal },
-      })
-    } catch (err) {
-      console.warn("[balances] Failed to save exchange balance snapshot:", err)
-    }
+    db.exchangeBalanceSnapshot.create({
+      data: { userId, totalValue: exchangeTotal },
+    }).catch((err) => console.warn("[balances] Failed to save exchange balance snapshot:", err))
   }
 
   // Build wallet list (on-chain + exchange "wallets")

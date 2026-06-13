@@ -155,6 +155,7 @@ export default function FinanceDashboardPage() {
           value={formatCurrency(netWorth)}
           isLoading={isLoading}
           isHidden={isHidden}
+          beam
           change={nwDelta !== 0 ? {
             value: `${nwPercent >= 0 ? "+" : ""}${nwPercent.toFixed(1)}% (${formatCurrency(Math.abs(nwDelta))})`,
             positive: nwDelta >= 0,
@@ -238,6 +239,7 @@ export default function FinanceDashboardPage() {
                 icon="account_balance"
                 accentColor="#10B981"
                 isHidden={isHidden}
+                href="/finance/accounts"
               />
             </StaggerItem>
             <StaggerItem>
@@ -247,6 +249,7 @@ export default function FinanceDashboardPage() {
                 icon="credit_card"
                 accentColor="#f97316"
                 isHidden={isHidden}
+                href="/finance/cards"
               />
             </StaggerItem>
             <StaggerItem>
@@ -256,6 +259,7 @@ export default function FinanceDashboardPage() {
                 icon="trending_up"
                 accentColor="#8B5CF6"
                 isHidden={isHidden}
+                href="/finance/investments"
               />
             </StaggerItem>
             <StaggerItem>
@@ -268,6 +272,7 @@ export default function FinanceDashboardPage() {
                   icon="savings"
                   accentColor="#3b82f6"
                   isHidden={isHidden}
+                  href="/finance/budgets"
                 />
               ) : (
                 <Link
@@ -297,13 +302,13 @@ export default function FinanceDashboardPage() {
       <FadeIn delay={0.2} className="mb-6">
         {deep && (deep.uncategorizedCount > 0) ? (
           <Link
-            href="/finance/categorize"
+            href="/finance/categorize?mode=rebuild"
             className="flex items-center gap-3 bg-card border border-amber-500/20 rounded-xl px-4 py-3 hover:border-amber-500/40 transition-colors group"
           >
             <span className="material-symbols-rounded text-amber-500 flex-shrink-0" style={{ fontSize: 18 }}>rate_review</span>
             <div className="flex-1">
               <p className="text-xs font-medium text-foreground">
-                {deep.uncategorizedCount} transaction{deep.uncategorizedCount !== 1 ? "s" : ""} need review
+                {deep.uncategorizedCount} transaction{deep.uncategorizedCount !== 1 ? "s" : ""} to categorize
               </p>
             </div>
             <span className="material-symbols-rounded text-foreground-muted group-hover:text-foreground text-sm transition-colors">arrow_forward</span>

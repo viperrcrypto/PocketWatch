@@ -37,6 +37,7 @@ export const FINANCE_NAV_ITEMS: NavItem[] = [
   { id: "fin-budgets",       label: "Budgets",        href: "/finance/budgets",        icon: "savings" },
   { id: "fin-investments",   label: "Investments",    href: "/finance/investments",    icon: "show_chart" },
   { id: "fin-cards",         label: "Cards & Bills",  href: "/finance/cards",          icon: "credit_card" },
+  { id: "fin-subscriptions", label: "Subscriptions",  href: "/finance/subscriptions",  icon: "subscriptions" },
 ]
 
 export const NET_WORTH_NAV_ITEMS: NavItem[] = [
@@ -46,6 +47,7 @@ export const NET_WORTH_NAV_ITEMS: NavItem[] = [
 export const TRAVEL_NAV_ITEMS: NavItem[] = [
   { id: "travel-flights", label: "Flight Search", href: "/travel", icon: "flight" },
   { id: "travel-hotels", label: "Hotel Search", href: "/travel/hotels", icon: "hotel" },
+  { id: "travel-trips", label: "Trips", href: "/trips", icon: "luggage" },
 ]
 
 export const AI_NAV_ITEMS: NavItem[] = [
@@ -57,16 +59,18 @@ export const NAV_CATEGORIES: Record<string, { label: string; items: NavItem[] }>
   finance:   { label: "Finance",       items: FINANCE_NAV_ITEMS },
   portfolio: { label: "Digital Assets", items: PORTFOLIO_NAV_ITEMS },
   travel:    { label: "Travel",        items: TRAVEL_NAV_ITEMS },
+  ai:        { label: "Assistant",     items: AI_NAV_ITEMS },
 }
 
 function buildDefaultPrefs(): SidebarPrefs {
   return {
-    categoryOrder: ["netWorth", "finance", "portfolio", "travel"],
+    categoryOrder: ["netWorth", "finance", "portfolio", "travel", "ai"],
     categories: {
       netWorth:  { order: NET_WORTH_NAV_ITEMS.map((i) => i.id), hidden: [] },
       finance:   { order: FINANCE_NAV_ITEMS.map((i) => i.id),   hidden: [] },
       portfolio: { order: PORTFOLIO_NAV_ITEMS.map((i) => i.id), hidden: [] },
       travel:    { order: TRAVEL_NAV_ITEMS.map((i) => i.id),    hidden: [] },
+      ai:        { order: AI_NAV_ITEMS.map((i) => i.id),        hidden: [] },
     },
   }
 }
@@ -102,10 +106,24 @@ function migratePrefs(prefs: SidebarPrefs): SidebarPrefs {
     }
     savePrefs(prefs)
   }
-  // Remove ai category (PocketLLM moved to floating button only)
-  if (prefs.categoryOrder.includes("ai")) {
-    prefs.categoryOrder = prefs.categoryOrder.filter((c) => c !== "ai")
-    delete prefs.categories.ai
+  // Inject travel-trips item if missing (added with the Trips section)
+  if (travelCat && !travelCat.order.includes("travel-trips")) {
+    travelCat.order.push("travel-trips")
+    savePrefs(prefs)
+  }
+  // Inject fin-subscriptions item if missing (dedicated Subscriptions page).
+  const financeCat = prefs.categories.finance
+  if (financeCat && !financeCat.order.includes("fin-subscriptions")) {
+    const cardsIdx = financeCat.order.indexOf("fin-cards")
+    if (cardsIdx >= 0) financeCat.order.splice(cardsIdx + 1, 0, "fin-subscriptions")
+    else financeCat.order.push("fin-subscriptions")
+    savePrefs(prefs)
+  }
+  // Inject ai category if missing (PocketLLM is back in the sidebar — opens the
+  // full-window chat with thread history, alongside the floating panel).
+  if (!prefs.categoryOrder.includes("ai")) {
+    prefs.categoryOrder.push("ai")
+    prefs.categories.ai = { order: AI_NAV_ITEMS.map((i) => i.id), hidden: [] }
     savePrefs(prefs)
   }
   // Remove domain settings items (consolidated to /settings)

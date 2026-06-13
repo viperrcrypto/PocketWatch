@@ -270,8 +270,26 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
   for (const acct of raw.accounts) {
     const balance = parseFloat(acct.balance)
     const available = acct.available ? parseFloat(acct.available) : null
+    // Sanitize once: an unparseable balance must never reach Prisma as NaN.
+    const finiteBalance = Number.isFinite(balance) ? balance : 0
+    if (!Number.isFinite(balance)) {
+      console.warn("[SimpleFIN] account with unparseable balance", {
+        org: acct.org.name, name: acct.name, rawBalance: acct.balance,
+      })
+    }
 
-    const acctType = inferAccountType(acct.name, acct.org.name, balance)
+    const acctType = inferAccountType(acct.name, acct.org.name, finiteBalance)
+
+    // Some brokerages (e.g. Charles Schwab) report balance as 0 over SimpleFIN
+    // even when the account holds value. For investment accounts, fall back to
+    // the available balance so they don't show $0 (logged to confirm the shape).
+    let currentBalance = finiteBalance
+    if (acctType === "investment" && currentBalance === 0 && available != null && available > 0) {
+      currentBalance = available
+      console.warn("[SimpleFIN] investment account balance 0 — using available", {
+        org: acct.org.name, name: acct.name, rawBalance: acct.balance, rawAvailable: acct.available,
+      })
+    }
 
     // Infer credit limit for credit accounts:
     // Credit cards report balance (negative = owed) and available credit.
@@ -279,7 +297,7 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
     // treat owed as 0 so we don't double-count.
     let creditLimit: number | null = null
     if (acctType === "credit" && available != null) {
-      const owed = Math.max(0, -balance)
+      const owed = Math.max(0, -finiteBalance)
       creditLimit = owed + available
     }
 
@@ -291,7 +309,7 @@ export function normalizeSimpleFINData(raw: SimpleFINResponse): {
       type: acctType,
       subtype: acctType === "investment" ? inferInvestmentSubtype(acct.name) : null,
       mask: extractMask(acct.name),
-      currentBalance: balance,
+      currentBalance,
       availableBalance: available,
       creditLimit,
       currency: acct.currency || "USD",

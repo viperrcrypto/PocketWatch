@@ -39,15 +39,18 @@ export function CardGalleryItem({ card, href }: CardGalleryItemProps) {
     <Link
       href={href}
       className={cn(
-        "block rounded-2xl overflow-hidden p-5",
+        "@container block rounded-2xl overflow-hidden p-5",
         "border backdrop-blur-sm transition-colors duration-200",
         "bg-card/60 border-card-border/50",
         "hover:border-primary/30",
       )}
     >
-      <div className="flex flex-col md:flex-row gap-5">
+      {/* Side-by-side only when the CARD itself is wide enough (container query),
+          so a narrow card (2-col grid + open chat panel) stacks instead of
+          cramming the details column into an overlapping sliver. */}
+      <div className="flex flex-col @md:flex-row gap-5">
         {/* Card Visual */}
-        <div className="w-full md:w-56 flex-shrink-0">
+        <div className="w-full @md:w-56 flex-shrink-0">
           <CreditCardVisual
             cardName={card.cardName}
             cardNetwork={card.cardNetwork}

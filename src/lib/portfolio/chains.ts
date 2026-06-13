@@ -174,6 +174,11 @@ export const CHAIN_REGISTRY: Record<string, ChainMeta> = {
     icon: "device_hub", chainPath: "monad", explorerUrl: "https://monadexplorer.com",
     isEvm: true, trustWalletName: "monad",
   },
+  MOVEMENT: {
+    id: "MOVEMENT", name: "Movement", symbol: "MOVE", color: "#FFDA34",
+    icon: "device_hub", chainPath: "movement", explorerUrl: "https://explorer.movementnetwork.xyz",
+    isEvm: false, trustWalletName: "movement",
+  },
   EXCHANGE: {
     id: "EXCHANGE", name: "Exchange", symbol: "CEX", color: "#6B7280",
     icon: "account_balance", chainPath: "exchange", explorerUrl: "",

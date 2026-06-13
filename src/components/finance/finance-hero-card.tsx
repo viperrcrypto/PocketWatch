@@ -3,12 +3,15 @@
 import { type ReactNode } from "react"
 import { TextMorph } from "torph/react"
 import { BlurredValue } from "@/components/portfolio/blurred-value"
+import { BorderBeam } from "@/components/ui/border-beam"
 import { cn } from "@/lib/utils"
 
 interface FooterStat {
   label: string
   value: string
   color?: string // "success" | "error" | etc.
+  /** Optional animated node rendered in place of `value` (e.g. NumberPop). */
+  node?: ReactNode
 }
 
 interface FinanceHeroCardProps {
@@ -20,6 +23,8 @@ interface FinanceHeroCardProps {
   isHidden?: boolean
   children?: ReactNode // slot for chart or extra content
   className?: string
+  /** Render a subtle accent border-beam around the card (hero emphasis). */
+  beam?: boolean
 }
 
 export function FinanceHeroCard({
@@ -31,16 +36,18 @@ export function FinanceHeroCard({
   isHidden,
   children,
   className,
+  beam = false,
 }: FinanceHeroCardProps) {
   return (
     <div
       className={cn(
-        "bg-gradient-to-br from-white via-white to-primary/[0.02] rounded-xl overflow-hidden",
+        "relative bg-gradient-to-br from-white via-white to-primary/[0.02] rounded-xl overflow-hidden",
         "dark:from-[#1C1C21] dark:via-[#1C1C21] dark:to-primary/[0.02]",
         className
       )}
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
+      {beam && <BorderBeam radius={12} size={1.5} speed={7} />}
       <div className="px-5 py-4">
         <span className="text-[10px] font-medium uppercase tracking-widest text-foreground-muted">
           {label}
@@ -111,7 +118,7 @@ export function FinanceHeroCard({
                   !stat.color && "text-foreground"
                 )}
               >
-                <BlurredValue isHidden={!!isHidden}>{stat.value}</BlurredValue>
+                <BlurredValue isHidden={!!isHidden}>{stat.node ?? stat.value}</BlurredValue>
               </p>
             </div>
           ))}

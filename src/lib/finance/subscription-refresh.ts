@@ -33,7 +33,7 @@ async function refreshMaterializedSubs(userId: string): Promise<void> {
     select: { id: true, merchantName: true, accountId: true, frequency: true, lastChargeDate: true, amount: true },
   })
 
-  const updates: Array<{ id: string; lastChargeDate: Date; nextChargeDate: Date; lastTransactionId: string }> = []
+  const updates: Array<{ id: string; lastChargeDate: Date; nextChargeDate: Date; lastTransactionId: string; amount: number }> = []
 
   for (const sub of subs) {
     const match = await findNewerTransaction(userId, sub.merchantName, sub.accountId, sub.lastChargeDate)
@@ -47,6 +47,9 @@ async function refreshMaterializedSubs(userId: string): Promise<void> {
       lastChargeDate: match.date,
       nextChargeDate: computeNextChargeDate(match.date, freq),
       lastTransactionId: match.transactionId,
+      // Keep the displayed amount in step with the most recent charge so a
+      // variable bill's headline matches its latest (verified) payment.
+      amount: match.amount,
     })
   }
 
@@ -54,7 +57,7 @@ async function refreshMaterializedSubs(userId: string): Promise<void> {
     await db.$transaction(
       updates.map((u) => db.financeSubscription.update({
         where: { id: u.id },
-        data: { lastChargeDate: u.lastChargeDate, nextChargeDate: u.nextChargeDate, lastTransactionId: u.lastTransactionId },
+        data: { lastChargeDate: u.lastChargeDate, nextChargeDate: u.nextChargeDate, lastTransactionId: u.lastTransactionId, amount: u.amount },
       }))
     )
   }
@@ -109,7 +112,7 @@ async function findNewerTransaction(
   merchantName: string,
   accountId: string | null,
   currentLastDate: Date | null,
-): Promise<{ date: Date; transactionId: string } | null> {
+): Promise<{ date: Date; transactionId: string; amount: number } | null> {
   const since = currentLastDate ?? new Date(Date.now() - 400 * 24 * 60 * 60 * 1000)
 
   // Clean the merchant name for search — strip account suffixes like "••••1234 Annual Fee"
@@ -133,7 +136,7 @@ async function findNewerTransaction(
       ],
       ...(accountId ? { accountId } : {}),
     },
-    select: { id: true, date: true },
+    select: { id: true, date: true, amount: true },
     orderBy: { date: "desc" },
   })
 
@@ -142,5 +145,5 @@ async function findNewerTransaction(
   const txDate = new Date(tx.date)
   if (currentLastDate && txDate <= new Date(currentLastDate)) return null
 
-  return { date: txDate, transactionId: tx.id }
+  return { date: txDate, transactionId: tx.id, amount: tx.amount }
 }

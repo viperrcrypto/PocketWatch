@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
+import { SuccessCheck } from "@/components/ui/success-check"
 import { cn } from "@/lib/utils"
 import type { BudgetInsight } from "./budget-types"
 
@@ -17,11 +19,25 @@ interface BudgetInlineInsightsProps {
 }
 
 export function BudgetInlineInsights({ insights, isGenerating, onGenerate }: BudgetInlineInsightsProps) {
+  // Briefly show a success check on the falling edge of `isGenerating`.
+  const [showSaved, setShowSaved] = useState(false)
+  const wasGenerating = useRef(false)
+  useEffect(() => {
+    const justFinished = wasGenerating.current && !isGenerating
+    wasGenerating.current = isGenerating
+    if (justFinished) {
+      setShowSaved(true)
+      const t = setTimeout(() => setShowSaved(false), 1800)
+      return () => clearTimeout(t)
+    }
+  }, [isGenerating])
+
   return (
     <div className="bg-card border border-card-border rounded-2xl p-5" style={{ boxShadow: "var(--shadow-sm)" }}>
       <div className="flex items-center gap-2 mb-4">
         <span className="material-symbols-rounded text-warning" style={{ fontSize: 16 }}>lightbulb</span>
         <h3 className="text-sm font-semibold text-foreground">Smart Insights</h3>
+        {showSaved && <SuccessCheck show size={18} className="ml-auto" />}
       </div>
 
       {insights.length > 0 ? (

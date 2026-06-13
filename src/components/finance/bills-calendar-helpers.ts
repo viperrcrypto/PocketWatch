@@ -37,17 +37,19 @@ export function merchantInitials(name: string): string {
 export function projectBillsToMonth(bills: BillItem[], year: number, month: number): Map<number, BillItem[]> {
   const dayMap = new Map<number, BillItem[]>()
   for (const bill of bills) {
-    // Parse as local time to avoid UTC→local day shift (e.g. "2026-03-22" UTC = Mar 21 in PDT)
+    // Work in UTC end-to-end: computeNextChargeDate produces UTC-midnight dates,
+    // so building/reading with UTC keeps the projected day exact (and avoids the
+    // ±1-day drift that local getters would accumulate each iteration).
     const [y, m, d] = bill.nextDueDate.split("-").map(Number)
-    let date = new Date(y, m - 1, d)
+    let date = new Date(Date.UTC(y, m - 1, d))
     let iterations = 0
-    while ((date.getFullYear() < year || (date.getFullYear() === year && date.getMonth() < month)) && iterations < 24) {
+    while ((date.getUTCFullYear() < year || (date.getUTCFullYear() === year && date.getUTCMonth() < month)) && iterations < 24) {
       date = computeNextChargeDate(date, bill.frequency as Frequency)
       iterations++
     }
-    if (date.getFullYear() > year || (date.getFullYear() === year && date.getMonth() > month)) continue
-    if (date.getFullYear() === year && date.getMonth() === month) {
-      const day = date.getDate()
+    if (date.getUTCFullYear() > year || (date.getUTCFullYear() === year && date.getUTCMonth() > month)) continue
+    if (date.getUTCFullYear() === year && date.getUTCMonth() === month) {
+      const day = date.getUTCDate()
       const existing = dayMap.get(day) ?? []
       // If bill was projected forward (date changed), isPaid no longer applies
       const projectedBill = iterations > 0 ? { ...bill, isPaid: false } : bill

@@ -103,7 +103,7 @@ No cloud. No subscriptions. No one else sees your data.
 
 | Feature | Description |
 |---------|-------------|
-| **Multi-source flight search** | Searches Roame (19+ award programs), Google Flights (cash prices via SerpAPI), and Award Travel Finder (22 airlines) in parallel |
+| **Multi-source flight search** | Searches Roame (19+ award programs), **direct Google Flights** (free, no API key — round-trip pricing + cheapest-date calendars), plus **Kiwi**, **Skiplagged** (hidden-city), and **Trivago** (hotels) keyless MCP providers, Award Travel Finder (OAuth 2.1), and SerpAPI — all in parallel with graceful fallback |
 | **Smart value scoring** | Every flight scored by CPP (cents per point), affordability, and sweet spot matches against your actual points balances |
 | **Transfer partner routing** | Knows which credit card points transfer to which airline programs (Chase UR → United, Amex MR → ANA, etc.) with ratios and transfer times |
 | **Sweet spot detection** | Flags routes where your points get outsized value (e.g., Alaska 70K for Cathay Pacific J, ANA 88K for first class) |
@@ -112,13 +112,29 @@ No cloud. No subscriptions. No one else sees your data.
 | **Top 3 recommendations** | Best value award, best premium product, and cheapest cash option with strategic advice on points vs. cash |
 | **Real-time SSE streaming** | Search progress streams to the UI as each source completes |
 | **Credential auto-refresh** | Roame sessions auto-renew via Firebase refresh token — set once, never re-paste |
+| **Price tracking & alerts** | Save a route, set a cash/points threshold, and a daily worker re-prices it and push-notifies you on a drop (web push / Telegram / ntfy) |
+| **Trips** | A trip-centric workspace: segments, per-trip spend (auto-tagged from your bank feed by date window, excluding transfers/income, click-through to each charge), **award miles/points + cash** captured per segment from confirmation emails, and an iCalendar feed you can subscribe to in Apple/Google Calendar |
+| **Travel-day briefing** | Destination weather (WeatherAPI) + your next flight + smart tips, per trip |
+| **Traveler vault** | Encrypted loyalty numbers, Known Traveler Number, passport (+ expiry), and seat/cabin preferences |
+
+### AI & Conversational
+
+| Feature | Description |
+|---------|-------------|
+| **PocketLLM assistant** | A natural-language interface to **every** part of PocketWatch (Claude / OpenAI / Gemini). Ask about your money, run **live** flight & hotel searches, plan trips, set price alerts, manage budgets and cards — across finance, portfolio, and travel — and get rich inline **cards & carousels**, not raw text |
+| **Live web search** | PocketLLM and the per-card / cancel-guide / budget-insight assistants **search the web** for current external facts — annual fees, rates, cancellation steps, news — instead of guessing from stale training data, and cite their sources |
+| **Card "Ask" + Refresh-with-AI** | Per-card chat and AI enrichment pull **current** fees, perks, and transfer partners (web-verified) into the card profile |
+| **Finance MCP server** | Expose your finances to Claude Desktop over a token-authed, **read-only** MCP endpoint (`/api/mcp`) — query balances, spending, net worth, and more from any MCP client |
+| **Daily "Hello Money" digest** | A once-a-day summary (balances, upcoming bills, net-worth move) delivered to your notification channels |
 
 ### Platform
 
 | Feature | Description |
 |---------|-------------|
 | **Encrypted vault** | Single-user, password-derived AES-256-GCM encryption for all stored credentials |
-| **PocketLLM AI chat** | Conversational AI sidebar with real-time financial queries using 8 read-only tools (Claude, OpenAI, Gemini) |
+| **Command palette (⌘K)** | A Notion/Linear-style global palette — fuzzy-search across pages, accounts, transactions, cards, subscriptions, and trips, plus quick actions (sync, connect, add) — jump anywhere from the keyboard |
+| **Mac desktop app** | A native Tauri menu-bar app — net worth at a glance in the menu bar, a window into your dashboard, and a global Cmd+Shift+P summon (`desktop/`) |
+| **CSV export** | Export transactions to CSV (spreadsheet-injection-safe) for Tiller-style spreadsheets or your accountant |
 | **Dark / light mode** | System-aware with manual toggle |
 | **PWA installable** | Add to home screen on mobile, use like a native app |
 | **Customizable sidebar** | Drag, reorder, and hide navigation items to match your workflow |

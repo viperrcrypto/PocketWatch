@@ -59,6 +59,7 @@ import {
   useHistoryWarning,
 } from "@/hooks/use-portfolio-chart-data"
 import { useSyncStatus, useWalletInfoList } from "@/hooks/use-portfolio-sync-status"
+import { SCHEDULER_DRIVES_SYNC } from "@/lib/sync-driver"
 
 export function PortfolioDashboard() {
   const [timeframe, setTimeframe] = useState<Timeframe>("ALL")
@@ -77,7 +78,7 @@ export function PortfolioDashboard() {
   } = useBlockchainBalances()
   const { data: netValue, isLoading: netValueLoading } = useNetValueHistory(timeframe, chartScope)
   const { data: netValue1D } = useNetValueHistory("1D", chartScope)
-  const { data: syncProgress } = useSyncProgress({ advance: true, reconstruct: true, autoStart: true })
+  const { data: syncProgress } = useSyncProgress({ advance: !SCHEDULER_DRIVES_SYNC, reconstruct: true, autoStart: !SCHEDULER_DRIVES_SYNC })
   const { data: pricesData } = useLatestPrices()
   const { data: trackedAccounts } = useTrackedAccounts()
   const refresh = useRefreshBalances()
@@ -244,7 +245,7 @@ export function PortfolioDashboard() {
 
       <StaggerChildren className="grid grid-cols-2 lg:grid-cols-4 gap-3" staggerMs={60}>
         <StaggerItem>
-          <OverviewStatCard label="Total Value" value={formatFiatValue(effectiveTotalValue)} icon="account_balance" isLoading={headlineLoading} accentColor="#ffffff" isHidden={isHidden} />
+          <OverviewStatCard label="Total Value" value={formatFiatValue(effectiveTotalValue)} icon="account_balance" isLoading={headlineLoading} accentColor="#ffffff" isHidden={isHidden} beam />
         </StaggerItem>
         <StaggerItem>
           <OverviewStatCard

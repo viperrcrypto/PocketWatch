@@ -51,14 +51,17 @@ function looksLikeCreditCard(name: string): boolean {
 const SIMPLEFIN_MIN_SYNC_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export async function syncSimpleFIN(
-  institution: Awaited<ReturnType<typeof db.financeInstitution.findUnique>> & { accounts: Array<{ id: string; externalId: string }> }
+  institution: Awaited<ReturnType<typeof db.financeInstitution.findUnique>> & { accounts: Array<{ id: string; externalId: string }> },
+  force = false,
 ): Promise<SyncResult> {
   if (!institution!.simplefinAccessUrl) {
     throw new Error("No SimpleFIN access URL")
   }
 
-  // Throttle: skip if this institution was synced recently
-  if (institution!.lastSyncedAt) {
+  // Throttle the AUTOMATED cron (every 15 min) to once per 2h per institution.
+  // A user-initiated sync passes force=true to bypass this — e.g. they just added
+  // a new account (Fidelity) in SimpleFIN and expect it to pull in immediately.
+  if (!force && institution!.lastSyncedAt) {
     const sinceLastSync = Date.now() - new Date(institution!.lastSyncedAt).getTime()
     if (sinceLastSync < SIMPLEFIN_MIN_SYNC_INTERVAL_MS) {
       console.log(
@@ -178,11 +181,12 @@ export async function syncSimpleFIN(
             creditLimit: acct.creditLimit,
             currency: acct.currency,
           },
+          // Do NOT overwrite name/type/subtype on update — those are
+          // user-editable (rename, change account type) and the sync was
+          // clobbering the user's edits on every run. Only refresh the
+          // provider-owned fields (mask, balances, limit).
           update: {
             institutionId: targetInst!.id,
-            name: acct.accountName,
-            type: acct.type,
-            subtype: acct.subtype,
             mask: acct.mask,
             currentBalance: acct.currentBalance,
             availableBalance: acct.availableBalance,

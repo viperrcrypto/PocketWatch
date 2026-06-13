@@ -1,0 +1,82 @@
+name: Desktop Release
+
+# Build the macOS PocketWatch.app + .dmg and attach to a GitHub Release.
+# Trigger by pushing a tag like `desktop-v0.1.0`, or run manually.
+#
+# Code signing + notarization are OPTIONAL: if the APPLE_* secrets below are set
+# on the repo, tauri-action signs + notarizes so the dmg opens without Gatekeeper
+# warnings. If they are absent, it still builds an UNSIGNED dmg (downloaders must
+# right-click -> Open, or run `xattr -dr com.apple.quarantine PocketWatch.app`).
+#
+# NOTE: the desktop app loads http://localhost:3500 — it is a companion for people
+# already self-hosting PocketWatch, not a standalone app. Say so in release notes.
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. desktop-v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    # Resolve the tag once into an env var (safe pattern — not interpolated into a
+    # shell `run:` step).
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Create frontendDist placeholder
+        # The window loads a remote URL, but generate_context! still needs the
+        # configured frontendDist (../dist) to exist at build time.
+        run: |
+          mkdir -p desktop/dist
+          printf '<!doctype html><meta charset=utf-8><title>PocketWatch</title>' > desktop/dist/index.html
+
+      - name: Build + release (tauri-action)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional signing/notarization — only used if the secrets exist.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          projectPath: desktop
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: PocketWatch Desktop ${{ env.RELEASE_TAG }}
+          releaseBody: |
+            macOS desktop companion for PocketWatch (menu-bar net worth, window, global summon).
+
+            **Requires a running PocketWatch server on http://localhost:3500** — this is a self-hoster companion, not a standalone app.
+
+            Unsigned builds: right-click the app → Open on first launch (or `xattr -dr com.apple.quarantine /Applications/PocketWatch.app`).
+          releaseDraft: true
+          prerelease: false
+          args: --bundles app,dmg

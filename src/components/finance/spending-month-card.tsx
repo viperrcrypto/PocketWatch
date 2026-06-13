@@ -116,7 +116,7 @@ export function SpendingMonthCard() {
           <div className="size-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       ) : donutData.length > 0 ? (
-        <SpendingDonutChart data={donutData} />
+        <SpendingDonutChart data={donutData} month={data?.month ?? undefined} />
       ) : (
         <p className="text-sm text-foreground-muted text-center py-12">
           No spending data{data?.month ? ` for ${formatMonthLabel(data.month)}` : " yet"}

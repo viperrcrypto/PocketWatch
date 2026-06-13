@@ -11,7 +11,6 @@ const InvestmentAllocationChart = dynamic(
   { ssr: false, loading: () => <div className="h-[180px] animate-shimmer rounded-xl" /> }
 )
 import { InstitutionLogo } from "@/components/finance/institution-logo"
-import { getInvestmentTypeMeta } from "./investments-constants"
 import { formatRelativeTime, getSyncStatus } from "./investments-helpers"
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -58,7 +57,7 @@ export function InvestmentsSidebar({
   return (
     <div className="space-y-4">
       {/* ── Allocation ── */}
-      <AllocationSection holdings={holdings} totalValue={totalValue} manualAccounts={manualAccounts} />
+      <AllocationSection holdings={holdings} totalValue={totalValue} manualAccounts={manualAccounts} connected={connected} />
 
       {/* ── AI Insights ── */}
       <AIInsightsSection aiData={aiData} generateInsights={generateInsights} />
@@ -71,27 +70,37 @@ export function InvestmentsSidebar({
 
 // ─── Allocation Section ─────────────────────────────────────────
 
-function AllocationSection({ holdings, totalValue, manualAccounts }: {
+const ALLOC_COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b", "#14b8a6", "#a855f7"]
+const INVESTMENT_TYPES = new Set(["investment", "brokerage"])
+
+function AllocationSection({ holdings, totalValue, manualAccounts, connected }: {
   holdings: Holding[] | undefined
   totalValue: number
   manualAccounts: ManualAccount[]
+  connected: Institution[]
 }) {
-  const manualSegments = useMemo(() =>
-    manualAccounts
-      .filter((a) => (a.currentBalance ?? 0) > 0)
-      .map((a) => {
-        const meta = getInvestmentTypeMeta(a.subtype)
-        return {
-          name: a.name,
-          value: a.currentBalance ?? 0,
-          pct: totalValue > 0 ? ((a.currentBalance ?? 0) / totalValue) * 100 : 0,
-          color: meta.color,
-          icon: meta.icon,
-        }
-      })
-      .sort((a, b) => b.value - a.value),
-    [manualAccounts, totalValue]
-  )
+  // Per-institution allocation from account VALUES — works for SimpleFIN (which
+  // gives balances but no per-security holdings), so the breakdown isn't empty.
+  const valueSegments = useMemo(() => {
+    const byInstitution = connected
+      .map((inst) => ({
+        name: inst.institutionName,
+        value: inst.accounts
+          .filter((a) => INVESTMENT_TYPES.has(a.type) && (a.currentBalance ?? 0) > 0)
+          .reduce((sum, a) => sum + (a.currentBalance ?? 0), 0),
+      }))
+      .filter((s) => s.value > 0)
+    const combined = [
+      ...byInstitution,
+      ...manualAccounts.filter((a) => (a.currentBalance ?? 0) > 0).map((a) => ({ name: a.name, value: a.currentBalance ?? 0 })),
+    ].sort((a, b) => b.value - a.value)
+    const sum = combined.reduce((s, x) => s + x.value, 0)
+    return combined.map((s, i) => ({
+      ...s,
+      pct: sum > 0 ? (s.value / sum) * 100 : 0,
+      color: ALLOC_COLORS[i % ALLOC_COLORS.length],
+    }))
+  }, [connected, manualAccounts])
 
   // Check if one asset type dominates (>90% of portfolio)
   const dominantType = useMemo(() => {
@@ -168,16 +177,17 @@ function AllocationSection({ holdings, totalValue, manualAccounts }: {
     )
   }
 
-  if (manualSegments.length > 0) {
+  // No per-security holdings (e.g. SimpleFIN) → fall back to an account/institution
+  // value breakdown so the user still gets a real allocation, not an empty card.
+  if (valueSegments.length > 0) {
     return (
       <div className="bg-card border border-card-border rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Portfolio Breakdown</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-0.5">Portfolio Breakdown</h3>
+        <p className="text-[10px] text-foreground-muted mb-4">By institution</p>
         <div className="space-y-3">
-          {manualSegments.map((s) => (
+          {valueSegments.map((s) => (
             <div key={s.name} className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${s.color}15` }}>
-                <span className="material-symbols-rounded" style={{ fontSize: 14, color: s.color }}>{s.icon}</span>
-              </div>
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between mb-1">
                   <span className="text-xs font-medium text-foreground truncate">{s.name}</span>

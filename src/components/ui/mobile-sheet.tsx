@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useCallback, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
 
@@ -63,7 +64,13 @@ export function MobileSheet({
 
   const transition = reduce ? { duration: 0 } : { type: "spring" as const, damping: 28, stiffness: 300 }
 
-  return (
+  if (typeof document === "undefined") return null
+
+  // Portal to body so the fixed overlay escapes the main content area. Page-
+  // transition / stagger wrappers apply transforms to ancestors, which would
+  // otherwise trap position:fixed and render the sheet clipped/off-screen (you'd
+  // see only the blurred backdrop).
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title || undefined}>
@@ -126,6 +133,7 @@ export function MobileSheet({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

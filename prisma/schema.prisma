@@ -63,6 +63,10 @@ model User {
   notifications                 Notification[]
   notificationPreference        NotificationPreference?
   passkeys                      Passkey[]
+  savedRoutes                   SavedRoute[]
+  pkceFlows                     PkceFlow[]
+  trips                         Trip[]
+  calendarTokenVersion          Int?                           @default(1)
 
 }
 
@@ -773,7 +777,10 @@ model FinanceTransaction {
   paymentMeta      Json?
   transactionCode  String?
   website          String?
+  tripId           String?
+  tripExcluded     Boolean        @default(false)
   account          FinanceAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  trip             Trip?          @relation(fields: [tripId], references: [id], onDelete: SetNull)
   linkedSubscriptions FinanceSubscription[]
 
   @@unique([userId, externalId])
@@ -781,6 +788,7 @@ model FinanceTransaction {
   @@index([userId, category])
   @@index([accountId, date])
   @@index([userId, isRecurring])
+  @@index([tripId])
   @@index([userId, merchantName])
   @@index([userId, isDuplicate, date])
   @@index([userId, isDuplicate, isExcluded, date])
@@ -1336,4 +1344,100 @@ model FlightSearchResult {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// A route the user is tracking for price drops. The price-check cron re-runs the
+// flight search for each active route and dispatches an alert when the lowest
+// price falls to/below alertThreshold.
+model SavedRoute {
+  id             String          @id @default(cuid())
+  userId         String
+  origin         String
+  destination    String
+  departureDate  String
+  returnDate     String?
+  tripType       String          @default("one_way")
+  searchClass    String          @default("ECON")
+  // Alerting
+  alertThreshold Float?
+  thresholdType  String          @default("cash") // "cash" | "points"
+  active         Boolean         @default(true)
+  lastPrice      Float?
+  lastCheckedAt  DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots      PriceSnapshot[]
+
+  @@index([userId, active])
+}
+
+// A trip — the organizing entity that searches, segments, and (Plaid) expenses
+// attach to. The travel module is trip-centric on top of this.
+model Trip {
+  id           String               @id @default(cuid())
+  userId       String
+  name         String
+  destination  String?
+  /** ISO yyyy-mm-dd */
+  startDate    String
+  endDate      String?
+  status       String               @default("upcoming") // upcoming | active | past
+  notes        String?
+  /** How this trip was created: null/manual, or "gmail" for email-imported. */
+  source       String?
+  /** Source identifiers (e.g. Gmail message IDs) that fed this trip — used to
+      dedupe on re-sync so the same confirmation email never imports twice. */
+  sourceRefs   String[]             @default([])
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  segments     TripSegment[]
+  transactions FinanceTransaction[]
+
+  @@index([userId, status])
+}
+
+// A booked component of a trip (flight, hotel, car, activity).
+model TripSegment {
+  id        String    @id @default(cuid())
+  tripId    String
+  type      String // flight | hotel | car | activity
+  title     String
+  startAt   DateTime?
+  endAt     DateTime?
+  location  String?
+  details   Json?
+  createdAt DateTime  @default(now())
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+}
+
+// Short-lived OAuth PKCE flow state, bound server-side to the initiating user so
+// the callback doesn't depend on the (sameSite=strict) session cookie surviving
+// the cross-site redirect back from the provider. Consumed (deleted) on callback.
+model PkceFlow {
+  state        String   @id
+  userId       String
+  provider     String   @default("atf")
+  codeVerifier String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+// Point-in-time lowest price observed for a tracked route.
+model PriceSnapshot {
+  id           String     @id @default(cuid())
+  savedRouteId String
+  source       String
+  cashPrice    Float?
+  points       Float?
+  capturedAt   DateTime   @default(now())
+  savedRoute   SavedRoute @relation(fields: [savedRouteId], references: [id], onDelete: Cascade)
+
+  @@index([savedRouteId, capturedAt])
 }

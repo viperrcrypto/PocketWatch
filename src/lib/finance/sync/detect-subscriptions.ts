@@ -6,6 +6,24 @@
 import { db } from "@/lib/db"
 import { detectSubscriptions, EXCLUDED_MERCHANTS, computeNextChargeDate, type Frequency } from "../subscriptions"
 import { stringSimilarity } from "../normalize"
+import { isGibberishName } from "../bill-helpers"
+
+// Spend categories that are purchases, not subscriptions — a few repeat visits to
+// a restaurant/store shouldn't be flagged as a recurring subscription.
+const NON_SUBSCRIPTION_CATEGORIES = new Set([
+  "food & dining", "groceries", "shopping", "gas", "transportation",
+])
+function isNonSubscriptionCategory(category: string | null | undefined): boolean {
+  return !!category && NON_SUBSCRIPTION_CATEGORIES.has(category.toLowerCase())
+}
+
+// Restaurant/food-merchant name keywords — repeat visits to a bakery/cafe/deli are
+// purchases, not subscriptions, even when the charge is "Uncategorized" (which is
+// how "The Bagel Factory" slipped past the category guard).
+const FOOD_MERCHANT_RE = /\b(bagel|bakery|caf[eé]|coffee|deli|diner|eatery|grill|kitchen|pizza|pizzeria|sushi|taco|burger|restaurant|bistro|brasserie|steakhouse|creamery|donut|doughnut|juice|smoothie|bar & grill)\b/i
+function isFoodMerchant(name: string | null | undefined): boolean {
+  return !!name && FOOD_MERCHANT_RE.test(name)
+}
 
 export interface SubscriptionPriceChange {
   merchantName: string
@@ -136,6 +154,10 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
       continue
     }
 
+    // Skip false positives: unreadable merchant names, and purchases in spend
+    // categories (restaurants/groceries/shopping repeating ≠ a subscription).
+    if (isGibberishName(sub.merchantName) || isNonSubscriptionCategory(sub.category) || isFoodMerchant(sub.merchantName)) continue
+
     await db.financeSubscription.create({
       data: {
         userId,
@@ -166,7 +188,7 @@ export async function detectAndSaveSubscriptions(userId: string): Promise<{
 
   for (const stream of recurringStreams) {
     const name = stream.merchantName ?? stream.description
-    if (!name) continue
+    if (!name || isGibberishName(name) || isNonSubscriptionCategory(stream.category) || isFoodMerchant(name)) continue
     if ([...EXCLUDED_MERCHANTS].some((m) => name.toUpperCase().includes(m))) continue
 
     const alreadyCovered = allSubs.some(
