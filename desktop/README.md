@@ -14,16 +14,6 @@ PocketWatch server (`http://localhost:3500`), so the whole app shows through.
 - **Global hotkey** `Cmd+Shift+P` → show/hide the window from anywhere.
 - **Launch at login** + single-instance.
 
-> ✅ The Rust **compiles cleanly** — verified with `cargo check` (exit 0). Two
-> initial bugs were fixed (a missing `GlobalShortcutExt` import + the window-icon
-> the build macro requires). The TS side (`/api/internal/desktop-status`) is also
-> build-verified.
->
-> To produce a real `.app`: install the CLI (`cargo install tauri-cli --version
-> "^2"`), drop a square logo in and run `cargo tauri icon <logo.png>` to generate
-> real icons (the committed `icons/icon.png` is a 32px placeholder), then set
-> `bundle.active: true` in `tauri.conf.json` and run `cargo tauri build`.
-
 ## Prerequisites
 ```bash
 # 1. Rust toolchain
@@ -43,12 +33,33 @@ export POCKETWATCH_DESKTOP_SECRET="<32+ char secret>"    # same value you set in
 Set `POCKETWATCH_DESKTOP_SECRET` in BOTH the server `.env` and here. Generate with
 `openssl rand -hex 32`.
 
-## Run / build
+## Run (development)
 ```bash
 cd desktop/src-tauri
-cargo tauri dev      # run against your local server
-cargo tauri build    # produce a .app / .dmg
+cargo tauri dev      # opens the window against your local server, hot-reloads the shell
 ```
+
+## Build & install the Mac app
+```bash
+cd desktop/src-tauri
+cargo tauri build
+```
+This produces, under `desktop/src-tauri/target/release/bundle/`:
+- `macos/PocketWatch.app` — drag it into `/Applications`
+- `dmg/PocketWatch_<version>_<arch>.dmg` — a double-click installer
+
+**Install:** open the `.dmg` and drag **PocketWatch** to Applications (or just copy
+the `.app`). Make sure your PocketWatch server is running first, then launch it.
+
+**Architecture:** the build targets the machine you build on — Apple Silicon
+(`aarch64`) or Intel (`x86_64`). Build on the matching Mac, or pass
+`--target universal-apple-darwin` for a universal binary.
+
+> **Gatekeeper note:** the build is **unsigned** (ad-hoc), so the first launch
+> shows "PocketWatch can't be opened because Apple cannot check it for malware."
+> Open **System Settings → Privacy & Security**, scroll down, and click **Open
+> Anyway** (one-time). To remove this warning entirely you'd code-sign + notarize
+> with an Apple Developer account.
 
 ## Notes
 - The window points at a remote URL, so WebAuthn passkeys won't work inside the
