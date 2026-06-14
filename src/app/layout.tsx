@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { DM_Sans, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/components/providers/query-provider"
-import { ErrorBoundary } from "@/components/error-boundary"
+import { ErrorBoundary, StaleChunkReloader } from "@/components/error-boundary"
 import { SkipToContent } from "@/components/skip-to-content"
 import { ClientShell } from "@/components/layout/client-shell"
 
@@ -85,6 +85,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SkipToContent />
+        <StaleChunkReloader />
         <QueryProvider>
           <ErrorBoundary>
             {children}

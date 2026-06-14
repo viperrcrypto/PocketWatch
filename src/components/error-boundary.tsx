@@ -1,6 +1,6 @@
 "use client"
 
-import React, { Component, type ReactNode, useCallback, useState } from "react"
+import React, { Component, type ReactNode, useCallback, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
 interface Props {
@@ -13,6 +13,44 @@ interface Props {
 interface State {
   hasError: boolean
   error?: Error
+}
+
+/**
+ * A stale build leaves the client referencing chunk filenames that no longer
+ * exist on the server (common with the desktop WKWebView caching an old shell
+ * after the server is rebuilt). webpack throws ChunkLoadError / "Failed to load
+ * chunk" — recoverable by reloading to fetch the current build.
+ */
+function isChunkLoadError(error?: Error): boolean {
+  if (!error) return false
+  if (error.name === "ChunkLoadError") return true
+  const msg = error.message || ""
+  return (
+    /Loading chunk \S+ failed/i.test(msg) ||
+    /Failed to load chunk/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg) ||
+    /importing a module script failed/i.test(msg)
+  )
+}
+
+/**
+ * Reload once to recover from a stale-chunk error, guarded so a chunk that
+ * genuinely can't load (server down) can't cause an infinite reload loop —
+ * if we already reloaded within the window, show the fallback instead.
+ */
+const CHUNK_RELOAD_KEY = "pw:chunk-reload-at"
+const CHUNK_RELOAD_WINDOW_MS = 15_000
+function tryReloadForStaleChunk(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    const last = Number(window.sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0)
+    if (Date.now() - last < CHUNK_RELOAD_WINDOW_MS) return false
+    window.sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()))
+  } catch {
+    // sessionStorage unavailable — still attempt a single reload below.
+  }
+  window.location.reload()
+  return true
 }
 
 /**
@@ -31,6 +69,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Stale-chunk errors are recoverable — reload to the current build instead
+    // of stranding the user on the error screen.
+    if (isChunkLoadError(error) && tryReloadForStaleChunk()) return
     console.error("Error Boundary caught an error:", error, errorInfo)
     this.props.onError?.(error, errorInfo)
   }
@@ -207,6 +248,31 @@ function ErrorFallback({ error, reset }: ErrorFallbackProps) {
       </div>
     </div>
   )
+}
+
+/**
+ * Mount once at the app root: catches stale-chunk failures that happen OUTSIDE
+ * React render (route prefetch / dynamic import rejections in the WKWebView) and
+ * reloads to the current build — the same guarded reload the boundary uses.
+ */
+export function StaleChunkReloader() {
+  useEffect(() => {
+    const onError = (e: ErrorEvent) => {
+      if (isChunkLoadError(e.error) || /Failed to load chunk|Loading chunk \S+ failed/i.test(e.message || "")) {
+        tryReloadForStaleChunk()
+      }
+    }
+    const onRejection = (e: PromiseRejectionEvent) => {
+      if (e.reason instanceof Error && isChunkLoadError(e.reason)) tryReloadForStaleChunk()
+    }
+    window.addEventListener("error", onError)
+    window.addEventListener("unhandledrejection", onRejection)
+    return () => {
+      window.removeEventListener("error", onError)
+      window.removeEventListener("unhandledrejection", onRejection)
+    }
+  }, [])
+  return null
 }
 
 /**
